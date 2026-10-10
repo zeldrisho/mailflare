@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import clsx from "clsx";
 import { useLanguage } from "@/components/language-provider";
 import { SidebarResizeBoundary } from "@/components/sidebar-resize-boundary";
 import { useSidebar } from "@/components/sidebar-state";
@@ -19,6 +18,7 @@ import {
   UPCOMING_BATCH_SIZE,
 } from "./calendar/utils";
 import type { UpcomingSidebarProps } from "./upcoming-sidebar-types";
+import { clsx } from "cn";
 
 export function UpcomingSidebar({
   events,

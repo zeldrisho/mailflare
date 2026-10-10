@@ -2,11 +2,11 @@
 
 import { useEffect, useState } from "react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import clsx from "clsx";
 import { Check, ListFilter } from "lucide-react";
 import { useLanguage } from "@/components/language-provider";
 import { DRIVE_CATEGORIES } from "@/lib/drive/category-names";
 import type { DriveCategory } from "@/lib/drive/category-names";
+import { clsx } from "cn";
 
 /** Multi-select filter by kind of file (photos, videos, documents, others). */
 export function DriveTypeFilter({

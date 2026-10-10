@@ -7,7 +7,6 @@ import { HeaderSearch } from "@/components/header-search";
 import { useRouter, useSearchParams } from "next/navigation";
 import toast, { Toaster } from "react-hot-toast";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import clsx from "clsx";
 import {
   ArrowDown,
   ArrowUp,
@@ -61,6 +60,7 @@ import {
   isDriveDraggable,
   startDriveDrag,
 } from "../drive-drag";
+import { clsx } from "cn";
 
 const menuItemClass =
   "flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-sm text-neutral-700 outline-none data-[highlighted]:bg-neutral-100";

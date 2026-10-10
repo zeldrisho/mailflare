@@ -1,9 +1,8 @@
 "use client";
-
-import clsx from "clsx";
 import { AlertCircle, CheckCircle2, X } from "lucide-react";
 import { useLanguage } from "@/components/language-provider";
 import type { DriveUploadEntry } from "./drive-upload-types";
+import { clsx } from "cn";
 
 // Every upload of the session stacked in one card: a row per file with its bar and percentage.
 export function DriveUploadPanel({

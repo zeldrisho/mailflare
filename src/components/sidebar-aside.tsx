@@ -1,10 +1,9 @@
 "use client";
-
-import clsx from "clsx";
 import { Menu } from "lucide-react";
 import type { ReactNode } from "react";
 import { useSidebar } from "./sidebar-state";
 import { useLanguage } from "./language-provider";
+import { clsx } from "cn";
 
 export function SidebarAside({ children, className }: { children: ReactNode; className?: string }) {
   const { mobile, mobileOpen, toggle } = useSidebar();

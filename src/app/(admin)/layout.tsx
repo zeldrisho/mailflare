@@ -11,12 +11,12 @@ import { MailboxSelector } from "@/components/mailbox-selector";
 import { LicenseIndicator } from "@/components/license-indicator";
 import { AdminNav } from "@/components/admin-nav";
 import { SidebarProvider } from "@/components/sidebar-state";
-import clsx from "clsx";
 import { usePathname } from "next/navigation";
 import { adminPageTitles } from "@/components/admin-page-titles";
 import { SidebarAside, MobileTopBar } from "@/components/sidebar-aside";
 import { SidebarResizeBoundary } from "@/components/sidebar-resize-boundary";
 import { ShortcutsProvider } from "@/components/shortcuts";
+import { clsx } from "cn";
 
 const primaryOnlyPrefixes = [
   "/agent",

@@ -2,7 +2,6 @@
 
 import { Fragment, memo, useMemo } from "react";
 import type { DragEvent, PointerEvent as ReactPointerEvent } from "react";
-import clsx from "clsx";
 import { useLanguage } from "@/components/language-provider";
 import { normalizeCalendarColor } from "@/lib/calendar/colors";
 import {
@@ -15,6 +14,7 @@ import {
 } from "./utils";
 import type { CalendarEvent, EventResizeEdge } from "./types";
 import type { DayEventsProps } from "./day-events-types";
+import { clsx } from "cn";
 
 // Memoized so pointer-move / drag-over preview updates in the page do not
 // recompute positions (timezone math) and re-render every event block.

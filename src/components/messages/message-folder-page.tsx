@@ -53,7 +53,7 @@ import {
   getPermanentDeleteConfirmText,
   supportsPermanentDelete,
 } from "@/lib/messages/permanent-delete-utils";
-import clsx from "clsx";
+import { clsx } from "cn";
 
 const pageSize = 25;
 

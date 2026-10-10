@@ -75,7 +75,7 @@ import {
   startOfWeek,
   WEEKDAY_OPTIONS,
 } from "./utils";
-import clsx from "clsx";
+import { clsx } from "cn";
 
 const eventFieldClass =
   "h-9 border-transparent bg-transparent px-2 shadow-none hover:bg-white/60 focus:border-blue-600 focus:bg-white focus:shadow-sm";

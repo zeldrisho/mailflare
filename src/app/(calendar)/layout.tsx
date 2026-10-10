@@ -19,10 +19,10 @@ import { SidebarHeader } from "@/components/sidebar-header";
 import { SidebarProvider } from "@/components/sidebar-state";
 import { ShortcutsProvider } from "@/components/shortcuts";
 import { Button } from "@/components/ui/button";
-import clsx from "clsx";
 import { CalendarMobileUpcoming } from "./calendar-mobile-upcoming";
 import { useDashboardState } from "../(dashboard)/dashboard-state";
 import { useAssistantAvailability } from "../(dashboard)/use-assistant-availability";
+import { clsx } from "cn";
 
 export default function CalendarLayout({ children }: { children: React.ReactNode }) {
   const { t } = useLanguage();

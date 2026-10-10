@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "vp run db:bundle && vp exec cf dev",
-    "build": "vp run db:bundle && vp exec cf build",
+    "build": "vp run db:bundle && vp build",
     "build:next": "vp run db:bundle && MAILFLARE_RUNTIME=node next build",
     "start": "vp preview --port 3000",
     "lint": "vp lint .",
@@ -48,7 +48,7 @@
     "bcryptjs": "^3.0.3",
     "better-sqlite3": "^13.0.3",
     "class-variance-authority": "^0.7.1",
-    "clsx": "^2.1.1",
+    "cn": "^0.4.0",
     "css-tree": "^3.2.1",
     "dayjs": "^1.11.20",
     "dompurify": "^3.4.16",
@@ -70,7 +70,6 @@
     "remark-gfm": "^4.0.1",
     "sass": "^1.105.0",
     "smtp-server": "^3.19.12",
-    "tailwind-merge": "^3.6.0",
     "vinext": "1.0.0-beta.13",
     "workers-ai-provider": "^4.0.0",
     "zod": "^4.4.3"

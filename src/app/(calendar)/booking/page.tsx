@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { mobilePrimaryActionClass } from "@/components/page-header-utils";
-import clsx from "clsx";
 import {
   CalendarDays,
   Check,
@@ -27,6 +26,7 @@ import { BookingListSkeleton } from "./booking-list-skeleton";
 import { visibleBookingEvents } from "./default-events";
 import type { BookingEvent, BookingForm, BookingHost } from "./types";
 import { availabilityLabel, durationLabel, emptyBookingForm, formFromEvent } from "./utils";
+import { clsx } from "cn";
 
 export default function BookingsPage() {
   const { t } = useLanguage();

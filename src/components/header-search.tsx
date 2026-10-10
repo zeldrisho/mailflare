@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import clsx from "clsx";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import type { HeaderSearchProps } from "./header-search-types";
+import { clsx } from "cn";
 
 // The header search shared by every layout. On phones it is an icon beside the menu button
 // until tapped, then covers the header at full width; the wrapper still fills the row so

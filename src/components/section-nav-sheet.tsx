@@ -1,10 +1,9 @@
 "use client";
-
-import clsx from "clsx";
 import { ChevronUp } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 import { useIsMobile } from "./sidebar-mobile-utils";
+import { clsx } from "cn";
 
 type SectionNavSheetProps = {
   label: string;

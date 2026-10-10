@@ -25,9 +25,9 @@ import {
   getConversationSenderEmail,
   partitionThread,
 } from "./conversation-thread-utils";
-import clsx from "clsx";
 import { useMessageListVisibility } from "./message-list-visibility";
 import { useAssistantOpen } from "../agent/assistant-open-state";
+import { clsx } from "cn";
 
 /**
  * The other messages in a conversation, ordered oldest to newest and collapsed

@@ -11,7 +11,6 @@ import {
   Trash2,
   UserRound,
 } from "lucide-react";
-import clsx from "clsx";
 import { useLanguage } from "@/components/language-provider";
 import { folderColorKeys } from "@/lib/folders/color-keys";
 import type { TranslationKey } from "@/lib/i18n/types";
@@ -31,6 +30,7 @@ import {
   WEEKDAYS,
 } from "./utils";
 import { BookingHostAvatar } from "./booking-host-avatar";
+import { clsx } from "cn";
 
 export function BookingEditor({
   form,

@@ -1,9 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import clsx from "clsx";
 import type { KeyboardEvent, PointerEvent } from "react";
 import { useLanguage } from "@/components/language-provider";
+import { clsx } from "cn";
 
 export type DriveColumn = "owner" | "updatedAt" | "size";
 

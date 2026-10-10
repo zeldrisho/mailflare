@@ -2,11 +2,11 @@
 
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Columns2 } from "lucide-react";
-import clsx from "clsx";
 import { useLanguage } from "@/components/language-provider";
 import { Tooltip } from "@/components/ui/tooltip";
 import { useMessageListVisibility } from "./message-list-visibility";
 import type { MessageReadingHeaderButtonProps } from "./message-reading-header-button-types";
+import { clsx } from "cn";
 
 export function MessageReadingHeaderButton({ assistantVisible }: MessageReadingHeaderButtonProps) {
   const { t } = useLanguage();
