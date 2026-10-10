@@ -4,12 +4,15 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "deploy": "wrangler deploy",
-    "dev": "wrangler dev"
+    "build": "vp exec cf build",
+    "deploy": "vp exec cf deploy",
+    "dev": "vp exec cf dev",
+    "typecheck": "vp exec tsc --noEmit"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^5.0.0",
-    "typescript": "^5",
-    "wrangler": "^4.127.1"
+    "@cloudflare/workers-types": "catalog:",
+    "cf": "catalog:",
+    "typescript": "catalog:",
+    "wrangler": "catalog:"
   }
 }
