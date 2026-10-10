@@ -6,21 +6,21 @@ Mailflare exposes APIs for domain, account, and mailbox management, and for send
 
 Adding or removing a domain from Mailflare also updates Cloudflare Email Routing and sending resources. Each domain has a `sendingProvider` and a `receivingProvider` (`none`, `cloudflare`, `resend` or `ses`); see [Sending and receiving providers](providers.md).
 
-| Mailflare route | Purpose |
-| --- | --- |
-| `GET /api/domains` | List connected domains |
-| `POST /api/domains` | Connect a domain and configure Cloudflare |
-| `GET /api/domains/[id]` | Get a connected domain |
-| `DELETE /api/domains/[id]` | Remove a domain and clean up its Cloudflare resources |
-| `GET /api/domains/[id]/dns` | View its routing and sending DNS status |
-| `PUT /api/domains/[id]/sending` | Choose the sending provider (`{ provider: "none" \| "cloudflare" \| "resend" \| "ses" }`) |
-| `PUT /api/domains/[id]/receiving` | Choose the receiving provider (same values) |
-| `GET /api/domains/[id]/sending`, `GET /api/domains/[id]/receiving` | Which providers still have configuration for the domain |
-| `DELETE /api/domains/[id]/sending`, `DELETE /api/domains/[id]/receiving` | Remove an unselected provider's configuration (`{ target }`) |
-| `GET/POST /api/domains/[id]/resend`, `/api/domains/[id]/ses` | Sending status, setup, verify and test email for Resend or SES |
-| `GET/POST /api/domains/[id]/receiving/[provider]` | Receiving checklist and setup for `resend` or `ses`; `POST` also accepts `cloudflare`, and answers `409 MX_CONFLICT` with the records until called with `{ replaceMx: true }` |
-| `GET/PUT/DELETE /api/admin/resend-key` | The shared Resend API key (primary administrator) |
-| `GET/PUT/POST/DELETE /api/admin/aws` | The shared AWS credentials: `PUT` validates before saving and `POST` re-checks permissions (primary administrator) |
+| Mailflare route                                                          | Purpose                                                                                                                                                                       |
+| ------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET /api/domains`                                                       | List connected domains                                                                                                                                                        |
+| `POST /api/domains`                                                      | Connect a domain and configure Cloudflare                                                                                                                                     |
+| `GET /api/domains/[id]`                                                  | Get a connected domain                                                                                                                                                        |
+| `DELETE /api/domains/[id]`                                               | Remove a domain and clean up its Cloudflare resources                                                                                                                         |
+| `GET /api/domains/[id]/dns`                                              | View its routing and sending DNS status                                                                                                                                       |
+| `PUT /api/domains/[id]/sending`                                          | Choose the sending provider (`{ provider: "none" \| "cloudflare" \| "resend" \| "ses" }`)                                                                                     |
+| `PUT /api/domains/[id]/receiving`                                        | Choose the receiving provider (same values)                                                                                                                                   |
+| `GET /api/domains/[id]/sending`, `GET /api/domains/[id]/receiving`       | Which providers still have configuration for the domain                                                                                                                       |
+| `DELETE /api/domains/[id]/sending`, `DELETE /api/domains/[id]/receiving` | Remove an unselected provider's configuration (`{ target }`)                                                                                                                  |
+| `GET/POST /api/domains/[id]/resend`, `/api/domains/[id]/ses`             | Sending status, setup, verify and test email for Resend or SES                                                                                                                |
+| `GET/POST /api/domains/[id]/receiving/[provider]`                        | Receiving checklist and setup for `resend` or `ses`; `POST` also accepts `cloudflare`, and answers `409 MX_CONFLICT` with the records until called with `{ replaceMx: true }` |
+| `GET/PUT/DELETE /api/admin/resend-key`                                   | The shared Resend API key (primary administrator)                                                                                                                             |
+| `GET/PUT/POST/DELETE /api/admin/aws`                                     | The shared AWS credentials: `PUT` validates before saving and `POST` re-checks permissions (primary administrator)                                                            |
 
 The hostname must be the apex of a zone available to the configured Cloudflare credentials, or a subdomain of that zone. Creating a mailbox also creates the Cloudflare Email Routing rule that delivers its address to the `mailflare` Worker.
 
@@ -28,14 +28,14 @@ The hostname must be the apex of a zone available to the configured Cloudflare c
 
 The same operations are available to scripts through admin API keys with the `domains` scope, using `Authorization: Bearer <key>`. Create these keys in Admin > API keys. The owner must retain the admin role; personal mail keys from Settings cannot grant domain access.
 
-| Mailflare route | Purpose |
-| --- | --- |
-| `GET /api/v1/domains` | List connected domains with their DNS status |
-| `POST /api/v1/domains` | Connect a domain and configure Cloudflare (`{ hostname, enableRouting?, enableSending?, replaceMxRecords?, receivingProvider?, sendingProvider? }`; `receivingProvider` defaults to `cloudflare`, and with another value Email Routing is not enabled. `sendingProvider` defaults to `cloudflare` (or `none` when `enableSending` is `false`), and the Cloudflare sending subdomain is only created for `cloudflare`) |
-| `GET /api/v1/domains/[id]` | Get a connected domain |
-| `DELETE /api/v1/domains/[id]` | Remove a domain and clean up its Cloudflare resources |
-| `GET /api/v1/domains/[id]/dns` | View its routing, sending and authentication DNS status |
-| `POST /api/v1/domains/[id]/dns/setup` | Create a missing record (`{ record: "mx" \| "spf" \| "dkim" \| "dmarc" }`) |
+| Mailflare route                       | Purpose                                                                                                                                                                                                                                                                                                                                                                                                               |
+| ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET /api/v1/domains`                 | List connected domains with their DNS status                                                                                                                                                                                                                                                                                                                                                                          |
+| `POST /api/v1/domains`                | Connect a domain and configure Cloudflare (`{ hostname, enableRouting?, enableSending?, replaceMxRecords?, receivingProvider?, sendingProvider? }`; `receivingProvider` defaults to `cloudflare`, and with another value Email Routing is not enabled. `sendingProvider` defaults to `cloudflare` (or `none` when `enableSending` is `false`), and the Cloudflare sending subdomain is only created for `cloudflare`) |
+| `GET /api/v1/domains/[id]`            | Get a connected domain                                                                                                                                                                                                                                                                                                                                                                                                |
+| `DELETE /api/v1/domains/[id]`         | Remove a domain and clean up its Cloudflare resources                                                                                                                                                                                                                                                                                                                                                                 |
+| `GET /api/v1/domains/[id]/dns`        | View its routing, sending and authentication DNS status                                                                                                                                                                                                                                                                                                                                                               |
+| `POST /api/v1/domains/[id]/dns/setup` | Create a missing record (`{ record: "mx" \| "spf" \| "dkim" \| "dmarc" }`)                                                                                                                                                                                                                                                                                                                                            |
 
 `GET /api/v1/domains` returns `{ domains, dns }`, where `dns[id].auth` reports `ok` / `missing` / `unknown` for MX, SPF, DKIM and DMARC. `GET /api/v1/domains/[id]/dns` returns the full audit, including the names queried and the values found. The `setup` route provisions MX/SPF through Email Routing, DKIM through the sending subdomain, and a `v=DMARC1; p=none` TXT for DMARC; on a self-hosted install where DNS is managed manually it returns an error, since Mailflare cannot write the zone.
 
@@ -43,11 +43,11 @@ The same operations are available to scripts through admin API keys with the `do
 
 Resend and Amazon SES deliver mail by calling the app, so these routes are public and authenticate themselves rather than using a session or API key:
 
-| Route | Authenticated by |
-| --- | --- |
-| `POST /api/inbound/resend` | The Svix signature of the webhook secret Resend returned when Mailflare created the webhook |
+| Route                           | Authenticated by                                                                                                      |
+| ------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `POST /api/inbound/resend`      | The Svix signature of the webhook secret Resend returned when Mailflare created the webhook                           |
 | `POST /api/inbound/ses?token=…` | The secret token in the subscription URL, the SNS topic ARN, and reading the message from the account's own S3 bucket |
-| `POST /api/inbound` | The HMAC from the Cloudflare relay Worker, used by self-hosted installs ([self-hosting](self-hosting.md)) |
+| `POST /api/inbound`             | The HMAC from the Cloudflare relay Worker, used by self-hosted installs ([self-hosting](self-hosting.md))             |
 
 ## Calendar and booking
 
@@ -57,12 +57,12 @@ Each user has a personal calendar at **Calendar** in the dashboard. Events have 
 
 When you add attendees and choose a sending mailbox, Mailflare emails each attendee an invitation with a calendar (`.ics`) file from that mailbox, and sends updates and cancellations the same way. Events created through MCP tools or the assistant record attendees but do not send invitations.
 
-| Mailflare route | Purpose |
-| --- | --- |
-| `GET /api/calendar/events?start=&end=` | List events in an ISO 8601 range (default: the next 31 days). Repeating events are returned once, with their rule |
-| `POST /api/calendar/events` | Create an event (`{ title, startsAt, endsAt, description?, location?, attendees?, color?, repeat?, repeatDays?, timeZone?, mailboxId?, from? }`) |
-| `PATCH /api/calendar/events/[eventId]` | Update an event or series. For a repeating event, pass an occurrence ID or `effectiveFrom` to change it from that occurrence onward |
-| `DELETE /api/calendar/events/[eventId]` | Delete an event, or a series from an occurrence onward |
+| Mailflare route                         | Purpose                                                                                                                                          |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `GET /api/calendar/events?start=&end=`  | List events in an ISO 8601 range (default: the next 31 days). Repeating events are returned once, with their rule                                |
+| `POST /api/calendar/events`             | Create an event (`{ title, startsAt, endsAt, description?, location?, attendees?, color?, repeat?, repeatDays?, timeZone?, mailboxId?, from? }`) |
+| `PATCH /api/calendar/events/[eventId]`  | Update an event or series. For a repeating event, pass an occurrence ID or `effectiveFrom` to change it from that occurrence onward              |
+| `DELETE /api/calendar/events/[eventId]` | Delete an event, or a series from an occurrence onward                                                                                           |
 
 These routes accept the dashboard session or an API key (`Authorization: Bearer <key>`) with the **Read calendar** (`calendar:read`) or **Manage calendar** (`calendar:write`) scope, which you choose when creating the key in **Settings → API keys**. A key can only send invitations if it also has the `send` scope for the chosen mailbox. MCP and the assistant use separate calendar tools, described in [Email assistant and MCP](email-assistant-and-mcp.md).
 
@@ -74,14 +74,14 @@ A guest picks a slot, enters a name, email, optional extra guest emails and note
 
 On a Team license an administrator can add other users as hosts of a booking event. The booking is created on every host's calendar, and a slot is offered only when all hosts are free.
 
-| Mailflare route | Purpose |
-| --- | --- |
-| `GET /api/booking`, `POST /api/booking` | List or create the signed-in user's booking events |
-| `PATCH /api/booking/[eventId]`, `DELETE /api/booking/[eventId]` | Update or delete one |
-| `PATCH /api/booking/settings` | Change the booking username (administrators) |
-| `GET /api/public/booking?username=` | Public: the host's name and enabled events |
-| `GET /api/public/booking/[eventId]?username=` | Public: one event and its open slots |
-| `POST /api/public/booking/[eventId]?username=` | Public: book a slot (`{ name, email, startsAt, guestEmails?, notes? }`) |
+| Mailflare route                                                 | Purpose                                                                 |
+| --------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| `GET /api/booking`, `POST /api/booking`                         | List or create the signed-in user's booking events                      |
+| `PATCH /api/booking/[eventId]`, `DELETE /api/booking/[eventId]` | Update or delete one                                                    |
+| `PATCH /api/booking/settings`                                   | Change the booking username (administrators)                            |
+| `GET /api/public/booking?username=`                             | Public: the host's name and enabled events                              |
+| `GET /api/public/booking/[eventId]?username=`                   | Public: one event and its open slots                                    |
+| `POST /api/public/booking/[eventId]?username=`                  | Public: book a slot (`{ name, email, startsAt, guestEmails?, notes? }`) |
 
 ## Account and mailbox management
 
@@ -91,19 +91,19 @@ The `storage` scope reports and tests object storage: `GET /api/v1/storage` retu
 
 Admin API keys cannot read or send mail. Enable **Allow MCP access** when creating an admin key to use its selected `domains`, `accounts`, `mailboxes`, and `storage` permissions through `/mcp`. The `manage_domains`, `manage_accounts`, `manage_mailboxes`, and `manage_storage` (`status`, `test`) tools expose the corresponding management actions below. Admin MCP keys do not expose mail tools. Use Settings > API keys for mail and mail MCP access.
 
-| Scope | Mailflare route | Purpose |
-| --- | --- | --- |
-| `accounts` | `GET /api/v1/accounts` | List managed accounts |
-| `accounts` | `POST /api/v1/accounts` | Create an account and its mailbox (`{ username, domainId, password, role?, useAllDomains?, aliases? }`) |
-| `accounts` | `GET /api/v1/accounts/[id]` | Get a managed account |
-| `accounts` | `PATCH /api/v1/accounts/[id]` | Update an account (`{ name, role, disabled, canManageMailboxes, forwardingEmail?, password? }`) |
-| `mailboxes` | `GET /api/v1/mailboxes` | List managed mailboxes |
-| `mailboxes` | `POST /api/v1/mailboxes` | Create a mailbox (`{ domainId, localPart, displayName?, type?, ownerUserId? }`) |
-| `mailboxes` | `GET /api/v1/mailboxes/[id]` | Get a managed mailbox |
-| `mailboxes` | `PATCH /api/v1/mailboxes/[id]` | Update mailbox settings |
-| `mailboxes` | `DELETE /api/v1/mailboxes/[id]` | Delete a mailbox and its routing rule |
-| `storage` | `GET /api/v1/storage` | Active object storage (R2, Backblaze B2, AWS S3 or local files) |
-| `storage` | `POST /api/v1/storage` | Write, read and delete a test object to verify storage |
+| Scope       | Mailflare route                 | Purpose                                                                                                 |
+| ----------- | ------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| `accounts`  | `GET /api/v1/accounts`          | List managed accounts                                                                                   |
+| `accounts`  | `POST /api/v1/accounts`         | Create an account and its mailbox (`{ username, domainId, password, role?, useAllDomains?, aliases? }`) |
+| `accounts`  | `GET /api/v1/accounts/[id]`     | Get a managed account                                                                                   |
+| `accounts`  | `PATCH /api/v1/accounts/[id]`   | Update an account (`{ name, role, disabled, canManageMailboxes, forwardingEmail?, password? }`)         |
+| `mailboxes` | `GET /api/v1/mailboxes`         | List managed mailboxes                                                                                  |
+| `mailboxes` | `POST /api/v1/mailboxes`        | Create a mailbox (`{ domainId, localPart, displayName?, type?, ownerUserId? }`)                         |
+| `mailboxes` | `GET /api/v1/mailboxes/[id]`    | Get a managed mailbox                                                                                   |
+| `mailboxes` | `PATCH /api/v1/mailboxes/[id]`  | Update mailbox settings                                                                                 |
+| `mailboxes` | `DELETE /api/v1/mailboxes/[id]` | Delete a mailbox and its routing rule                                                                   |
+| `storage`   | `GET /api/v1/storage`           | Active object storage (R2, Backblaze B2, AWS S3 or local files)                                         |
+| `storage`   | `POST /api/v1/storage`          | Write, read and delete a test object to verify storage                                                  |
 
 ### Choose aliases when creating an account
 
@@ -122,9 +122,7 @@ creation handler. For example, this API body creates `sam@example.com` with just
   "domainId": "dom_example_com",
   "password": "REPLACE_WITH_A_STRONG_PASSWORD",
   "useAllDomains": false,
-  "aliases": [
-    { "domainId": "dom_example_net", "localPart": "sales" }
-  ]
+  "aliases": [{ "domainId": "dom_example_net", "localPart": "sales" }]
 }
 ```
 
@@ -212,15 +210,15 @@ When two-factor authentication is on, `POST /api/auth/login` returns `{ ok: true
 
 `GET /api/messages?q=...` (session) and `GET /api/v1/messages?q=...` (API key, `read` scope) accept the same query grammar, backed by an FTS5 index over subject, sender, recipients and body:
 
-| Syntax | Meaning |
-|---|---|
-| `invoice` | prefix match anywhere (`inv` finds "invoice") |
-| `"private window"` | exact phrase |
-| `-word` | exclude |
+| Syntax                                  | Meaning                                        |
+| --------------------------------------- | ---------------------------------------------- |
+| `invoice`                               | prefix match anywhere (`inv` finds "invoice")  |
+| `"private window"`                      | exact phrase                                   |
+| `-word`                                 | exclude                                        |
 | `from:maya`, `to:sam`, `subject:report` | restrict a term to one field (`to:` covers Cc) |
-| `has:attachment` | at least one non-inline attachment |
-| `is:unread`, `is:read`, `is:starred` | flags |
-| `after:2026-09-01`, `before:2026-09-30` | date bounds (UTC, `before` exclusive) |
+| `has:attachment`                        | at least one non-inline attachment             |
+| `is:unread`, `is:read`, `is:starred`    | flags                                          |
+| `after:2026-09-01`, `before:2026-09-30` | date bounds (UTC, `before` exclusive)          |
 
 Terms combine with AND. Admins can check or rebuild the index with `GET` / `POST /api/admin/search-index`; triggers keep it current, so a rebuild is only needed after restoring a backup made before the index existed.
 

@@ -20,26 +20,31 @@ export const sidebarBootstrapScript = `(() => {
 })();`;
 
 export function syncInitialSidebarWidth(width: number, minimal: boolean): void {
-	if (typeof document === "undefined") return;
-	document.documentElement.style.setProperty("--persisted-sidebar-width", `${minimal ? 72 : width}px`);
+  if (typeof document === "undefined") return;
+  document.documentElement.style.setProperty(
+    "--persisted-sidebar-width",
+    `${minimal ? 72 : width}px`,
+  );
 }
 
 export function readInitialSidebarMinimal(): boolean {
-	if (typeof window === "undefined") return false;
-	try {
-		const saved = localStorage.getItem(SIDEBAR_MINIMAL_STORAGE_KEY);
-		if (saved !== null) return saved === "true";
-		const userKeys = Object.keys(localStorage).filter((key) => key.startsWith(`${SIDEBAR_MINIMAL_STORAGE_KEY}:`));
-		return userKeys.length === 1 && localStorage.getItem(userKeys[0]) === "true";
-	} catch {
-		return false;
-	}
+  if (typeof window === "undefined") return false;
+  try {
+    const saved = localStorage.getItem(SIDEBAR_MINIMAL_STORAGE_KEY);
+    if (saved !== null) return saved === "true";
+    const userKeys = Object.keys(localStorage).filter((key) =>
+      key.startsWith(`${SIDEBAR_MINIMAL_STORAGE_KEY}:`),
+    );
+    return userKeys.length === 1 && localStorage.getItem(userKeys[0]) === "true";
+  } catch {
+    return false;
+  }
 }
 
 export function saveInitialSidebarMinimal(minimal: boolean): void {
-	try {
-		localStorage.setItem(SIDEBAR_MINIMAL_STORAGE_KEY, String(minimal));
-	} catch {
-		// Storage can be unavailable in private windows.
-	}
+  try {
+    localStorage.setItem(SIDEBAR_MINIMAL_STORAGE_KEY, String(minimal));
+  } catch {
+    // Storage can be unavailable in private windows.
+  }
 }

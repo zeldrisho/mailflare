@@ -1,10 +1,10 @@
 export type ImportMailboxResult = {
-	imported: number;
-	skipped: number;
-	errors: string[];
+  imported: number;
+  skipped: number;
+  errors: string[];
 };
 
 export type ImportMessageInput = {
-	filename: string;
-	raw: ArrayBuffer;
+  filename: string;
+  raw: ArrayBuffer;
 };

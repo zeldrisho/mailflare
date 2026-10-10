@@ -3,14 +3,14 @@ import type { MessageAttachment } from "@/app/(dashboard)/inbox/[messageId]/type
 import type { LucideIcon } from "lucide-react";
 
 export interface MessageAttachmentCardProps {
-	attachment: MessageAttachment;
-	messageId: string;
-	onPreview: (attachment: MessageAttachment) => void;
+  attachment: MessageAttachment;
+  messageId: string;
+  onPreview: (attachment: MessageAttachment) => void;
 }
 
 export type AttachmentVisual = {
-	icon: LucideIcon;
-	iconClassName: string;
-	labelKey: TranslationKey;
-	thumbnail: "image" | "video" | null;
+  icon: LucideIcon;
+  iconClassName: string;
+  labelKey: TranslationKey;
+  thumbnail: "image" | "video" | null;
 };

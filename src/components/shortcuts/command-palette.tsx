@@ -30,15 +30,9 @@ function CommandPaletteDialog({
     inputRef.current?.focus();
   }, []);
 
-  const filteredCommands = useMemo(
-    () => filterCommands(commands, query),
-    [commands, query]
-  );
+  const filteredCommands = useMemo(() => filterCommands(commands, query), [commands, query]);
 
-  const activeIndex = Math.min(
-    selectedIndex,
-    Math.max(0, filteredCommands.length - 1)
-  );
+  const activeIndex = Math.min(selectedIndex, Math.max(0, filteredCommands.length - 1));
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "ArrowDown") {
@@ -47,7 +41,7 @@ function CommandPaletteDialog({
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
       setSelectedIndex(
-        (prev) => (prev - 1 + filteredCommands.length) % (filteredCommands.length || 1)
+        (prev) => (prev - 1 + filteredCommands.length) % (filteredCommands.length || 1),
       );
     } else if (e.key === "Enter") {
       e.preventDefault();
@@ -61,10 +55,7 @@ function CommandPaletteDialog({
     }
   };
 
-  const grouped = useMemo(
-    () => groupCommandsByCategory(filteredCommands),
-    [filteredCommands]
-  );
+  const grouped = useMemo(() => groupCommandsByCategory(filteredCommands), [filteredCommands]);
 
   let flatIndex = 0;
 
@@ -133,9 +124,7 @@ function CommandPaletteDialog({
         <div className="px-4 py-2.5 bg-neutral-50 border-t border-neutral-100 flex items-center justify-between text-xs text-neutral-400">
           <div className="flex items-center gap-3">
             <span>
-              <kbd className="px-1.5 py-0.5 bg-neutral-200 rounded mr-1 text-[10px]">
-                ↑↓
-              </kbd>
+              <kbd className="px-1.5 py-0.5 bg-neutral-200 rounded mr-1 text-[10px]">↑↓</kbd>
               {t("palette.navigate")}
             </span>
             <span className="flex items-center">
@@ -150,11 +139,7 @@ function CommandPaletteDialog({
   );
 }
 
-export function CommandPalette({
-  isOpen,
-  onClose,
-  commands,
-}: CommandPaletteProps) {
+export function CommandPalette({ isOpen, onClose, commands }: CommandPaletteProps) {
   if (!isOpen) return null;
   return <CommandPaletteDialog onClose={onClose} commands={commands} />;
 }

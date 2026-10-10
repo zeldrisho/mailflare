@@ -10,12 +10,7 @@ interface CommandPaletteItemProps {
   onHover: () => void;
 }
 
-export function CommandPaletteItem({
-  item,
-  isActive,
-  onSelect,
-  onHover,
-}: CommandPaletteItemProps) {
+export function CommandPaletteItem({ item, isActive, onSelect, onHover }: CommandPaletteItemProps) {
   const Icon = item.icon;
 
   return (
@@ -24,30 +19,18 @@ export function CommandPaletteItem({
       onClick={onSelect}
       onMouseEnter={onHover}
       className={`w-full text-left px-3 py-2.5 rounded-xl flex items-center justify-between transition-colors ${
-        isActive
-          ? "bg-blue-600 text-white"
-          : "text-neutral-800 hover:bg-neutral-100"
+        isActive ? "bg-blue-600 text-white" : "text-neutral-800 hover:bg-neutral-100"
       }`}
     >
       <div className="flex items-center gap-3 min-w-0">
         {Icon && (
-          <Icon
-            className={`w-4 h-4 shrink-0 ${
-              isActive
-                ? "text-white"
-                : "text-neutral-500"
-            }`}
-          />
+          <Icon className={`w-4 h-4 shrink-0 ${isActive ? "text-white" : "text-neutral-500"}`} />
         )}
         <div className="truncate">
           <span className="text-sm font-medium">{item.title}</span>
           {item.subtitle && (
             <span
-              className={`ml-2 text-xs truncate ${
-                isActive
-                  ? "text-blue-100"
-                  : "text-neutral-400"
-              }`}
+              className={`ml-2 text-xs truncate ${isActive ? "text-blue-100" : "text-neutral-400"}`}
             >
               {item.subtitle}
             </span>

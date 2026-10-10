@@ -4,9 +4,9 @@ import { getEnv } from "@/lib/cloudflare";
 import { DEFAULT_BRANDING } from "@/components/branding-provider-utils";
 
 export const getHomeBranding = cache(async () => {
-	try {
-		return await getBranding(getEnv());
-	} catch {
-		return DEFAULT_BRANDING;
-	}
+  try {
+    return await getBranding(getEnv());
+  } catch {
+    return DEFAULT_BRANDING;
+  }
 });

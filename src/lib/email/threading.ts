@@ -11,19 +11,19 @@ type Db = ReturnType<typeof getDb>;
 
 /** A References header is a whitespace (occasionally comma) separated list of Message-IDs. */
 export function parseMessageIdList(value: string | null | undefined): string[] {
-	const seen = new Set<string>();
-	const result: string[] = [];
-	for (const token of (value ?? "").split(/[\s,]+/)) {
-		const id = normalizeMessageId(token);
-		if (!id || seen.has(id)) continue;
-		seen.add(id);
-		result.push(id);
-	}
-	return result;
+  const seen = new Set<string>();
+  const result: string[] = [];
+  for (const token of (value ?? "").split(/[\s,]+/)) {
+    const id = normalizeMessageId(token);
+    if (!id || seen.has(id)) continue;
+    seen.add(id);
+    result.push(id);
+  }
+  return result;
 }
 
 export function formatMessageIdHeader(ids: string[]): string {
-	return ids.map((id) => `<${id}>`).join(" ");
+  return ids.map((id) => `<${id}>`).join(" ");
 }
 
 /**
@@ -31,13 +31,16 @@ export function formatMessageIdHeader(ids: string[]): string {
  * the parent itself. Long chains keep the root and the most recent ancestors,
  * which is what mail clients use to reconstruct a conversation.
  */
-export function buildReplyReferences(parentReferences: string[], parentMessageId: string | null): string[] {
-	const ids = [...parentReferences];
-	const parent = normalizeMessageId(parentMessageId);
-	if (parent && !ids.includes(parent)) ids.push(parent);
-	const MAX = 30;
-	if (ids.length <= MAX) return ids;
-	return [ids[0], ...ids.slice(ids.length - (MAX - 1))];
+export function buildReplyReferences(
+  parentReferences: string[],
+  parentMessageId: string | null,
+): string[] {
+  const ids = [...parentReferences];
+  const parent = normalizeMessageId(parentMessageId);
+  if (parent && !ids.includes(parent)) ids.push(parent);
+  const MAX = 30;
+  if (ids.length <= MAX) return ids;
+  return [ids[0], ...ids.slice(ids.length - (MAX - 1))];
 }
 
 /**
@@ -47,21 +50,23 @@ export function buildReplyReferences(parentReferences: string[], parentMessageId
  * its own Message-ID so later replies can find it.
  */
 export async function resolveThreadId(db: Db, input: ResolveThreadInput): Promise<string> {
-	const candidates = selectThreadLookupIds(input.inReplyTo, input.references ?? []);
+  const candidates = selectThreadLookupIds(input.inReplyTo, input.references ?? []);
 
-	if (input.mailboxId && candidates.length > 0) {
-		// Stored Message-IDs may or may not include their angle brackets.
-		const variants = candidates.flatMap((id) => [id, `<${id}>`]);
-		const [parent] = await db
-			.select({ threadId: messages.threadId, providerMessageId: messages.providerMessageId })
-			.from(messages)
-			.where(and(eq(messages.mailboxId, input.mailboxId), inArray(messages.providerMessageId, variants)))
-			.orderBy(asc(messages.createdAt))
-			.limit(1);
-		if (parent) {
-			return parent.threadId ?? normalizeMessageId(parent.providerMessageId) ?? newId("thr");
-		}
-	}
+  if (input.mailboxId && candidates.length > 0) {
+    // Stored Message-IDs may or may not include their angle brackets.
+    const variants = candidates.flatMap((id) => [id, `<${id}>`]);
+    const [parent] = await db
+      .select({ threadId: messages.threadId, providerMessageId: messages.providerMessageId })
+      .from(messages)
+      .where(
+        and(eq(messages.mailboxId, input.mailboxId), inArray(messages.providerMessageId, variants)),
+      )
+      .orderBy(asc(messages.createdAt))
+      .limit(1);
+    if (parent) {
+      return parent.threadId ?? normalizeMessageId(parent.providerMessageId) ?? newId("thr");
+    }
+  }
 
-	return normalizeMessageId(input.messageId) ?? newId("thr");
+  return normalizeMessageId(input.messageId) ?? newId("thr");
 }

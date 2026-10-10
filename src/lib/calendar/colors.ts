@@ -10,7 +10,9 @@ const LEGACY_CALENDAR_COLORS: Record<string, FolderColor> = {
 };
 
 export function normalizeCalendarColor(value: string | undefined): FolderColor {
-  return FOLDER_COLOR_VALUES.find((color) => color === value)
-    ?? LEGACY_CALENDAR_COLORS[value ?? ""]
-    ?? DEFAULT_FOLDER_COLOR;
+  return (
+    FOLDER_COLOR_VALUES.find((color) => color === value) ??
+    LEGACY_CALENDAR_COLORS[value ?? ""] ??
+    DEFAULT_FOLDER_COLOR
+  );
 }

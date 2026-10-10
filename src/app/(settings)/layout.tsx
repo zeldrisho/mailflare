@@ -15,11 +15,7 @@ import { SidebarProvider } from "@/components/sidebar-state";
 import { ShortcutsProvider } from "@/components/shortcuts";
 import { SidebarAside, MobileMenuButton } from "@/components/sidebar-aside";
 
-export default function DashboardLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
     <AuthGuard>
       <SidebarProvider mobileOverlay>
@@ -27,7 +23,10 @@ export default function DashboardLayout({
           <ComposeProvider>
             <MailSearchProvider>
               <ShortcutsProvider>
-                <div className="grid h-[100dvh] grid-cols-[minmax(0,1fr)] md:grid-cols-[var(--sidebar-width)_minmax(0,1fr)] overflow-hidden bg-[#f6f8fc] transition-[grid-template-columns]" style={{ transitionDuration: "var(--sidebar-transition-duration)" }}>
+                <div
+                  className="grid h-[100dvh] grid-cols-[minmax(0,1fr)] md:grid-cols-[var(--sidebar-width)_minmax(0,1fr)] overflow-hidden bg-[#f6f8fc] transition-[grid-template-columns]"
+                  style={{ transitionDuration: "var(--sidebar-transition-duration)" }}
+                >
                   <SidebarAside>
                     <DashboardNav />
                   </SidebarAside>

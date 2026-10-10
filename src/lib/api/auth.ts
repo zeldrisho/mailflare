@@ -6,11 +6,11 @@ import type { ApiAuthResult } from "@/lib/api/key-auth-types";
 export type { ApiAuthResult };
 
 export async function authenticateApiKey(
-	env: CloudflareEnv,
-	authorization: string | null,
+  env: CloudflareEnv,
+  authorization: string | null,
 ): Promise<ApiAuthResult | null> {
-	if (!authorization?.startsWith("Bearer ")) return null;
-	return authenticateApiKeyValue(env, authorization.slice(7));
+  if (!authorization?.startsWith("Bearer ")) return null;
+  return authenticateApiKeyValue(env, authorization.slice(7));
 }
 
 export const requireScope = hasScope;
@@ -21,9 +21,12 @@ export const requireScope = hasScope;
  * status.
  */
 export async function requireSessionUser(env: CloudflareEnv, request: Request) {
-	const user = await getCurrentUser(env, request);
-	if (!user) {
-		return { user: null, error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }) } as const;
-	}
-	return { user, error: null } as const;
+  const user = await getCurrentUser(env, request);
+  if (!user) {
+    return {
+      user: null,
+      error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
+    } as const;
+  }
+  return { user, error: null } as const;
 }

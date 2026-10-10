@@ -1,3 +1,3 @@
 export type QuotedEmailToggleProps = {
-	html: string;
+  html: string;
 };

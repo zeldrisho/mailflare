@@ -1,3 +1,3 @@
 export type DomainRoutingRuleRouteParams = {
-	params: Promise<{ id: string }>;
+  params: Promise<{ id: string }>;
 };

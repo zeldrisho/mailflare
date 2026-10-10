@@ -1,14 +1,13 @@
 import { webcrypto } from "node:crypto";
 
 function base64Url(bytes) {
-	return Buffer.from(bytes).toString("base64url");
+  return Buffer.from(bytes).toString("base64url");
 }
 
-const pair = await webcrypto.subtle.generateKey(
-	{ name: "ECDSA", namedCurve: "P-256" },
-	true,
-	["sign", "verify"],
-);
+const pair = await webcrypto.subtle.generateKey({ name: "ECDSA", namedCurve: "P-256" }, true, [
+  "sign",
+  "verify",
+]);
 const publicKey = new Uint8Array(await webcrypto.subtle.exportKey("raw", pair.publicKey));
 const privateJwk = await webcrypto.subtle.exportKey("jwk", pair.privateKey);
 

@@ -1,3 +1,3 @@
 export type SnoozeMessagePayload = {
-	snoozedUntil?: string;
+  snoozedUntil?: string;
 };

@@ -1,3 +1,3 @@
 export type MessageMetadataRouteParams = {
-	params: Promise<{ messageId: string }>;
+  params: Promise<{ messageId: string }>;
 };

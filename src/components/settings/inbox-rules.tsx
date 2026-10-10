@@ -36,12 +36,8 @@ export function InboxRules() {
   const { selectedMailbox } = useSelectedMailbox();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingRule, setEditingRule] = useState<InboxRule | null>(null);
-  const [matchField, setMatchField] = useState<"email" | "content" | "title">(
-    "email",
-  );
-  const [matchOperator, setMatchOperator] = useState<"contains" | "exact">(
-    "contains",
-  );
+  const [matchField, setMatchField] = useState<"email" | "content" | "title">("email");
+  const [matchOperator, setMatchOperator] = useState<"contains" | "exact">("contains");
   const [matchValue, setMatchValue] = useState("");
   const [destination, setDestination] = useState("");
   const mailboxId = selectedMailbox?.id ?? "";
@@ -67,9 +63,7 @@ export function InboxRules() {
         destination,
         priority: editingRule?.priority ?? 10,
       };
-      return editingRule
-        ? updateInboxRule(editingRule.id, input)
-        : createInboxRule(input);
+      return editingRule ? updateInboxRule(editingRule.id, input) : createInboxRule(input);
     },
     onSuccess: () => {
       setDialogOpen(false);
@@ -79,17 +73,14 @@ export function InboxRules() {
   });
   const remove = useMutation({
     mutationFn: deleteInboxRule,
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ["routing-rules", mailboxId] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["routing-rules", mailboxId] }),
   });
 
   const folderMap = new Map(
     (folders.data?.folders ?? []).map((folder) => [folder.id, folder.name]),
   );
 
-  function getRuleDestinationLabel(
-    rule: Pick<InboxRule, "action" | "folderId">,
-  ) {
+  function getRuleDestinationLabel(rule: Pick<InboxRule, "action" | "folderId">) {
     if (rule.action === "spam") return t("navigation.spam");
     if (rule.action === "trash") return t("navigation.trash");
     return folderMap.get(rule.folderId ?? "") ?? t("rules.unknownFolder");
@@ -115,10 +106,7 @@ export function InboxRules() {
     setDialogOpen(true);
   }
 
-  function onRuleKeyDown(
-    event: KeyboardEvent<HTMLDivElement>,
-    rule: InboxRule,
-  ) {
+  function onRuleKeyDown(event: KeyboardEvent<HTMLDivElement>, rule: InboxRule) {
     if (event.key !== "Enter" && event.key !== " ") return;
     event.preventDefault();
     openEditDialog(rule);
@@ -133,12 +121,8 @@ export function InboxRules() {
     <section className="space-y-4">
       <div className="flex flex-row items-center">
         <header className="flex-1">
-          <h2 className="text-2xl font-semibold text-neutral-900">
-            {t("rules.mailboxTitle")}
-          </h2>
-          <p className="mt-1 text-sm text-neutral-500">
-            {t("rules.appliedAfterDelivery")}
-          </p>
+          <h2 className="text-2xl font-semibold text-neutral-900">{t("rules.mailboxTitle")}</h2>
+          <p className="mt-1 text-sm text-neutral-500">{t("rules.appliedAfterDelivery")}</p>
         </header>
 
         <Button type="button" onClick={openCreateDialog} disabled={!mailboxId}>
@@ -172,12 +156,9 @@ export function InboxRules() {
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium text-neutral-900">
                   {getRuleFieldLabel(rule.matchField, t)}{" "}
-                  {getRuleOperatorLabel(rule.matchOperator, t)}{" "}
-                  {rule.matchValue || rule.pattern}
+                  {getRuleOperatorLabel(rule.matchOperator, t)} {rule.matchValue || rule.pattern}
                 </p>
-                <p className="truncate text-xs text-neutral-500">
-                  {getRuleDestinationLabel(rule)}
-                </p>
+                <p className="truncate text-xs text-neutral-500">{getRuleDestinationLabel(rule)}</p>
               </div>
               <Button
                 type="button"
@@ -202,12 +183,8 @@ export function InboxRules() {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-h-[calc(100vh-4rem)] overflow-y-auto sm:max-w-[560px]">
           <DialogHeader>
-            <DialogTitle>
-              {editingRule ? t("rules.update") : t("rules.new")}
-            </DialogTitle>
-            <DialogDescription>
-              {t("rules.dialogDescription")}
-            </DialogDescription>
+            <DialogTitle>{editingRule ? t("rules.update") : t("rules.new")}</DialogTitle>
+            <DialogDescription>{t("rules.dialogDescription")}</DialogDescription>
           </DialogHeader>
           <form onSubmit={onSubmit} className="space-y-4">
             <div className="grid grid-cols-1 items-end gap-4 sm:grid-cols-2">
@@ -217,9 +194,7 @@ export function InboxRules() {
                   id="matchField"
                   value={matchField}
                   onChange={(event) =>
-                    setMatchField(
-                      event.target.value as "email" | "content" | "title",
-                    )
+                    setMatchField(event.target.value as "email" | "content" | "title")
                   }
                 >
                   <option value="email">{t("rules.field.email")}</option>
@@ -232,9 +207,7 @@ export function InboxRules() {
                 <RoutingRuleSelect
                   id="matchOperator"
                   value={matchOperator}
-                  onChange={(event) =>
-                    setMatchOperator(event.target.value as "contains" | "exact")
-                  }
+                  onChange={(event) => setMatchOperator(event.target.value as "contains" | "exact")}
                 >
                   <option value="contains">{t("rules.operatorOption.contains")}</option>
                   <option value="exact">{t("rules.operatorOption.exact")}</option>
@@ -249,7 +222,9 @@ export function InboxRules() {
                   value={matchValue}
                   onChange={(event) => setMatchValue(event.target.value)}
                   placeholder={
-                    matchField === "email" ? t("rules.valuePlaceholderEmail") : t("rules.valuePlaceholderOther")
+                    matchField === "email"
+                      ? t("rules.valuePlaceholderEmail")
+                      : t("rules.valuePlaceholderOther")
                   }
                 />
               </div>
@@ -271,25 +246,14 @@ export function InboxRules() {
                 </RoutingRuleSelect>
               </div>
             </div>
-            {save.isError && (
-              <p className="text-sm text-red-600">{save.error.message}</p>
-            )}
+            {save.isError && <p className="text-sm text-red-600">{save.error.message}</p>}
             <div className="flex justify-end gap-2 border-t border-neutral-200 pt-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setDialogOpen(false)}
-              >
+              <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
                 {t("common.cancel")}
               </Button>
               <Button
                 type="submit"
-                disabled={
-                  !mailboxId ||
-                  !destination ||
-                  !matchValue.trim() ||
-                  save.isPending
-                }
+                disabled={!mailboxId || !destination || !matchValue.trim() || save.isPending}
               >
                 {save.isPending
                   ? t("common.saving")

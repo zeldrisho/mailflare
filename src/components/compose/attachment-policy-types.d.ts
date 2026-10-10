@@ -1,4 +1,4 @@
 export interface ComposeAttachmentPolicy {
-	maxMb: number;
-	cloudThresholdBytes: number;
+  maxMb: number;
+  cloudThresholdBytes: number;
 }

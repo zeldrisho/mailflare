@@ -1,4 +1,4 @@
 export type BlockContactRequest = {
-	mailboxId?: string;
-	address?: string;
+  mailboxId?: string;
+  address?: string;
 };

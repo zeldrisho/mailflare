@@ -1,5 +1,5 @@
 export type ContactRequestInput = {
-	mailboxId?: string;
-	address?: string;
-	displayName?: string;
+  mailboxId?: string;
+  address?: string;
+  displayName?: string;
 };

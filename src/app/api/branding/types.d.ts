@@ -1,3 +1,3 @@
 export type UploadedBrandingIcon = File & {
-	arrayBuffer(): Promise<ArrayBuffer>;
+  arrayBuffer(): Promise<ArrayBuffer>;
 };

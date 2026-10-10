@@ -1,3 +1,3 @@
 export type CalendarEventRouteParams = {
-	params: Promise<{ eventId: string }>;
+  params: Promise<{ eventId: string }>;
 };

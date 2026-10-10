@@ -60,7 +60,12 @@ const sections: { id?: string; labelKey?: TranslationKey; links: AdminNavLink[] 
       { href: "/agent", labelKey: "admin.nav.agent", icon: Bot, permission: "primary" },
       { href: "/accounts", labelKey: "admin.nav.accounts", icon: Users },
       { href: "/activity", labelKey: "admin.nav.activity", icon: Activity, permission: "primary" },
-      { href: "/backups", labelKey: "admin.nav.backups", icon: DatabaseBackup, permission: "primary" },
+      {
+        href: "/backups",
+        labelKey: "admin.nav.backups",
+        icon: DatabaseBackup,
+        permission: "primary",
+      },
     ],
   },
   {
@@ -68,12 +73,29 @@ const sections: { id?: string; labelKey?: TranslationKey; links: AdminNavLink[] 
     labelKey: "admin.nav.product",
     links: [
       { href: "/branding", labelKey: "admin.nav.branding", icon: Palette, permission: "primary" },
-      { href: "/licenses", labelKey: "admin.nav.licenses", icon: BadgeDollarSign, permission: "primary" },
+      {
+        href: "/licenses",
+        labelKey: "admin.nav.licenses",
+        icon: BadgeDollarSign,
+        permission: "primary",
+      },
     ],
   },
 ];
 
-function AdminSection({ id, label, links, showDivider, minimal }: { id?: string; label?: string; links: NavLink[]; showDivider: boolean; minimal: boolean }) {
+function AdminSection({
+  id,
+  label,
+  links,
+  showDivider,
+  minimal,
+}: {
+  id?: string;
+  label?: string;
+  links: NavLink[];
+  showDivider: boolean;
+  minimal: boolean;
+}) {
   const [open, toggle] = useSectionOpen(`mailflare:nav:admin-section-open:${id ?? ""}`);
   // Unlabelled sections have nothing to toggle; the icon rail always shows everything.
   const expanded = minimal || !label || open;
@@ -106,15 +128,28 @@ export function AdminNav({ className }: { className?: string }) {
   }
 
   return (
-    <SidebarScaffold className={className} header={<SidebarHeader href="/inbox" label={t("account.admin")} />} footer={<SidebarFooter />}>
+    <SidebarScaffold
+      className={className}
+      header={<SidebarHeader href="/inbox" label={t("account.admin")} />}
+      footer={<SidebarFooter />}
+    >
       <div className={cn("space-y-4", minimal && "space-y-2 pl-1")}>
         {sections.map((section, sectionIndex) => {
-          const links = section.links.filter(canSee).map(({ labelKey, ...link }): NavLink => ({ ...link, label: t(labelKey) }));
+          const links = section.links
+            .filter(canSee)
+            .map(({ labelKey, ...link }): NavLink => ({ ...link, label: t(labelKey) }));
           if (links.length === 0) return null;
 
           return (
             // The first section has no label, so fall back to its first href for a stable key.
-            <AdminSection key={section.id ?? links[0].href} id={section.id} label={section.labelKey ? t(section.labelKey) : undefined} links={links} showDivider={minimal && sectionIndex > 0} minimal={minimal} />
+            <AdminSection
+              key={section.id ?? links[0].href}
+              id={section.id}
+              label={section.labelKey ? t(section.labelKey) : undefined}
+              links={links}
+              showDivider={minimal && sectionIndex > 0}
+              minimal={minimal}
+            />
           );
         })}
       </div>

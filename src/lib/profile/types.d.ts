@@ -1,7 +1,7 @@
 export type ProfileAvatarChangedDetail = {
-	url: string;
+  url: string;
 };
 
 export type ProfileNameChangedDetail = {
-	name: string;
+  name: string;
 };

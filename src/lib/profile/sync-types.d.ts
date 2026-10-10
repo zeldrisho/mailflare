@@ -1,5 +1,5 @@
 export type PersonalIdentity = {
-	userId: string;
-	name: string;
-	avatarKey: string | null;
+  userId: string;
+  name: string;
+  avatarKey: string | null;
 };

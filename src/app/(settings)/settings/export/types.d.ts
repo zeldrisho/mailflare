@@ -1,4 +1,4 @@
 export type ExportState = {
-	error: string | null;
-	loading: boolean;
+  error: string | null;
+  loading: boolean;
 };

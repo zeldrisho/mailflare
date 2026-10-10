@@ -11,17 +11,20 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 
 /** Messages that entered Trash or Spam before this instant are due for deletion. */
 export function getTrashRetentionCutoff(now: Date, days: number): Date {
-	return new Date(now.getTime() - days * DAY_MS);
+  return new Date(now.getTime() - days * DAY_MS);
 }
 
 /** Null (or anything outside the supported range) means "never delete automatically". */
 export function normalizeTrashRetentionDays(value: unknown): number | null {
-	if (typeof value !== "number" || !Number.isInteger(value)) return null;
-	if (value < MIN_TRASH_RETENTION_DAYS || value > MAX_TRASH_RETENTION_DAYS) return null;
-	return value;
+  if (typeof value !== "number" || !Number.isInteger(value)) return null;
+  if (value < MIN_TRASH_RETENTION_DAYS || value > MAX_TRASH_RETENTION_DAYS) return null;
+  return value;
 }
 
-export function describeTrashRetention(days: number | null, t: Translator = defaultTranslator): string {
-	if (!days) return t("settings.trash.never");
-	return t("settings.trash.afterDay", { count: days });
+export function describeTrashRetention(
+  days: number | null,
+  t: Translator = defaultTranslator,
+): string {
+  if (!days) return t("settings.trash.never");
+  return t("settings.trash.afterDay", { count: days });
 }

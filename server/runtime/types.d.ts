@@ -4,12 +4,12 @@ import type { RealtimeHubRegistry } from "./realtime";
 import type { SqliteDatabase } from "./sqlite-database";
 
 export type NodeRuntime = {
-	env: CloudflareEnv;
-	dataDir: string;
-	database: SqliteDatabase;
-	mailer: Mailer;
-	inboundQueue: InProcessQueue;
-	outboundQueue: InProcessQueue;
-	agentQueue: InProcessQueue;
-	realtime: RealtimeHubRegistry;
+  env: CloudflareEnv;
+  dataDir: string;
+  database: SqliteDatabase;
+  mailer: Mailer;
+  inboundQueue: InProcessQueue;
+  outboundQueue: InProcessQueue;
+  agentQueue: InProcessQueue;
+  realtime: RealtimeHubRegistry;
 };

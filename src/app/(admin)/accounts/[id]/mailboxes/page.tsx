@@ -42,9 +42,7 @@ export default function AccountMailboxesPage() {
 
   useEffect(() => {
     void load().catch((error) =>
-      setMessage(
-        error instanceof Error ? error.message : t("account.mailboxes.loadFailed"),
-      ),
+      setMessage(error instanceof Error ? error.message : t("account.mailboxes.loadFailed")),
     );
   }, [id, t]);
 
@@ -58,9 +56,7 @@ export default function AccountMailboxesPage() {
       setLocalPart("");
       await load();
     } catch (error) {
-      setMessage(
-        error instanceof Error ? error.message : t("account.mailboxes.addFailed"),
-      );
+      setMessage(error instanceof Error ? error.message : t("account.mailboxes.addFailed"));
     } finally {
       setSaving(false);
     }
@@ -72,22 +68,26 @@ export default function AccountMailboxesPage() {
       await removeManagedMailbox(mailboxId);
       await load();
     } catch (error) {
-      setMessage(
-        error instanceof Error ? error.message : t("account.mailboxes.removeFailed"),
-      );
+      setMessage(error instanceof Error ? error.message : t("account.mailboxes.removeFailed"));
     }
   }
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl md:text-3xl font-medium text-neutral-900">{t("account.mailboxes.title")}</h1>
+        <h1 className="text-2xl md:text-3xl font-medium text-neutral-900">
+          {t("account.mailboxes.title")}
+        </h1>
         <p className="mt-2 text-sm text-neutral-500">
-          {t("account.mailboxes.manage", { name: account?.name ?? t("account.password.thisAccount") })}
+          {t("account.mailboxes.manage", {
+            name: account?.name ?? t("account.password.thisAccount"),
+          })}
         </p>
       </div>
       <section className="space-y-4 rounded-3xl bg-white p-6">
-        <h2 className="text-base font-semibold text-neutral-900">{t("account.mailboxes.current")}</h2>
+        <h2 className="text-base font-semibold text-neutral-900">
+          {t("account.mailboxes.current")}
+        </h2>
         <div className="space-y-2">
           {mailboxes.map((mailbox) => (
             <div
@@ -118,10 +118,10 @@ export default function AccountMailboxesPage() {
           )}
         </div>
         <div className="border-t border-neutral-200 pt-6">
-          <h2 className="text-base font-semibold text-neutral-900">{t("account.mailboxes.addTitle")}</h2>
-          <p className="mt-1 text-sm text-neutral-500">
-            {t("account.mailboxes.addDescription")}
-          </p>
+          <h2 className="text-base font-semibold text-neutral-900">
+            {t("account.mailboxes.addTitle")}
+          </h2>
+          <p className="mt-1 text-sm text-neutral-500">{t("account.mailboxes.addDescription")}</p>
           <form onSubmit={addMailbox} className="mt-4 space-y-4">
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="min-w-0 space-y-2">
@@ -147,7 +147,9 @@ export default function AccountMailboxesPage() {
                   disabled={!account || domains.length === 0 || saving}
                   required
                 >
-                  {domains.length === 0 && <option value="">{t("account.mailboxes.noDomains")}</option>}
+                  {domains.length === 0 && (
+                    <option value="">{t("account.mailboxes.noDomains")}</option>
+                  )}
                   {domains.map((domain) => (
                     <option key={domain.id} value={domain.id}>
                       {domain.hostname}
@@ -158,7 +160,11 @@ export default function AccountMailboxesPage() {
             </div>
             {domainId && (
               <p className="break-all text-sm text-neutral-500">
-                {t("account.mailboxes.address")} <span className="font-medium text-neutral-900">{localPart || t("account.mailboxes.inboxPlaceholder")}@{domains.find((domain) => domain.id === domainId)?.hostname}</span>
+                {t("account.mailboxes.address")}{" "}
+                <span className="font-medium text-neutral-900">
+                  {localPart || t("account.mailboxes.inboxPlaceholder")}@
+                  {domains.find((domain) => domain.id === domainId)?.hostname}
+                </span>
               </p>
             )}
             <Button type="submit" disabled={!account || !domainId || !localPart.trim() || saving}>

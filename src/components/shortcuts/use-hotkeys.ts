@@ -10,18 +10,13 @@ interface UseHotkeysOptions {
 export function isTypingInInput(target: EventTarget | null): boolean {
   if (!target || !(target instanceof HTMLElement)) return false;
   const tagName = target.tagName.toUpperCase();
-  const isInputOrTextarea =
-    tagName === "INPUT" || tagName === "TEXTAREA" || tagName === "SELECT";
+  const isInputOrTextarea = tagName === "INPUT" || tagName === "TEXTAREA" || tagName === "SELECT";
   const isContentEditable =
-    target.isContentEditable ||
-    target.getAttribute("contenteditable") === "true";
+    target.isContentEditable || target.getAttribute("contenteditable") === "true";
   return isInputOrTextarea || isContentEditable;
 }
 
-function matchModifiers(
-  e: KeyboardEvent,
-  shortcut: ShortcutDefinition
-): boolean {
+function matchModifiers(e: KeyboardEvent, shortcut: ShortcutDefinition): boolean {
   const requiresCtrl = shortcut.modifiers?.includes("ctrl");
   const requiresMeta = shortcut.modifiers?.includes("meta");
   const requiresAlt = shortcut.modifiers?.includes("alt");
@@ -51,7 +46,7 @@ function matchModifiers(
 
 export function useHotkeys(
   shortcuts: ShortcutDefinition[],
-  options: UseHotkeysOptions = { enabled: true }
+  options: UseHotkeysOptions = { enabled: true },
 ) {
   const sequenceBufferRef = useRef<string[]>([]);
   const sequenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -73,7 +68,7 @@ export function useHotkeys(
         const cmdK = shortcutsRef.current.find(
           (s) =>
             s.key.toLowerCase() === "k" &&
-            (s.modifiers?.includes("meta") || s.modifiers?.includes("ctrl"))
+            (s.modifiers?.includes("meta") || s.modifiers?.includes("ctrl")),
         );
         if (cmdK) {
           e.preventDefault();
@@ -85,7 +80,7 @@ export function useHotkeys(
       if (isInput) {
         if (e.key === "Escape") {
           const esc = shortcutsRef.current.find(
-            (s) => s.key.toLowerCase() === "escape" || s.key.toLowerCase() === "esc"
+            (s) => s.key.toLowerCase() === "escape" || s.key.toLowerCase() === "esc",
           );
           if (esc) esc.action();
         }
@@ -105,7 +100,7 @@ export function useHotkeys(
 
       const currentSequence = sequenceBufferRef.current.join(" ");
       const sequenceMatch = shortcutsRef.current.find(
-        (s) => s.key.toLowerCase() === currentSequence
+        (s) => s.key.toLowerCase() === currentSequence,
       );
 
       if (sequenceMatch) {

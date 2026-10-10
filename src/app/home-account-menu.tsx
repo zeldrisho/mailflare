@@ -5,9 +5,9 @@ import { MailboxSelector } from "@/components/mailbox-selector";
 import type { HomeAccountMenuProps } from "./types";
 
 export function HomeAccountMenu({ user }: HomeAccountMenuProps) {
-	return (
-		<MailboxProvider>
-			<MailboxSelector initialUser={user} />
-		</MailboxProvider>
-	);
+  return (
+    <MailboxProvider>
+      <MailboxSelector initialUser={user} />
+    </MailboxProvider>
+  );
 }

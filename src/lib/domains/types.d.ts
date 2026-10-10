@@ -9,39 +9,39 @@ import type { CfDnsRecord, CfEmailRoutingRule } from "@/lib/cloudflare-api.types
  * the orphaned config the rollback exists to prevent.
  */
 export type DomainProvisioningChanges = {
-	zoneId: string;
-	/** Email Routing was off before this attempt and this attempt turned it on. */
-	enabledEmailRouting: boolean;
-	/** Tag of a sending subdomain this attempt created; null when one already existed. */
-	createdSendingSubdomainTag: string | null;
-	/** The zone's catch-all rule as it stood before this attempt overwrote it. */
-	previousCatchAll: CfEmailRoutingRule | null;
-	/** Addresses this attempt pointed at the Worker, filled in as they are created. */
-	createdAddressRules: string[];
-	/** MX records removed with the user's confirmation, retained so rollback can restore them. */
-	deletedMxRecords: CfDnsRecord[];
+  zoneId: string;
+  /** Email Routing was off before this attempt and this attempt turned it on. */
+  enabledEmailRouting: boolean;
+  /** Tag of a sending subdomain this attempt created; null when one already existed. */
+  createdSendingSubdomainTag: string | null;
+  /** The zone's catch-all rule as it stood before this attempt overwrote it. */
+  previousCatchAll: CfEmailRoutingRule | null;
+  /** Addresses this attempt pointed at the Worker, filled in as they are created. */
+  createdAddressRules: string[];
+  /** MX records removed with the user's confirmation, retained so rollback can restore them. */
+  deletedMxRecords: CfDnsRecord[];
 };
 
 export type DomainProvisioningError = {
-	message: string;
-	code?: "MX_RECORDS_CONFLICT";
-	status: number;
+  message: string;
+  code?: "MX_RECORDS_CONFLICT";
+  status: number;
 };
 
 export type DomainProvisioningResult = {
-	hostname: string;
-	zone: { id: string; name: string };
-	routingEnabled: boolean;
-	sendingRequested: boolean;
-	sendingEnabled: boolean;
-	sendingSubdomainTag: string | null;
-	routingStatus?: string;
-	changes: DomainProvisioningChanges;
+  hostname: string;
+  zone: { id: string; name: string };
+  routingEnabled: boolean;
+  sendingRequested: boolean;
+  sendingEnabled: boolean;
+  sendingSubdomainTag: string | null;
+  routingStatus?: string;
+  changes: DomainProvisioningChanges;
 };
 
 export type DomainPreflightResult = {
-	hostname: string;
-	zone: { id: string; name: string };
+  hostname: string;
+  zone: { id: string; name: string };
 };
 
 export type DomainRow = typeof domains.$inferSelect;

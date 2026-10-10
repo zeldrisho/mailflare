@@ -20,8 +20,7 @@ const defaultSettings: MailboxAutoReplySettings = {
 
 export function MailboxAutoReplyForm() {
   const { t } = useLanguage();
-  const { selectedMailbox, setSelectedMailbox, isLoading } =
-    useSelectedMailbox();
+  const { selectedMailbox, setSelectedMailbox, isLoading } = useSelectedMailbox();
   const [settings, setSettings] = useState(defaultSettings);
   const [savedSettings, setSavedSettings] = useState(defaultSettings);
   const [status, setStatus] = useState<string | null>(null);
@@ -64,9 +63,7 @@ export function MailboxAutoReplyForm() {
       });
       setStatus(t("common.saved"));
     } catch (error) {
-      setStatus(
-        error instanceof Error ? error.message : t("settings.autoReply.failed"),
-      );
+      setStatus(error instanceof Error ? error.message : t("settings.autoReply.failed"));
     } finally {
       setSaving(false);
     }
@@ -75,11 +72,7 @@ export function MailboxAutoReplyForm() {
   if (isLoading)
     return <p className="text-sm text-neutral-500">{t("settings.signature.loadingInbox")}</p>;
   if (!selectedMailbox)
-    return (
-      <p className="text-sm text-neutral-500">
-        {t("settings.autoReply.selectInbox")}
-      </p>
-    );
+    return <p className="text-sm text-neutral-500">{t("settings.autoReply.selectInbox")}</p>;
 
   const address = `${selectedMailbox.localPart}@${selectedMailbox.hostname}`;
   const canManage = selectedMailbox.permission === "full_access";
@@ -110,9 +103,7 @@ export function MailboxAutoReplyForm() {
             <Input
               id="autoReplySubject"
               value={settings.subject}
-              onChange={(event) =>
-                setSettings({ ...settings, subject: event.target.value })
-              }
+              onChange={(event) => setSettings({ ...settings, subject: event.target.value })}
               placeholder={t("settings.autoReply.subjectPlaceholder")}
               disabled={!canManage || saving}
             />
@@ -122,9 +113,7 @@ export function MailboxAutoReplyForm() {
             <Textarea
               id="autoReplyBody"
               value={settings.body}
-              onChange={(event) =>
-                setSettings({ ...settings, body: event.target.value })
-              }
+              onChange={(event) => setSettings({ ...settings, body: event.target.value })}
               placeholder={t("settings.autoReply.messagePlaceholder")}
               rows={7}
               disabled={!canManage || saving}
@@ -135,9 +124,7 @@ export function MailboxAutoReplyForm() {
               {saving ? t("common.saving") : t("settings.autoReply.save")}
             </Button>
             {!canManage && (
-              <p className="text-sm text-neutral-500">
-                {t("settings.autoReply.needFullAccess")}
-              </p>
+              <p className="text-sm text-neutral-500">{t("settings.autoReply.needFullAccess")}</p>
             )}
             {status && <p className="text-sm text-neutral-500">{status}</p>}
           </div>

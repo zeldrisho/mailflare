@@ -1,4 +1,4 @@
 export type MailboxAvatarChangedDetail = {
-	mailboxId: string;
-	url: string;
+  mailboxId: string;
+  url: string;
 };

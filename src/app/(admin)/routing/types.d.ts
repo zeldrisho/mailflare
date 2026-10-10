@@ -1,10 +1,10 @@
 export type AdminRoutingDomain = {
-	id: string;
-	hostname: string;
-	status: string;
-	routingEnabled: boolean;
+  id: string;
+  hostname: string;
+  status: string;
+  routingEnabled: boolean;
 };
 
 export type AdminRoutingDomainsResponse = {
-	domains: AdminRoutingDomain[];
+  domains: AdminRoutingDomain[];
 };

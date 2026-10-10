@@ -12,9 +12,7 @@ export function filterCommands(commands: CommandItem[], query: string): CommandI
     const matchTitle = cmd.title.toLowerCase().includes(lowerQuery);
     const matchSubtitle = cmd.subtitle?.toLowerCase().includes(lowerQuery);
     const matchCategory = cmd.category.toLowerCase().includes(lowerQuery);
-    const matchKeywords = cmd.keywords?.some((k) =>
-      k.toLowerCase().includes(lowerQuery)
-    );
+    const matchKeywords = cmd.keywords?.some((k) => k.toLowerCase().includes(lowerQuery));
     return matchTitle || matchSubtitle || matchCategory || matchKeywords;
   });
 }
@@ -22,12 +20,13 @@ export function filterCommands(commands: CommandItem[], query: string): CommandI
 /**
  * Group commands by their category string.
  */
-export function groupCommandsByCategory(
-  commands: CommandItem[]
-): Record<string, CommandItem[]> {
-  return commands.reduce((acc, item) => {
-    if (!acc[item.category]) acc[item.category] = [];
-    acc[item.category].push(item);
-    return acc;
-  }, {} as Record<string, CommandItem[]>);
+export function groupCommandsByCategory(commands: CommandItem[]): Record<string, CommandItem[]> {
+  return commands.reduce(
+    (acc, item) => {
+      if (!acc[item.category]) acc[item.category] = [];
+      acc[item.category].push(item);
+      return acc;
+    },
+    {} as Record<string, CommandItem[]>,
+  );
 }

@@ -1,3 +1,3 @@
 export type MessageOriginalRouteParams = {
-	params: Promise<{ messageId: string }>;
+  params: Promise<{ messageId: string }>;
 };

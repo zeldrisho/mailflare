@@ -9,7 +9,7 @@ Mailflare is a self-hosted email inbox for custom domains, built on Cloudflare. 
 ## Screenshots
 
 | ![Inbox](/screenshots/1.png)<br>Inbox | ![Manage domains](/screenshots/2.png)<br>Manage domains | ![Manage inboxes](/screenshots/3.png)<br>Manage inboxes |
-| --- | --- | --- |
+| ------------------------------------- | ------------------------------------------------------- | ------------------------------------------------------- |
 
 ### Featured sponsors
 
@@ -47,11 +47,11 @@ Your mail stays in your own D1 database, and attachments stay in your own R2, Ba
 
 **You can set up Mailflare, receive mail, and send mail for free.** Receiving with Cloudflare Email Routing is free. For sending, use the free tier of Resend or Amazon SES. Cloudflare's own email sending needs a paid Worker plan.
 
-| Send with | Free tier | After that |
-| --- | --- | --- |
-| **Resend** | 3,000 emails a month (100 a day), 3 domains | From $20/month for 50,000 emails |
-| **Amazon SES** | $200 AWS credit for new accounts (about 2 million emails). The free plan lasts 6 months and credits expire after 12. | $0.10 per 1,000 emails |
-| **Cloudflare Email Sending** | None | Needs a [Paid Worker](https://developers.cloudflare.com/workers/platform/pricing/) plan ($5/month) |
+| Send with                    | Free tier                                                                                                            | After that                                                                                         |
+| ---------------------------- | -------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| **Resend**                   | 3,000 emails a month (100 a day), 3 domains                                                                          | From $20/month for 50,000 emails                                                                   |
+| **Amazon SES**               | $200 AWS credit for new accounts (about 2 million emails). The free plan lasts 6 months and credits expire after 12. | $0.10 per 1,000 emails                                                                             |
+| **Cloudflare Email Sending** | None                                                                                                                 | Needs a [Paid Worker](https://developers.cloudflare.com/workers/platform/pricing/) plan ($5/month) |
 
 Receiving costs:
 

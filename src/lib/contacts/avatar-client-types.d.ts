@@ -1,4 +1,4 @@
 export type ContactAvatarChangedDetail = {
-	email: string;
-	hasAvatar: boolean;
+  email: string;
+  hasAvatar: boolean;
 };

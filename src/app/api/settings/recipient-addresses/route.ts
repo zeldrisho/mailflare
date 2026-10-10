@@ -9,28 +9,31 @@ import type { UpdateRecipientAddressSettingsInput } from "./types";
 import { parseUpdateRecipientAddressSettingsRequest } from "./utils";
 
 export async function GET(request: Request) {
-	const env = getEnv();
-	const auth = await requireSessionUser(env, request);
-	if (auth.error) return auth.error;
-	return NextResponse.json({ enabled: auth.user.showFullRecipientAddresses });
+  const env = getEnv();
+  const auth = await requireSessionUser(env, request);
+  if (auth.error) return auth.error;
+  return NextResponse.json({ enabled: auth.user.showFullRecipientAddresses });
 }
 
 export async function PATCH(request: Request) {
-	const env = getEnv();
-	const auth = await requireSessionUser(env, request);
-	if (auth.error) return auth.error;
+  const env = getEnv();
+  const auth = await requireSessionUser(env, request);
+  if (auth.error) return auth.error;
 
-	let input: UpdateRecipientAddressSettingsInput;
-	try {
-		input = await parseUpdateRecipientAddressSettingsRequest(request);
-	} catch (error) {
-		return NextResponse.json({ error: error instanceof ZodError ? error.flatten() : "Invalid request" }, { status: 400 });
-	}
+  let input: UpdateRecipientAddressSettingsInput;
+  try {
+    input = await parseUpdateRecipientAddressSettingsRequest(request);
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof ZodError ? error.flatten() : "Invalid request" },
+      { status: 400 },
+    );
+  }
 
-	await getDb(env)
-		.update(users)
-		.set({ showFullRecipientAddresses: input.enabled })
-		.where(eq(users.id, auth.user.id));
+  await getDb(env)
+    .update(users)
+    .set({ showFullRecipientAddresses: input.enabled })
+    .where(eq(users.id, auth.user.id));
 
-	return NextResponse.json({ enabled: input.enabled });
+  return NextResponse.json({ enabled: input.enabled });
 }

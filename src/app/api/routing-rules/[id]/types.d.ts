@@ -1,3 +1,3 @@
 export type RoutingRuleRouteParams = {
-	params: Promise<{ id: string }>;
+  params: Promise<{ id: string }>;
 };

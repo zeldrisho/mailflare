@@ -4,13 +4,15 @@
  * counts below ever disagree.
  */
 export async function rebuildSearchIndex(env: CloudflareEnv): Promise<void> {
-	await env.DB.prepare("INSERT INTO messages_fts(messages_fts) VALUES ('rebuild')").run();
+  await env.DB.prepare("INSERT INTO messages_fts(messages_fts) VALUES ('rebuild')").run();
 }
 
-export async function getSearchIndexStatus(env: CloudflareEnv): Promise<{ indexed: number; messages: number }> {
-	const [indexed, total] = await env.DB.batch<{ n: number }>([
-		env.DB.prepare("SELECT count(*) AS n FROM messages_fts"),
-		env.DB.prepare("SELECT count(*) AS n FROM messages"),
-	]);
-	return { indexed: indexed.results[0]?.n ?? 0, messages: total.results[0]?.n ?? 0 };
+export async function getSearchIndexStatus(
+  env: CloudflareEnv,
+): Promise<{ indexed: number; messages: number }> {
+  const [indexed, total] = await env.DB.batch<{ n: number }>([
+    env.DB.prepare("SELECT count(*) AS n FROM messages_fts"),
+    env.DB.prepare("SELECT count(*) AS n FROM messages"),
+  ]);
+  return { indexed: indexed.results[0]?.n ?? 0, messages: total.results[0]?.n ?? 0 };
 }

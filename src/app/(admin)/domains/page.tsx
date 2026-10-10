@@ -18,7 +18,16 @@ import { Label } from "@/components/ui/label";
 import { List } from "@/components/ui/list";
 import { CheckCircle2, LoaderCircle, Plus } from "lucide-react";
 import { authFetch } from "@/lib/auth/client";
-import type { DnsAuthRecord, DnsStatusSummary, Domain, DomainDnsCache, DomainDnsView, DomainPreflight, ReceivingProvider, SendingProvider } from "./types";
+import type {
+  DnsAuthRecord,
+  DnsStatusSummary,
+  Domain,
+  DomainDnsCache,
+  DomainDnsView,
+  DomainPreflight,
+  ReceivingProvider,
+  SendingProvider,
+} from "./types";
 import DomainItemCard from "./DomainItemCard";
 import { SectionRowSkeleton } from "@/components/page-skeletons";
 import { checkDomain } from "./utils";
@@ -31,7 +40,8 @@ export default function DomainsPage() {
   // Self-hosted installs without Cloudflare credentials manage DNS by hand.
   const { data: me } = useQuery({
     queryKey: ["me"],
-    queryFn: async () => (await (await authFetch("/api/auth/me")).json()) as { managesDns?: boolean },
+    queryFn: async () =>
+      (await (await authFetch("/api/auth/me")).json()) as { managesDns?: boolean },
   });
   const managesDns = me?.managesDns ?? true;
   const [domainCheck, setDomainCheck] = useState<DomainPreflight | null>(null);
@@ -167,7 +177,15 @@ export default function DomainsPage() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ provider, replaceMx }),
         });
-        return { res, json: (await res.json()) as { warning?: string; error?: string; code?: string; records?: { content: string; priority: number }[] } };
+        return {
+          res,
+          json: (await res.json()) as {
+            warning?: string;
+            error?: string;
+            code?: string;
+            records?: { content: string; priority: number }[];
+          },
+        };
       };
       let { res, json } = await put(false);
       // Cloudflare sending refuses while another service's MX records exist.
@@ -202,7 +220,9 @@ export default function DomainsPage() {
       await loadDns(id);
       qc.invalidateQueries({ queryKey: ["domains"] });
     } catch (error) {
-      setReceivingMessage(error instanceof Error ? error.message : t("domains.receivingChangeFailed"));
+      setReceivingMessage(
+        error instanceof Error ? error.message : t("domains.receivingChangeFailed"),
+      );
     } finally {
       setReceivingBusy(false);
     }
@@ -279,9 +299,7 @@ export default function DomainsPage() {
         <div>
           <h1 className="text-2xl md:text-3xl font-medium">{t("domains.title")}</h1>
           <p className="mt-1 text-sm text-neutral-500">
-            {managesDns
-              ? t("domains.descriptionManaged")
-              : t("domains.descriptionManual")}
+            {managesDns ? t("domains.descriptionManaged") : t("domains.descriptionManual")}
           </p>
         </div>
         <Dialog open={createOpen} onOpenChange={setCreateOpen}>
@@ -294,9 +312,7 @@ export default function DomainsPage() {
           <DialogContent>
             <DialogHeader>
               <DialogTitle>{t("domains.addTitle")}</DialogTitle>
-              <DialogDescription>
-                {t("domains.addDescription")}
-              </DialogDescription>
+              <DialogDescription>{t("domains.addDescription")}</DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
               <div className="space-y-2">
@@ -350,7 +366,9 @@ export default function DomainsPage() {
                           : t("domains.providerHintLater")}
                   </p>
                 </div>
-                {domainChecking && <LoaderCircle className="h-4 w-4 shrink-0 animate-spin text-neutral-500" />}
+                {domainChecking && (
+                  <LoaderCircle className="h-4 w-4 shrink-0 animate-spin text-neutral-500" />
+                )}
                 <select
                   id="sending-provider"
                   value={sendingProvider}
@@ -378,16 +396,10 @@ export default function DomainsPage() {
                 <div className="space-y-3 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">
                   <p>{(create.error as Error).message}</p>
                   <div className="space-y-2">
-                    <p className="font-medium">
-                      {t("domains.tokenPermissions")}
-                    </p>
+                    <p className="font-medium">{t("domains.tokenPermissions")}</p>
                     <ul className="list-disc space-y-1 pl-5">
-                      <li>
-                        {t("domains.tokenAccounts")}
-                      </li>
-                      <li>
-                        {t("domains.tokenZones")}
-                      </li>
+                      <li>{t("domains.tokenAccounts")}</li>
+                      <li>{t("domains.tokenZones")}</li>
                     </ul>
                   </div>
                 </div>
@@ -406,9 +418,7 @@ export default function DomainsPage() {
         {/* <div className="flex items-center justify-between">
 					<span className="text-sm text-neutral-500">{(data?.domains ?? []).length} total</span>
 				</div> */}
-        {isLoading && (
-          <SectionRowSkeleton />
-        )}
+        {isLoading && <SectionRowSkeleton />}
         {!isLoading && (data?.domains ?? []).length === 0 && (
           <p className="rounded-2xl bg-white px-5 py-4 text-sm text-neutral-500">
             {t("domains.none")}

@@ -133,7 +133,7 @@ export function ShortcutsProvider({
         category: "Navigation",
         action: () => {
           const searchInput = document.querySelector<HTMLInputElement>(
-            'input[data-mail-search-input]'
+            "input[data-mail-search-input]",
           );
           if (searchInput) {
             searchInput.focus();

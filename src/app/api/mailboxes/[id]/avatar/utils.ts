@@ -1,3 +1,3 @@
 export function mailboxAvatarKeyFor(mailboxId: string): string {
-	return `mailbox-avatars/${mailboxId}`;
+  return `mailbox-avatars/${mailboxId}`;
 }

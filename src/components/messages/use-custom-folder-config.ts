@@ -8,38 +8,38 @@ import type { CustomFolderSummary } from "./custom-folder-config-types";
 import type { MessageFolderConfig } from "./types";
 
 export function useCustomFolderConfig(folderId: string): MessageFolderConfig {
-	const { selectedMailbox } = useSelectedMailbox();
-	const [folderName, setFolderName] = useState("Folder");
+  const { selectedMailbox } = useSelectedMailbox();
+  const [folderName, setFolderName] = useState("Folder");
 
-	useEffect(() => {
-		if (!selectedMailbox?.id) return;
-		let cancelled = false;
-		const search = new URLSearchParams({ mailboxId: selectedMailbox.id });
+  useEffect(() => {
+    if (!selectedMailbox?.id) return;
+    let cancelled = false;
+    const search = new URLSearchParams({ mailboxId: selectedMailbox.id });
 
-		authFetch(`/api/folders?${search.toString()}`)
-			.then((response) => response.json() as Promise<{ folders?: CustomFolderSummary[] }>)
-			.then((data) => {
-				if (cancelled) return;
-				const folder = data.folders?.find((item) => item.id === folderId);
-				if (folder) setFolderName(folder.name);
-			})
-			.catch(() => {});
+    authFetch(`/api/folders?${search.toString()}`)
+      .then((response) => response.json() as Promise<{ folders?: CustomFolderSummary[] }>)
+      .then((data) => {
+        if (cancelled) return;
+        const folder = data.folders?.find((item) => item.id === folderId);
+        if (folder) setFolderName(folder.name);
+      })
+      .catch(() => {});
 
-		return () => {
-			cancelled = true;
-		};
-	}, [folderId, selectedMailbox?.id]);
+    return () => {
+      cancelled = true;
+    };
+  }, [folderId, selectedMailbox?.id]);
 
-	return useMemo(
-		() => ({
-			folder: "inbox",
-			folderId,
-			title: folderName,
-			emptyText: "No emails in this folder",
-			hrefPrefix: `/folders/${folderId}`,
-			icon: Folder,
-			showRowBadge: false,
-		}),
-		[folderId, folderName],
-	);
+  return useMemo(
+    () => ({
+      folder: "inbox",
+      folderId,
+      title: folderName,
+      emptyText: "No emails in this folder",
+      hrefPrefix: `/folders/${folderId}`,
+      icon: Folder,
+      showRowBadge: false,
+    }),
+    [folderId, folderName],
+  );
 }

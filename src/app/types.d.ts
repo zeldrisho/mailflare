@@ -5,44 +5,44 @@ import type { MailboxSelectorUser } from "@/components/mailbox-selector-types";
 import type { ReactNode } from "react";
 
 export type HomeAuthProviderProps = {
-	children: ReactNode;
+  children: ReactNode;
 };
 
 export type HomeAuthResponse = {
-	user?: MailboxSelectorUser;
+  user?: MailboxSelectorUser;
 };
 
 export type HomeAccountMenuProps = {
-	user: MailboxSelectorUser;
+  user: MailboxSelectorUser;
 };
 
 export type HomeAction = {
-	href: string;
-	labelKey: TranslationKey;
-	variant: ButtonProps["variant"];
+  href: string;
+  labelKey: TranslationKey;
+  variant: ButtonProps["variant"];
 };
 
 export type LandingNavItem = {
-	href: string;
-	label: string;
+  href: string;
+  label: string;
 };
 
 export type SidebarItem = {
-	labelKey: TranslationKey;
-	icon: LucideIcon;
-	active?: boolean;
-	count?: string;
+  labelKey: TranslationKey;
+  icon: LucideIcon;
+  active?: boolean;
+  count?: string;
 };
 
 export type MailPreview = {
-	icon: LucideIcon;
-	sender: string;
-	subjectKey: TranslationKey;
-	previewKey: TranslationKey;
-	badgeKey: TranslationKey;
+  icon: LucideIcon;
+  sender: string;
+  subjectKey: TranslationKey;
+  previewKey: TranslationKey;
+  badgeKey: TranslationKey;
 };
 
 export type LandingStat = {
-	value: string;
-	label: string;
+  value: string;
+  label: string;
 };

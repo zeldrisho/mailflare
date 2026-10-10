@@ -1,3 +1,3 @@
 export type MessageStatusPayload = {
-	status?: string;
+  status?: string;
 };

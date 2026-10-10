@@ -9,32 +9,32 @@ import type { UpdateShortcutsSettingsInput } from "./types";
 import { parseUpdateShortcutsSettingsRequest } from "./utils";
 
 export async function GET(request: Request) {
-	const env = getEnv();
-	const auth = await requireSessionUser(env, request);
-	if (auth.error) return auth.error;
+  const env = getEnv();
+  const auth = await requireSessionUser(env, request);
+  if (auth.error) return auth.error;
 
-	return NextResponse.json({ enabled: auth.user.keyboardShortcutsEnabled });
+  return NextResponse.json({ enabled: auth.user.keyboardShortcutsEnabled });
 }
 
 export async function PATCH(request: Request) {
-	const env = getEnv();
-	const auth = await requireSessionUser(env, request);
-	if (auth.error) return auth.error;
+  const env = getEnv();
+  const auth = await requireSessionUser(env, request);
+  if (auth.error) return auth.error;
 
-	let input: UpdateShortcutsSettingsInput;
-	try {
-		input = await parseUpdateShortcutsSettingsRequest(request);
-	} catch (error) {
-		if (error instanceof ZodError) {
-			return NextResponse.json({ error: error.flatten() }, { status: 400 });
-		}
-		return NextResponse.json({ error: "Invalid request" }, { status: 400 });
-	}
+  let input: UpdateShortcutsSettingsInput;
+  try {
+    input = await parseUpdateShortcutsSettingsRequest(request);
+  } catch (error) {
+    if (error instanceof ZodError) {
+      return NextResponse.json({ error: error.flatten() }, { status: 400 });
+    }
+    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+  }
 
-	await getDb(env)
-		.update(users)
-		.set({ keyboardShortcutsEnabled: input.enabled })
-		.where(eq(users.id, auth.user.id));
+  await getDb(env)
+    .update(users)
+    .set({ keyboardShortcutsEnabled: input.enabled })
+    .where(eq(users.id, auth.user.id));
 
-	return NextResponse.json({ enabled: input.enabled });
+  return NextResponse.json({ enabled: input.enabled });
 }

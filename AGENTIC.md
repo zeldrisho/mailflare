@@ -19,15 +19,15 @@ Keep autonomous sending, arbitrary third-party MCP connections, attachment inter
 
 Source snapshot: Cloudflare's [agentic-inbox at commit `48039bb`](https://github.com/cloudflare/agentic-inbox/tree/48039bb6785af34e592c2966f87cde2b255c4c80). The implementation is more precise than the README's description of “9 email tools … and sending.”
 
-| Area | Observed behavior | Adaptation for Mailflare |
-| --- | --- | --- |
-| Built-in agent | `EmailAgent` extends `AIChatAgent`; nine tools, none of which sends email. Uses Workers AI, streaming chat, and a five-step limit. | Keep the nine-tool draft-first workflow; provide explicit send review through the UI. |
-| Auto-draft | Inbound storage triggers `/onNewEmail` through `ctx.waitUntil`. The agent reads the email/thread, uses fresh model context, and saves a draft. | Use recoverable jobs after successful intake; do not make model availability part of mail delivery. |
-| Prompt and history | Mailbox prompt settings live in R2; agent history lives in a mailbox-named Durable Object. | Store settings/history in D1 or SQLite; private conversations belong to a user and mailbox. |
-| Draft quality | Scans inbound/thread text for prompt injection and uses a second model to remove commentary from drafts. | Treat scans as optional defense; enforce authority in code and reject malformed/empty drafts. |
-| MCP | `EmailMCP` registers 13 tools, including direct send and permanent deletion. Shared helper functions serve both MCP and chat. | Share one authorized service layer; omit permanent deletion and replace direct sending with review requests. |
-| Authentication | Cloudflare Access is the single trust boundary; authorized users can operate on all mailboxes. | Preserve Mailflare's account, delegation, disabled-account, and mailbox checks on every operation. |
-| UI | Agent panel displays streaming Markdown, tool activity, and a composer handoff; MCP panel displays connection information. | Follow existing Mailflare components, navigation, and composer behavior. |
+| Area               | Observed behavior                                                                                                                              | Adaptation for Mailflare                                                                                     |
+| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| Built-in agent     | `EmailAgent` extends `AIChatAgent`; nine tools, none of which sends email. Uses Workers AI, streaming chat, and a five-step limit.             | Keep the nine-tool draft-first workflow; provide explicit send review through the UI.                        |
+| Auto-draft         | Inbound storage triggers `/onNewEmail` through `ctx.waitUntil`. The agent reads the email/thread, uses fresh model context, and saves a draft. | Use recoverable jobs after successful intake; do not make model availability part of mail delivery.          |
+| Prompt and history | Mailbox prompt settings live in R2; agent history lives in a mailbox-named Durable Object.                                                     | Store settings/history in D1 or SQLite; private conversations belong to a user and mailbox.                  |
+| Draft quality      | Scans inbound/thread text for prompt injection and uses a second model to remove commentary from drafts.                                       | Treat scans as optional defense; enforce authority in code and reject malformed/empty drafts.                |
+| MCP                | `EmailMCP` registers 13 tools, including direct send and permanent deletion. Shared helper functions serve both MCP and chat.                  | Share one authorized service layer; omit permanent deletion and replace direct sending with review requests. |
+| Authentication     | Cloudflare Access is the single trust boundary; authorized users can operate on all mailboxes.                                                 | Preserve Mailflare's account, delegation, disabled-account, and mailbox checks on every operation.           |
+| UI                 | Agent panel displays streaming Markdown, tool activity, and a composer handoff; MCP panel displays connection information.                     | Follow existing Mailflare components, navigation, and composer behavior.                                     |
 
 These observations come from the pinned [agent implementation](https://github.com/cloudflare/agentic-inbox/blob/48039bb6785af34e592c2966f87cde2b255c4c80/workers/agent/index.ts), [MCP implementation](https://github.com/cloudflare/agentic-inbox/blob/48039bb6785af34e592c2966f87cde2b255c4c80/workers/mcp/index.ts), [shared tools](https://github.com/cloudflare/agentic-inbox/blob/48039bb6785af34e592c2966f87cde2b255c4c80/workers/lib/tools.ts), [inbound handler](https://github.com/cloudflare/agentic-inbox/blob/48039bb6785af34e592c2966f87cde2b255c4c80/workers/index.ts), [authentication/routing](https://github.com/cloudflare/agentic-inbox/blob/48039bb6785af34e592c2966f87cde2b255c4c80/workers/app.ts), and [agent UI](https://github.com/cloudflare/agentic-inbox/blob/48039bb6785af34e592c2966f87cde2b255c4c80/app/components/AgentPanel.tsx).
 
@@ -35,20 +35,20 @@ Important distinction: the reference MCP send descriptions ask the caller to obt
 
 ## Existing Mailflare foundations and integration gaps
 
-| Existing area | Relevant files | Implication |
-| --- | --- | --- |
-| Next.js/React UI | `src/app/(dashboard)/layout.tsx`, `src/components/messages/message-split-layout.tsx` | Mount one agent provider/panel in the dashboard shell; avoid duplicating it for each folder. |
-| Composer and drafts | `src/components/compose/`, `src/app/api/drafts/`, `src/app/(dashboard)/drafts/` | AI drafts should be ordinary `messages` rows with `status = draft`, supplemented with provenance. |
-| Draft ownership | `src/app/api/drafts/utils.ts`, `src/app/api/drafts/[id]/utils.ts` | Draft APIs currently enforce individual ownership. Auto-drafts need an explicit reviewer, not a mailbox-wide shared draft assumption. |
-| Mailbox access and sender identity | `src/lib/mailboxes/access.ts`, `src/lib/email/sender.ts` | Reuse read/send/manage capabilities, domain identities, and send-on-behalf display rules. Admin status does not automatically grant mailbox access here. |
-| Read/thread/search | `src/lib/email/inbound.ts`, `src/lib/email/thread-view.ts`, `src/lib/search/`, `src/app/api/messages/route.ts` | Reuse authorized reads and search conditions. Thread lookup currently takes a message ID and caps results at 200. |
-| Inbound processing | `worker.ts`, `src/lib/email/inbound.ts`, `src/lib/email/intake.ts` | Attach auto-draft scheduling to the common processor used by Cloudflare and Node/relay intake. |
-| Existing automatic replies | `src/lib/email/auto-reply.ts` | Out-of-office replies already send automatically; AI auto-drafts must be a separate setting and execution path. |
-| Delivery | `src/app/api/send/route.ts`, `src/lib/email/send.ts` | Immediate sends call the provider directly; scheduled sends use `OUTBOUND_QUEUE`. An approval/deduplication layer must precede either path. |
-| External API authentication | `src/lib/api/key-auth.ts`, `src/lib/api/scopes.ts` | Reuse key hashing/authentication, but add MCP-specific scopes and mailbox restrictions. Existing scopes are `send`, `read`, `jmap`, and `domains`. |
-| Realtime | `src/lib/realtime/`, `src/hooks/message-realtime-utils.ts` | Extend the event union and query invalidation for draft/job changes; current notifications are `new_message`. |
-| Runtime portability | `src/lib/runtime.ts`, `server/runtime/env.ts`, `server/runtime/queue.ts`, `server/runtime/scheduler.ts` | Node queue timers are in-memory. Persist AI jobs and recover them after restart. |
-| Schema/deployment | `src/db/schema/index.ts`, `drizzle/migrations/`, `wrangler*.jsonc`, `env.d.ts` | Add additive migrations, model configuration, queue bindings, and documented runtime configuration. |
+| Existing area                      | Relevant files                                                                                                 | Implication                                                                                                                                              |
+| ---------------------------------- | -------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Next.js/React UI                   | `src/app/(dashboard)/layout.tsx`, `src/components/messages/message-split-layout.tsx`                           | Mount one agent provider/panel in the dashboard shell; avoid duplicating it for each folder.                                                             |
+| Composer and drafts                | `src/components/compose/`, `src/app/api/drafts/`, `src/app/(dashboard)/drafts/`                                | AI drafts should be ordinary `messages` rows with `status = draft`, supplemented with provenance.                                                        |
+| Draft ownership                    | `src/app/api/drafts/utils.ts`, `src/app/api/drafts/[id]/utils.ts`                                              | Draft APIs currently enforce individual ownership. Auto-drafts need an explicit reviewer, not a mailbox-wide shared draft assumption.                    |
+| Mailbox access and sender identity | `src/lib/mailboxes/access.ts`, `src/lib/email/sender.ts`                                                       | Reuse read/send/manage capabilities, domain identities, and send-on-behalf display rules. Admin status does not automatically grant mailbox access here. |
+| Read/thread/search                 | `src/lib/email/inbound.ts`, `src/lib/email/thread-view.ts`, `src/lib/search/`, `src/app/api/messages/route.ts` | Reuse authorized reads and search conditions. Thread lookup currently takes a message ID and caps results at 200.                                        |
+| Inbound processing                 | `worker.ts`, `src/lib/email/inbound.ts`, `src/lib/email/intake.ts`                                             | Attach auto-draft scheduling to the common processor used by Cloudflare and Node/relay intake.                                                           |
+| Existing automatic replies         | `src/lib/email/auto-reply.ts`                                                                                  | Out-of-office replies already send automatically; AI auto-drafts must be a separate setting and execution path.                                          |
+| Delivery                           | `src/app/api/send/route.ts`, `src/lib/email/send.ts`                                                           | Immediate sends call the provider directly; scheduled sends use `OUTBOUND_QUEUE`. An approval/deduplication layer must precede either path.              |
+| External API authentication        | `src/lib/api/key-auth.ts`, `src/lib/api/scopes.ts`                                                             | Reuse key hashing/authentication, but add MCP-specific scopes and mailbox restrictions. Existing scopes are `send`, `read`, `jmap`, and `domains`.       |
+| Realtime                           | `src/lib/realtime/`, `src/hooks/message-realtime-utils.ts`                                                     | Extend the event union and query invalidation for draft/job changes; current notifications are `new_message`.                                            |
+| Runtime portability                | `src/lib/runtime.ts`, `server/runtime/env.ts`, `server/runtime/queue.ts`, `server/runtime/scheduler.ts`        | Node queue timers are in-memory. Persist AI jobs and recover them after restart.                                                                         |
+| Schema/deployment                  | `src/db/schema/index.ts`, `drizzle/migrations/`, `wrangler*.jsonc`, `env.d.ts`                                 | Add additive migrations, model configuration, queue bindings, and documented runtime configuration.                                                      |
 
 There are no AI SDK/Agents/MCP dependencies in the inspected `package.json`.
 
@@ -69,17 +69,17 @@ There are no AI SDK/Agents/MCP dependencies in the inspected `package.json`.
 
 Use one schema/handler registry with adapters for the model and MCP. Chat binds its mailbox on the server; the model cannot switch it by inventing an argument. MCP accepts a mailbox ID and validates it against the authenticated principal's allowed mailboxes.
 
-| Tool | Inputs and result | Required behavior |
-| --- | --- | --- |
-| `list_emails` | Folder/status filter, cursor, bounded limit; returns metadata and next cursor. | Authorized mailbox only; default 20, maximum 50. Show only the caller's drafts. |
-| `get_email` | Message ID; returns text body, metadata, attachment metadata, and truncation information. | Verify message belongs to the active mailbox; omit attachment bytes and internal storage keys. |
-| `get_thread` | Anchor message ID; returns chronological messages and continuation/truncation information. | Adapt existing thread service; enforce mailbox and draft-owner boundaries on every returned row. |
-| `search_emails` | Query, optional folder, cursor; returns snippets and IDs. | Reuse Mailflare search semantics and indexes; no model-supplied SQL. |
-| `draft_email` | Recipients, subject, body; returns draft ID and composer link. | Require sender permission; resolve From server-side. Save under the requesting user. |
-| `draft_reply` | Source message ID, body, reply/reply-all mode; returns linked draft. | Derive recipients and RFC threading headers server-side. Handle Reply-To, aliases, and self-address exclusion using shared reply logic. |
-| `mark_email_read` | Message ID and read boolean; returns updated state. | Apply existing Mailflare mutation permissions; add unread support in the shared service if needed. |
-| `move_email` | Message ID and allowed destination; returns updated state. | Reuse existing move/status policy. Validate custom-folder ownership. Never manufacture sent/draft state or permanently delete. |
-| `discard_draft` | Draft ID and expected revision; returns discarded state. | Caller-owned draft only; require an explicit user action before discarding human-edited content. |
+| Tool              | Inputs and result                                                                          | Required behavior                                                                                                                       |
+| ----------------- | ------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `list_emails`     | Folder/status filter, cursor, bounded limit; returns metadata and next cursor.             | Authorized mailbox only; default 20, maximum 50. Show only the caller's drafts.                                                         |
+| `get_email`       | Message ID; returns text body, metadata, attachment metadata, and truncation information.  | Verify message belongs to the active mailbox; omit attachment bytes and internal storage keys.                                          |
+| `get_thread`      | Anchor message ID; returns chronological messages and continuation/truncation information. | Adapt existing thread service; enforce mailbox and draft-owner boundaries on every returned row.                                        |
+| `search_emails`   | Query, optional folder, cursor; returns snippets and IDs.                                  | Reuse Mailflare search semantics and indexes; no model-supplied SQL.                                                                    |
+| `draft_email`     | Recipients, subject, body; returns draft ID and composer link.                             | Require sender permission; resolve From server-side. Save under the requesting user.                                                    |
+| `draft_reply`     | Source message ID, body, reply/reply-all mode; returns linked draft.                       | Derive recipients and RFC threading headers server-side. Handle Reply-To, aliases, and self-address exclusion using shared reply logic. |
+| `mark_email_read` | Message ID and read boolean; returns updated state.                                        | Apply existing Mailflare mutation permissions; add unread support in the shared service if needed.                                      |
+| `move_email`      | Message ID and allowed destination; returns updated state.                                 | Reuse existing move/status policy. Validate custom-folder ownership. Never manufacture sent/draft state or permanently delete.          |
+| `discard_draft`   | Draft ID and expected revision; returns discarded state.                                   | Caller-owned draft only; require an explicit user action before discarding human-edited content.                                        |
 
 Read tools require `canRead`; draft creation requires `canSendOnBehalf` or stronger and the existing sender resolver. For read/move mutations, carry through the actual existing per-operation permission checks rather than treating readable mail as universally writable. Each handler rechecks access when it runs, including after a long model response.
 
@@ -155,18 +155,18 @@ Human review -> revision-bound approval -> durable send command -> delivery
 
 Proposed additive schema:
 
-| Entity | Main fields / constraints |
-| --- | --- |
-| `mailbox_agent_settings` | Mailbox PK, enabled, autoDraftEnabled, reviewerUserId, instructions, version, filters, dailyLimit, updatedAt. |
-| `agent_conversations` | ID, userId, mailboxId, title, createdAt, updatedAt; scoped history index. |
-| `agent_chat_messages` | Conversation ID, sequence, role, validated parts JSON, runId, status; unique sequence and client message ID for deduplication. |
-| `agent_runs` | Actor/reviewer, mailbox, conversation/source message, mode, status, model, settings version, timestamps, token usage, safe error; atomic budget reservation. |
-| `agent_jobs` | Source message/mailbox, kind, reviewer, status, attempts, nextAttemptAt, leaseUntil, runId, draftId, skip reason; unique inbound job key. |
-| `agent_draft_metadata` | Draft message PK, origin (`chat`, `auto`, `mcp`), source message/run/key, revision, humanEditedAt, stale/superseded marker. |
-| `agent_send_approvals` | Principal, mailbox, draft/revision, payload hash/snapshot reference, expiry, status, reviewedBy, commandId; single-use claim. |
-| `agent_send_commands` | Unique approval ID, immutable payload reference, dispatch state, lease, message/job ID, delivery outcome and timestamps. |
-| API key extension | Credential kind and mailbox allowlist, preferably a join table; scopes remain explicit. |
-| Intake recovery marker | Source message, intake completion, eligibility/settings snapshot, and dispatch reconciliation state. |
+| Entity                   | Main fields / constraints                                                                                                                                    |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `mailbox_agent_settings` | Mailbox PK, enabled, autoDraftEnabled, reviewerUserId, instructions, version, filters, dailyLimit, updatedAt.                                                |
+| `agent_conversations`    | ID, userId, mailboxId, title, createdAt, updatedAt; scoped history index.                                                                                    |
+| `agent_chat_messages`    | Conversation ID, sequence, role, validated parts JSON, runId, status; unique sequence and client message ID for deduplication.                               |
+| `agent_runs`             | Actor/reviewer, mailbox, conversation/source message, mode, status, model, settings version, timestamps, token usage, safe error; atomic budget reservation. |
+| `agent_jobs`             | Source message/mailbox, kind, reviewer, status, attempts, nextAttemptAt, leaseUntil, runId, draftId, skip reason; unique inbound job key.                    |
+| `agent_draft_metadata`   | Draft message PK, origin (`chat`, `auto`, `mcp`), source message/run/key, revision, humanEditedAt, stale/superseded marker.                                  |
+| `agent_send_approvals`   | Principal, mailbox, draft/revision, payload hash/snapshot reference, expiry, status, reviewedBy, commandId; single-use claim.                                |
+| `agent_send_commands`    | Unique approval ID, immutable payload reference, dispatch state, lease, message/job ID, delivery outcome and timestamps.                                     |
+| API key extension        | Credential kind and mailbox allowlist, preferably a join table; scopes remain explicit.                                                                      |
+| Intake recovery marker   | Source message, intake completion, eligibility/settings snapshot, and dispatch reconciliation state.                                                         |
 
 Reuse `messages` for draft bodies and existing attachment storage; do not duplicate email bodies in job payloads. Add revision tracking on every AI draft mutation path, including composer autosave and attachments. Personal manual drafts need not acquire AI approval semantics.
 
@@ -176,21 +176,21 @@ Delete conversation history on user request; use a configurable retention policy
 
 New code should follow the repository convention: helper functions in separate files in the same folder (`utils.ts` or purpose-specific modules), type definitions in adjacent `types.d.ts`. Inspect and preserve all manual edits before touching existing integration points; do not reformat adjacent code.
 
-| Location | Planned responsibility |
-| --- | --- |
-| `src/lib/agent/` | Tool registry/schemas, authorized adapters, model loop/provider adapter, prompt construction, context limits, run persistence, draft validation. |
-| `src/lib/agent/jobs/` | Eligibility, durable job claims, generation, reconciliation, budget handling; adjacent types. |
-| `src/lib/agent/approvals/` | Snapshot hashing, revision checks, browser approval, durable delivery commands. |
-| `src/lib/mcp/` | Server registration, transport adapter, dedicated-key authentication, scope enforcement, MCP result formatting. |
-| `src/app/mcp/route.ts` | Thin Next.js entry point for `/mcp`; keep compatible with OpenNext and Node. |
-| `src/app/api/agent/` | Chat stream, conversations/history, settings, job retry/status, send review/confirmation endpoints. |
-| `src/components/agent/` | Provider, toggle/panel, chat messages, tool cards, draft cards, approval UI, settings and connection details. |
-| Existing dashboard/composer/settings files | Mount UI, provide selected-mail context, open generated drafts, route AI draft sends through review. |
-| Existing draft/read/search/send services | Extract only the functionality needed for reuse; preserve established permissions and manual behavior. |
+| Location                                                   | Planned responsibility                                                                                                                                                     |
+| ---------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/lib/agent/`                                           | Tool registry/schemas, authorized adapters, model loop/provider adapter, prompt construction, context limits, run persistence, draft validation.                           |
+| `src/lib/agent/jobs/`                                      | Eligibility, durable job claims, generation, reconciliation, budget handling; adjacent types.                                                                              |
+| `src/lib/agent/approvals/`                                 | Snapshot hashing, revision checks, browser approval, durable delivery commands.                                                                                            |
+| `src/lib/mcp/`                                             | Server registration, transport adapter, dedicated-key authentication, scope enforcement, MCP result formatting.                                                            |
+| `src/app/mcp/route.ts`                                     | Thin Next.js entry point for `/mcp`; keep compatible with OpenNext and Node.                                                                                               |
+| `src/app/api/agent/`                                       | Chat stream, conversations/history, settings, job retry/status, send review/confirmation endpoints.                                                                        |
+| `src/components/agent/`                                    | Provider, toggle/panel, chat messages, tool cards, draft cards, approval UI, settings and connection details.                                                              |
+| Existing dashboard/composer/settings files                 | Mount UI, provide selected-mail context, open generated drafts, route AI draft sends through review.                                                                       |
+| Existing draft/read/search/send services                   | Extract only the functionality needed for reuse; preserve established permissions and manual behavior.                                                                     |
 | `src/lib/email/inbound.ts`, `worker.ts`, `worker-utils.ts` | Intake/recovery hook and explicit dispatch of AI jobs. Current worker fallback treats unknown queue payloads as outbound: replace that ambiguity before adding a job kind. |
-| `server/runtime/` | Durable-job startup recovery and periodic dispatcher; HTTP model configuration; retain current email transport adapters. |
-| `src/lib/realtime/`, relevant hooks | Draft/job event types and authorized notifications/query invalidation on both runtimes. |
-| Schema/migrations/config/docs | Additive schema, AI queue and provider configuration, MCP scopes/key UI, deployment and self-hosting instructions. |
+| `server/runtime/`                                          | Durable-job startup recovery and periodic dispatcher; HTTP model configuration; retain current email transport adapters.                                                   |
+| `src/lib/realtime/`, relevant hooks                        | Draft/job event types and authorized notifications/query invalidation on both runtimes.                                                                                    |
+| Schema/migrations/config/docs                              | Additive schema, AI queue and provider configuration, MCP scopes/key UI, deployment and self-hosting instructions.                                                         |
 
 Dependencies to evaluate and pin during implementation: `ai`, its React integration, `workers-ai-provider`, an HTTP model-provider adapter, the official MCP TypeScript SDK, and a Markdown renderer if needed. Mailflare uses Zod 4; the reference uses Zod 3, so do not copy its dependency versions or tool typings blindly. No model/provider credentials enter client bundles. On Cloudflare, add the [`AI` binding](https://developers.cloudflare.com/workers-ai/configuration/bindings/) and a dedicated agent queue; use a frequent recovery schedule alongside the existing backup cron. Docker uses persisted jobs with its local scheduler and server-only provider credentials. Missing AI configuration disables generation gracefully; authorized MCP reads/draft CRUD can still work without a model.
 

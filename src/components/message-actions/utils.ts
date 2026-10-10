@@ -5,7 +5,12 @@ import { getEmailAddress, normalizeEmailAddress, splitEmailAddressList } from "@
 import { getLatestEmailContent } from "@/lib/email/reply-content-utils";
 import { formatUserDate } from "@/lib/time/utils";
 import { sanitizeEmailHtml } from "@/app/(dashboard)/inbox/[messageId]/email-html-sanitizer";
-import { escapeHtml, htmlToPlainText, textToHtml, wrapQuotedHtml } from "@/components/compose/rich-text-utils";
+import {
+  escapeHtml,
+  htmlToPlainText,
+  textToHtml,
+  wrapQuotedHtml,
+} from "@/components/compose/rich-text-utils";
 import type {
   BlockMessageContactInput,
   ForwardDraftInput,
@@ -26,10 +31,7 @@ import {
   TrashIcon,
 } from "lucide-react";
 
-export function getMessageBackHref(
-  direction: "inbound" | "outbound",
-  status: string,
-) {
+export function getMessageBackHref(direction: "inbound" | "outbound", status: string) {
   if (status === "trash") return "/trash";
   if (status === "spam") return "/spam";
   if (status === "archived") return "/archived";
@@ -37,10 +39,7 @@ export function getMessageBackHref(
   return direction === "inbound" ? "/inbox" : "/sent";
 }
 
-export async function runSingleMessageAction(
-  messageId: string,
-  action: BulkMessageAction,
-) {
+export async function runSingleMessageAction(messageId: string, action: BulkMessageAction) {
   const response = await authFetch("/api/messages/bulk", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -51,7 +50,8 @@ export async function runSingleMessageAction(
     throw new Error("Unable to update message");
   }
 
-  if (action === "read" || action === "unread") markMessagesReadInCaches([messageId], action === "read");
+  if (action === "read" || action === "unread")
+    markMessagesReadInCaches([messageId], action === "read");
   window.dispatchEvent(new Event("mailflare:messages-changed"));
 }
 
@@ -65,10 +65,7 @@ export function confirmTrashWithoutUnsubscribe() {
   );
 }
 
-export async function createTrashSenderRule({
-  mailboxId,
-  senderAddress,
-}: TrashSenderRuleInput) {
+export async function createTrashSenderRule({ mailboxId, senderAddress }: TrashSenderRuleInput) {
   const sender = getEmailAddress(senderAddress).trim().toLowerCase();
   if (!sender) throw new Error("Sender address is required");
 
@@ -85,14 +82,10 @@ export async function createTrashSenderRule({
     }),
   });
   const data = (await response.json()) as { error?: string };
-  if (!response.ok)
-    throw new Error(data.error ?? "Unable to create trash rule");
+  if (!response.ok) throw new Error(data.error ?? "Unable to create trash rule");
 }
 
-export async function blockMessageContact({
-  mailboxId,
-  senderAddress,
-}: BlockMessageContactInput) {
+export async function blockMessageContact({ mailboxId, senderAddress }: BlockMessageContactInput) {
   const response = await authFetch("/api/contacts/block", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -108,7 +101,11 @@ export function getMoveMessageActions(
 ): MoveMessageActionItem[] {
   const actions: MoveMessageActionItem[] = [];
   if ((status === "archived" || status === "spam") && direction === "inbound") {
-    actions.push({ action: "inbox", labelKey: status === "spam" ? "common.notSpam" : "navigation.inbox", icon: InboxIcon });
+    actions.push({
+      action: "inbox",
+      labelKey: status === "spam" ? "common.notSpam" : "navigation.inbox",
+      icon: InboxIcon,
+    });
   }
   if (status !== "archived")
     actions.push({ action: "archive", labelKey: "navigation.archived", icon: ArchiveIcon });
@@ -136,10 +133,7 @@ export function buildReplySubject(subject: string | null | undefined) {
   return /^re:/i.test(trimmed) ? trimmed : `Re: ${trimmed}`;
 }
 
-export function buildReplyQuote(
-  senderAddress: string,
-  bodyText: string | null | undefined,
-) {
+export function buildReplyQuote(senderAddress: string, bodyText: string | null | undefined) {
   const latest = getLatestEmailContent(bodyText).trim();
   if (!latest) return "";
   const quoted = latest
@@ -161,9 +155,20 @@ export function buildReplyQuoteHtml(
   bodyText: string | null | undefined,
   bodyHtml: string | null | undefined,
 ) {
-  const original = bodyHtml ? sanitizeEmailHtml(bodyHtml, { forOutgoing: true }) : textToHtml(bodyText);
+  const original = bodyHtml
+    ? sanitizeEmailHtml(bodyHtml, { forOutgoing: true })
+    : textToHtml(bodyText);
   if (!original) return null;
-  const when = sentAt ? formatUserDate(sentAt, { weekday: "short", month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" }) : "an earlier date";
+  const when = sentAt
+    ? formatUserDate(sentAt, {
+        weekday: "short",
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+      })
+    : "an earlier date";
   return wrapQuotedHtml(
     `<div style="margin-top:1.4em">On ${escapeHtml(when)}, ${escapeHtml(senderAddress)} wrote:</div><blockquote style="${QUOTE_STYLE}">${original}</blockquote>`,
   );
@@ -198,12 +203,18 @@ export function getReplyRecipients(
 
   const to = unique([message.fromAddr]);
   if (mode !== "replyAll") return { to, cc: [] };
-  const cc = unique([...splitEmailAddressList(message.toAddr), ...splitEmailAddressList(message.ccAddr)]);
+  const cc = unique([
+    ...splitEmailAddressList(message.toAddr),
+    ...splitEmailAddressList(message.ccAddr),
+  ]);
   return { to, cc };
 }
 
 /** Reply-all is only worth offering when it would reach someone a plain reply would not. */
-export function hasAdditionalRecipients(message: ReplyableMessage, ownAddresses: string[]): boolean {
+export function hasAdditionalRecipients(
+  message: ReplyableMessage,
+  ownAddresses: string[],
+): boolean {
   const all = getReplyRecipients(message, ownAddresses, "replyAll");
   const single = getReplyRecipients(message, ownAddresses, "reply");
   return all.to.length + all.cc.length > single.to.length + single.cc.length;
@@ -244,7 +255,9 @@ export function buildForwardHtml(
   ];
   if (message.ccAddr) lines.push(`Cc: ${message.ccAddr}`);
   const header = `<div>---------- Forwarded message ---------<br>${lines.map(escapeHtml).join("<br>")}</div><br>`;
-  const original = bodyHtml ? sanitizeEmailHtml(bodyHtml, { forOutgoing: true }) : textToHtml(bodyText);
+  const original = bodyHtml
+    ? sanitizeEmailHtml(bodyHtml, { forOutgoing: true })
+    : textToHtml(bodyText);
   return wrapQuotedHtml(`${header}${original ?? ""}`);
 }
 
@@ -252,7 +265,13 @@ export function buildForwardHtml(
  * A forward keeps the original's attachments (copied onto the draft server-side)
  * and references its Message-ID so recipients who already have it see the link.
  */
-export async function createForwardDraft({ mailboxId, ownAddress, message, bodyText, bodyHtml }: ForwardDraftInput) {
+export async function createForwardDraft({
+  mailboxId,
+  ownAddress,
+  message,
+  bodyText,
+  bodyHtml,
+}: ForwardDraftInput) {
   const html = buildForwardHtml(message, bodyText, bodyHtml);
   const response = await authFetch("/api/drafts", {
     method: "POST",
@@ -307,7 +326,6 @@ export async function createReplyDraft({
     draft?: { id: string };
     error?: string;
   };
-  if (!response.ok || !data.draft)
-    throw new Error(data.error ?? "Unable to create reply draft");
+  if (!response.ok || !data.draft) throw new Error(data.error ?? "Unable to create reply draft");
   return data.draft.id;
 }

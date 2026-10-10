@@ -10,24 +10,24 @@ Set up Mailflare in three steps:
 2. **Complete setup:** open the deployed app and follow `/setup` to check the installation and create the first admin account.
 3. **Connect your domain:** add a domain managed by the same Cloudflare account and choose which service receives its mail. Mailflare configures email routing and, when available and selected, email sending before helping you create the first mailbox. Resend and Amazon SES are alternatives to Cloudflare for receiving and sending; see [Sending and receiving providers](providers.md).
 
-
 ## Step 1: Setup CF_TOKEN
+
 To configure your `CF_TOKEN` (which is a scoped Cloudflare API Token with specific permissions), follow the below steps.
 
 1. In your Cloudflare account, navigate to `Manage Account` → `Account API Tokens` and create a new token.
 2. At the top of the Policy window, select `Specified Domains` for all domains that you plan to connect
-    1. Then configure these permissions
-        1. DNS & Zones > DNS > Select `Edit` Access
-            1. This allows the confirmed setup flow to replace conflicting MX records
-        2. DNS & Zones > Zone > Select `Read` Access
-        3. DNS & Zones → Zone Settings → Select `Edit` Access
-        4. Email & Messaging > Email Routing Rules > Select `Edit` Access
+   1. Then configure these permissions
+      1. DNS & Zones > DNS > Select `Edit` Access
+         1. This allows the confirmed setup flow to replace conflicting MX records
+      2. DNS & Zones > Zone > Select `Read` Access
+      3. DNS & Zones → Zone Settings → Select `Edit` Access
+      4. Email & Messaging > Email Routing Rules > Select `Edit` Access
 3. If mailflare will send emails: Add another policy and select `Entire Account`, and configure these permissions:
-    1. Email & Messaging > Email Sending > Select `Edit` Access
+   1. Email & Messaging > Email Sending > Select `Edit` Access
 4. After your token is setup, go to `Compute` → `Email Service` → `Email Sending`
-    1. You will need to purchase a paid workers plan if you don't already have one
-    2. Select On-board domain and follow the prompts
-    3. After this is done, and after you have setup Mailflare, on the Admin > domains page, when you expand the domain you can then configure DKIM and DMARC records
+   1. You will need to purchase a paid workers plan if you don't already have one
+   2. Select On-board domain and follow the prompts
+   3. After this is done, and after you have setup Mailflare, on the Admin > domains page, when you expand the domain you can then configure DKIM and DMARC records
 
 Paste only the token secret into the `CF_TOKEN` field in step 2. Do not include the word `Bearer` and do not use the token ID. The token must belong to the same Cloudflare account as the domains you connect.
 
@@ -38,10 +38,9 @@ Paste only the token secret into the `CF_TOKEN` field in step 2. Do not include 
 [![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/hieunc229/mailflare)
 
 2. Choose the Cloudflare account that owns the domain you want to use.
-3. Set the app name to exactly `mailflare`. Do not rename it. 
+3. Set the app name to exactly `mailflare`. Do not rename it.
 4. Add `CF_TOKEN` when Cloudflare asks for the app's runtime variables or secrets. This is different from the CF_TOKEN that Cloudflare uses to deploy the app.
 5. Start the deployment and wait for Cloudflare to finish provisioning and deploying the Worker.
-
 
 ### Optional Web Push configuration
 
@@ -98,12 +97,12 @@ Remote migrations require the target account's `database_id` in your local `wran
 
 Raw mail, attachments, Drive files, avatars, branding icons, JMAP uploads and backups all live in one bucket. By default that is the `BUCKET` R2 binding in `wrangler.jsonc`. To use Backblaze B2 instead, set four Worker variables (as secrets, or in `.dev.vars` locally):
 
-| Variable | Example | Purpose |
-| --- | --- | --- |
-| `B2_KEY_ID` | `004abc...` | Application key ID |
-| `B2_APPLICATION_KEY` | `K004...` | Application key secret |
-| `B2_BUCKET` | `mailflare` | Bucket name |
-| `B2_ENDPOINT` | `s3.us-west-004.backblazeb2.com` | S3-compatible endpoint from the bucket page; the region is read from it |
+| Variable             | Example                          | Purpose                                                                 |
+| -------------------- | -------------------------------- | ----------------------------------------------------------------------- |
+| `B2_KEY_ID`          | `004abc...`                      | Application key ID                                                      |
+| `B2_APPLICATION_KEY` | `K004...`                        | Application key secret                                                  |
+| `B2_BUCKET`          | `mailflare`                      | Bucket name                                                             |
+| `B2_ENDPOINT`        | `s3.us-west-004.backblazeb2.com` | S3-compatible endpoint from the bucket page; the region is read from it |
 
 ```bash
 npx wrangler secret put B2_KEY_ID
@@ -145,21 +144,21 @@ The **Update Mailflare** button in the admin dashboard dispatches `.github/workf
 
 Create a fine-grained personal access token for the installation repository with these repository permissions:
 
-| Permission | Access | Used for |
-| --- | --- | --- |
-| Actions | Read and write | Dispatching `deploy-update.yml` from the Mailflare admin dashboard |
-| Contents | Read and write | Committing and pushing the upstream source into the installation repository |
-| Workflows | Read and write | Replacing files inside `.github/workflows` during an update |
+| Permission | Access         | Used for                                                                    |
+| ---------- | -------------- | --------------------------------------------------------------------------- |
+| Actions    | Read and write | Dispatching `deploy-update.yml` from the Mailflare admin dashboard          |
+| Contents   | Read and write | Committing and pushing the upstream source into the installation repository |
+| Workflows  | Read and write | Replacing files inside `.github/workflows` during an update                 |
 
 Configure the token and repository details in both Cloudflare and GitHub:
 
-| Location | Name | Type | Value |
-| --- | --- | --- | --- |
-| Cloudflare Worker | `GITHUB_UPDATE_TOKEN` | Secret | The fine-grained personal access token |
-| Cloudflare Worker | `GITHUB_UPDATE_REPO` | Variable | The installation repository in `owner/repository` format |
-| Cloudflare Worker | `GITHUB_UPDATE_REF` | Optional variable | The installation branch to update; omit it to use the repository's default branch |
-| GitHub repository → Actions | `MAILFLARE_UPDATE_TOKEN` | Repository secret | The same fine-grained personal access token |
-| GitHub repository → Actions | `UPDATE_SOURCE_REPOSITORY` | Optional repository variable | The upstream repository; defaults to `hieunc229/mailflare` |
+| Location                    | Name                       | Type                         | Value                                                                             |
+| --------------------------- | -------------------------- | ---------------------------- | --------------------------------------------------------------------------------- |
+| Cloudflare Worker           | `GITHUB_UPDATE_TOKEN`      | Secret                       | The fine-grained personal access token                                            |
+| Cloudflare Worker           | `GITHUB_UPDATE_REPO`       | Variable                     | The installation repository in `owner/repository` format                          |
+| Cloudflare Worker           | `GITHUB_UPDATE_REF`        | Optional variable            | The installation branch to update; omit it to use the repository's default branch |
+| GitHub repository → Actions | `MAILFLARE_UPDATE_TOKEN`   | Repository secret            | The same fine-grained personal access token                                       |
+| GitHub repository → Actions | `UPDATE_SOURCE_REPOSITORY` | Optional repository variable | The upstream repository; defaults to `hieunc229/mailflare`                        |
 
 The same token can be used for `GITHUB_UPDATE_TOKEN` and `MAILFLARE_UPDATE_TOKEN` when it has all three permissions above. Keep both values secret and limit the token's repository access to the installation repository.
 

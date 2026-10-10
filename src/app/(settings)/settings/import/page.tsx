@@ -8,13 +8,7 @@ import type { TranslationKey } from "@/lib/i18n/types";
 import { useSelectedMailbox } from "@/components/mailbox-provider";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
@@ -66,11 +60,11 @@ const SECTION_LABEL_KEYS: Record<ImportSourceSection, TranslationKey> = {
 export default function SettingsImportPage() {
   const { t } = useLanguage();
   // System sections are translated; folders discovered on the source keep their own names.
-  const sourceLabel = (source: ImportSourceItem) => source.sourceSection ? t(SECTION_LABEL_KEYS[source.sourceSection]) : source.label;
+  const sourceLabel = (source: ImportSourceItem) =>
+    source.sourceSection ? t(SECTION_LABEL_KEYS[source.sourceSection]) : source.label;
   const { selectedMailbox } = useSelectedMailbox();
   const [activeTab, setActiveTab] = useState<ImportTab>("file");
-  const [selectedSections, setSelectedSections] =
-    useState<ImportSourceSection[]>(defaultSections);
+  const [selectedSections, setSelectedSections] = useState<ImportSourceSection[]>(defaultSections);
   const [sourceDropdownOpen, setSourceDropdownOpen] = useState(false);
   const [files, setFiles] = useState<File[]>([]);
   const [fileResult, setFileResult] = useState<ImportResult | null>(null);
@@ -94,8 +88,7 @@ export default function SettingsImportPage() {
 
   function toggleSection(section: ImportSourceSection, checked: boolean) {
     setSelectedSections((current) => {
-      if (checked)
-        return current.includes(section) ? current : [...current, section];
+      if (checked) return current.includes(section) ? current : [...current, section];
       return current.filter((item) => item !== section);
     });
   }
@@ -129,9 +122,7 @@ export default function SettingsImportPage() {
       setFileResult(result);
       window.dispatchEvent(new Event("mailflare:messages-changed"));
     } catch (error) {
-      setFileError(
-        error instanceof Error ? error.message : t("importPage.fileFailed"),
-      );
+      setFileError(error instanceof Error ? error.message : t("importPage.fileFailed"));
     } finally {
       setFileLoading(false);
     }
@@ -187,9 +178,7 @@ export default function SettingsImportPage() {
           total.skipped = (total.skipped ?? 0) + (result.skipped ?? 0);
           total.errors = [...(total.errors ?? []), ...(result.errors ?? [])];
           processed +=
-            (result.imported ?? 0) +
-            (result.skipped ?? 0) +
-            (result.errors?.length ?? 0);
+            (result.imported ?? 0) + (result.skipped ?? 0) + (result.errors?.length ?? 0);
           if (
             !imapForm.importAll ||
             result.nextOffset === null ||
@@ -201,7 +190,11 @@ export default function SettingsImportPage() {
           setImapProgress({
             completed: index,
             total: expandedSources.length,
-            label: t("importPage.importingSourceProgress", { source: sourceLabel(source), processed, total: result.total ?? "?" }),
+            label: t("importPage.importingSourceProgress", {
+              source: sourceLabel(source),
+              processed,
+              total: result.total ?? "?",
+            }),
           });
         }
         setImapProgress({
@@ -214,9 +207,7 @@ export default function SettingsImportPage() {
       setImapForm((current) => ({ ...current, password: "" }));
       window.dispatchEvent(new Event("mailflare:messages-changed"));
     } catch (error) {
-      setImapError(
-        error instanceof Error ? error.message : t("importPage.imapFailed"),
-      );
+      setImapError(error instanceof Error ? error.message : t("importPage.imapFailed"));
     } finally {
       setImapLoading(false);
     }
@@ -234,12 +225,8 @@ export default function SettingsImportPage() {
 
       <section className="space-y-4">
         <div>
-          <h2 className="text-xl font-semibold text-neutral-900">
-            {t("importPage.title")}
-          </h2>
-          <p className="mt-1 text-sm text-neutral-500">
-            {t("importPage.description")}
-          </p>
+          <h2 className="text-xl font-semibold text-neutral-900">{t("importPage.title")}</h2>
+          <p className="mt-1 text-sm text-neutral-500">{t("importPage.description")}</p>
         </div>
         <div className="space-y-1 overflow-hidden rounded-3xl">
           <CardContent className="space-y-6 rounded-b-lg rounded-t-3xl bg-white p-6">
@@ -248,9 +235,7 @@ export default function SettingsImportPage() {
               <Select
                 id="import-source"
                 value={activeTab}
-                onChange={(event) =>
-                  setActiveTab(event.target.value as ImportTab)
-                }
+                onChange={(event) => setActiveTab(event.target.value as ImportTab)}
                 className="text-sm w-full py-2"
                 // className="h-10 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 shadow-sm shadow-neutral-200/50 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
               >
@@ -280,9 +265,7 @@ export default function SettingsImportPage() {
                       >
                         <Checkbox
                           checked={selectedSections.includes(option.value)}
-                          onChange={(event) =>
-                            toggleSection(option.value, event.target.checked)
-                          }
+                          onChange={(event) => toggleSection(option.value, event.target.checked)}
                         />
                         {t(SECTION_LABEL_KEYS[option.value])}
                       </label>
@@ -306,9 +289,7 @@ export default function SettingsImportPage() {
                       type="file"
                       accept=".eml,.mbox,.mbx,message/rfc822,application/mbox"
                       multiple
-                      onChange={(event) =>
-                        setFiles(Array.from(event.target.files ?? []))
-                      }
+                      onChange={(event) => setFiles(Array.from(event.target.files ?? []))}
                       className="block w-full rounded-md border border-neutral-200 bg-white px-3 py-1 text-sm shadow-sm shadow-neutral-200/50 file:mr-3 file:rounded-md file:border-0 file:bg-neutral-100 file:px-3 file:py-1.5 file:text-sm file:font-medium"
                     />
                     <p className="text-xs leading-5 text-neutral-500">
@@ -332,10 +313,7 @@ export default function SettingsImportPage() {
                     {fileLoading ? t("import.importing") : t("importPage.importFiles")}
                   </Button>
                   {fileProgress && (
-                    <div
-                      className="space-y-1 text-xs text-neutral-500"
-                      aria-live="polite"
-                    >
+                    <div className="space-y-1 text-xs text-neutral-500" aria-live="polite">
                       <div className="flex justify-between">
                         <span>{fileProgress.label}</span>
                         <span>{fileProgress.completed}%</span>
@@ -369,9 +347,7 @@ export default function SettingsImportPage() {
                       <Input
                         id="imap-host"
                         value={imapForm.host}
-                        onChange={(event) =>
-                          setImapForm({ ...imapForm, host: event.target.value })
-                        }
+                        onChange={(event) => setImapForm({ ...imapForm, host: event.target.value })}
                         placeholder="imap.gmail.com"
                       />
                     </div>
@@ -381,9 +357,7 @@ export default function SettingsImportPage() {
                         id="imap-port"
                         type="number"
                         value={imapForm.port}
-                        onChange={(event) =>
-                          setImapForm({ ...imapForm, port: event.target.value })
-                        }
+                        onChange={(event) => setImapForm({ ...imapForm, port: event.target.value })}
                       />
                     </div>
                   </div>
@@ -403,9 +377,7 @@ export default function SettingsImportPage() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="imap-password">
-                        {t("importPage.passwordOrApp")}
-                      </Label>
+                      <Label htmlFor="imap-password">{t("importPage.passwordOrApp")}</Label>
                       <Input
                         id="imap-password"
                         type="password"
@@ -423,9 +395,7 @@ export default function SettingsImportPage() {
                   <div className="grid gap-3 md:grid-cols-2">
                     <div className="space-y-2">
                       <Label htmlFor="imap-limit">
-                        {imapForm.importAll
-                          ? t("importPage.perBatch")
-                          : t("importPage.perSource")}
+                        {imapForm.importAll ? t("importPage.perBatch") : t("importPage.perSource")}
                       </Label>
                       <Input
                         id="imap-limit"
@@ -484,10 +454,7 @@ export default function SettingsImportPage() {
                     {imapLoading ? t("import.importing") : t("importPage.importSources")}
                   </Button>
                   {imapProgress && (
-                    <div
-                      className="space-y-1 text-xs text-neutral-500"
-                      aria-live="polite"
-                    >
+                    <div className="space-y-1 text-xs text-neutral-500" aria-live="polite">
                       <div className="flex justify-between">
                         <span>{imapProgress.label}</span>
                         <span>

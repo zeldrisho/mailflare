@@ -13,10 +13,13 @@ import { findSendingSubdomain } from "@/lib/domains/sending-status";
 const SENDING_UNAUTHORIZED_CODE = 2036;
 
 export const SENDING_MX_CONFLICT_MESSAGE =
-	"Cloudflare Email Sending cannot be enabled while this domain has MX records for another mail service. Replace them to send with Cloudflare.";
+  "Cloudflare Email Sending cannot be enabled while this domain has MX records for another mail service. Replace them to send with Cloudflare.";
 
 function isSendingUnauthorized(error: unknown): boolean {
-	return isCloudflareApiErrorCode(error, SENDING_UNAUTHORIZED_CODE) || (error instanceof CloudflareApiError && error.status === 401);
+  return (
+    isCloudflareApiErrorCode(error, SENDING_UNAUTHORIZED_CODE) ||
+    (error instanceof CloudflareApiError && error.status === 401)
+  );
 }
 
 /**
@@ -26,28 +29,31 @@ function isSendingUnauthorized(error: unknown): boolean {
  * them onto `deletedMx` so a rollback can restore them) and tries again.
  */
 export async function ensureSendingSubdomain(
-	env: CloudflareEnv,
-	zoneId: string,
-	hostname: string,
-	options: { replaceMx?: boolean; deletedMx?: CfDnsRecord[] } = {},
+  env: CloudflareEnv,
+  zoneId: string,
+  hostname: string,
+  options: { replaceMx?: boolean; deletedMx?: CfDnsRecord[] } = {},
 ): Promise<{ subdomain: CfSendingSubdomain; created: boolean }> {
-	const existing = findSendingSubdomain(hostname, await listSendingSubdomains(env, zoneId));
-	if (existing) return { subdomain: existing, created: false };
+  const existing = findSendingSubdomain(hostname, await listSendingSubdomains(env, zoneId));
+  if (existing) return { subdomain: existing, created: false };
 
-	try {
-		return { subdomain: await createSendingSubdomain(env, zoneId, hostname), created: true };
-	} catch (error) {
-		if (!isSendingUnauthorized(error)) throw error;
-		const conflicting = await listConflictingMxRecords(env, zoneId, hostname).catch(() => []);
-		// No foreign MX: the 401 really is about credentials, so keep Cloudflare's error.
-		if (conflicting.length === 0) throw error;
-		if (!options.replaceMx) {
-			throw new MxConflictError(
-				conflicting.map((record) => ({ content: record.content ?? "", priority: record.priority ?? 0 })),
-				SENDING_MX_CONFLICT_MESSAGE,
-			);
-		}
-		await removeMxRecords(env, zoneId, hostname, options.deletedMx ?? []);
-		return { subdomain: await createSendingSubdomain(env, zoneId, hostname), created: true };
-	}
+  try {
+    return { subdomain: await createSendingSubdomain(env, zoneId, hostname), created: true };
+  } catch (error) {
+    if (!isSendingUnauthorized(error)) throw error;
+    const conflicting = await listConflictingMxRecords(env, zoneId, hostname).catch(() => []);
+    // No foreign MX: the 401 really is about credentials, so keep Cloudflare's error.
+    if (conflicting.length === 0) throw error;
+    if (!options.replaceMx) {
+      throw new MxConflictError(
+        conflicting.map((record) => ({
+          content: record.content ?? "",
+          priority: record.priority ?? 0,
+        })),
+        SENDING_MX_CONFLICT_MESSAGE,
+      );
+    }
+    await removeMxRecords(env, zoneId, hostname, options.deletedMx ?? []);
+    return { subdomain: await createSendingSubdomain(env, zoneId, hostname), created: true };
+  }
 }

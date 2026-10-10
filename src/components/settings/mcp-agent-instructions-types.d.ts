@@ -1,4 +1,4 @@
 export type McpAgentInstructionsProps = {
-	mode: "mail" | "admin";
-	apiKey: string;
+  mode: "mail" | "admin";
+  apiKey: string;
 };

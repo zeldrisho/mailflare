@@ -107,7 +107,11 @@ export function LoginClient({ adding = false }: { adding?: boolean }) {
               {error}
             </p>
           )}
-          <Button type="submit" className="h-11 w-full rounded-full px-6 active:scale-[0.98]" disabled={loading}>
+          <Button
+            type="submit"
+            className="h-11 w-full rounded-full px-6 active:scale-[0.98]"
+            disabled={loading}
+          >
             {loading ? t("auth.verifying") : t("auth.verify")}
           </Button>
           <button
@@ -130,27 +134,20 @@ export function LoginClient({ adding = false }: { adding?: boolean }) {
     <AuthShell
       icon={Mail}
       title={adding ? t("auth.addAnother") : t("auth.signIn")}
-      description={
-        adding
-          ? t("auth.addDescription")
-          : t("auth.signInDescription")
-      }
+      description={adding ? t("auth.addDescription") : t("auth.signInDescription")}
     >
       <form method="post" onSubmit={onSubmit} className="space-y-5">
         <div className="space-y-2">
           <Label htmlFor="email">{t("auth.email")}</Label>
-          <Input
-            id="email"
-            name="email"
-            type="email"
-            autoComplete="email"
-            required
-          />
+          <Input id="email" name="email" type="email" autoComplete="email" required />
         </div>
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <Label htmlFor="password">{t("auth.password")}</Label>
-            <Link href="/forgot-password" className="text-xs font-medium text-blue-600 hover:underline">
+            <Link
+              href="/forgot-password"
+              className="text-xs font-medium text-blue-600 hover:underline"
+            >
               {t("auth.forgotPassword")}
             </Link>
           </div>

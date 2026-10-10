@@ -5,12 +5,7 @@ import { LogIn, LogOut } from "lucide-react";
 import { useLanguage } from "@/components/language-provider";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  fetchActivity,
-  formatActivityDate,
-  getActivityLabel,
-  getActivityMetadata,
-} from "./utils";
+import { fetchActivity, formatActivityDate, getActivityLabel, getActivityMetadata } from "./utils";
 
 export default function ActivityPage() {
   const { t } = useLanguage();
@@ -23,9 +18,7 @@ export default function ActivityPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl md:text-3xl font-medium text-neutral-900">{t("activity.title")}</h1>
-        <p className="mt-1 text-sm text-neutral-500">
-          {t("activity.description")}
-        </p>
+        <p className="mt-1 text-sm text-neutral-500">{t("activity.description")}</p>
       </div>
 
       <section className="overflow-x-auto rounded-3xl bg-white">

@@ -9,53 +9,55 @@ import { themeBootstrapScript } from "@/components/theme-utils";
 import "./globals.css";
 
 const geistSans = Geist({
-	variable: "--font-geist-sans",
-	subsets: ["latin"],
+  variable: "--font-geist-sans",
+  subsets: ["latin"],
 });
 
 const geistMono = Geist_Mono({
-	variable: "--font-geist-mono",
-	subsets: ["latin"],
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
 });
 
 export const metadata: Metadata = {
-	title: "Mailflare",
-	description: "Multi-tenant email on Cloudflare",
-	icons: { icon: "/api/branding/icon", apple: "/icon-192.png" },
-	appleWebApp: {
-		capable: true,
-		title: "Mailflare",
-		statusBarStyle: "default",
-	},
-	robots: {
-		index: false,
-		follow: false,
-		noarchive: true,
-		nosnippet: true,
-		noimageindex: true,
-		googleBot: {
-			index: false,
-			follow: false,
-			noarchive: true,
-			nosnippet: true,
-			noimageindex: true,
-		},
-	},
+  title: "Mailflare",
+  description: "Multi-tenant email on Cloudflare",
+  icons: { icon: "/api/branding/icon", apple: "/icon-192.png" },
+  appleWebApp: {
+    capable: true,
+    title: "Mailflare",
+    statusBarStyle: "default",
+  },
+  robots: {
+    index: false,
+    follow: false,
+    noarchive: true,
+    nosnippet: true,
+    noimageindex: true,
+    googleBot: {
+      index: false,
+      follow: false,
+      noarchive: true,
+      nosnippet: true,
+      noimageindex: true,
+    },
+  },
 };
 
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-	const locale = await getRequestLocale();
-	const messages = locale === DEFAULT_LOCALE ? undefined : await loadServerMessages(locale);
-	return (
-		<html lang={locale} dir={getDirection(locale)} suppressHydrationWarning>
-			<head>
-				<script dangerouslySetInnerHTML={{ __html: sidebarBootstrapScript }} />
-				<script dangerouslySetInnerHTML={{ __html: themeBootstrapScript }} />
-				<link rel="icon" href="/api/branding/icon"></link>
-			</head>
-			<body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-				<LanguageProvider initialLocale={locale} initialMessages={messages}><Providers>{children}</Providers></LanguageProvider>
-			</body>
-		</html>
-	);
+  const locale = await getRequestLocale();
+  const messages = locale === DEFAULT_LOCALE ? undefined : await loadServerMessages(locale);
+  return (
+    <html lang={locale} dir={getDirection(locale)} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: sidebarBootstrapScript }} />
+        <script dangerouslySetInnerHTML={{ __html: themeBootstrapScript }} />
+        <link rel="icon" href="/api/branding/icon"></link>
+      </head>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        <LanguageProvider initialLocale={locale} initialMessages={messages}>
+          <Providers>{children}</Providers>
+        </LanguageProvider>
+      </body>
+    </html>
+  );
 }

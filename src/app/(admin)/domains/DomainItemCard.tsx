@@ -66,12 +66,13 @@ export default function DomainItemCard({
           </span>
 
           <div className="flex flex-wrap gap-2">
-            <Badge
-              variant={item.status === "active" ? "success" : "secondary"}
-              className="gap-1"
-            >
+            <Badge variant={item.status === "active" ? "success" : "secondary"} className="gap-1">
               <StatusIcon ok={item.status === "active"} className="h-3 w-3" />
-              {item.status === "active" ? t("dns.status.active") : item.status === "pending" ? t("dns.status.pending") : item.status}
+              {item.status === "active"
+                ? t("dns.status.active")
+                : item.status === "pending"
+                  ? t("dns.status.pending")
+                  : item.status}
             </Badge>
             {item.receivingProvider === "cloudflare" ? (
               <Badge
@@ -87,13 +88,17 @@ export default function DomainItemCard({
               </Badge>
             ) : (
               <Badge variant="outline" className="gap-1">
-                {t("domains.badge.receivingVia", { provider: item.receivingProvider === "ses" ? "Amazon SES" : "Resend" })}
+                {t("domains.badge.receivingVia", {
+                  provider: item.receivingProvider === "ses" ? "Amazon SES" : "Resend",
+                })}
               </Badge>
             )}
             {item.sendingProvider === "resend" || item.sendingProvider === "ses" ? (
               <Badge variant="outline" className="gap-1">
                 <StatusIcon ok className="h-3 w-3" />
-                {t("domains.badge.sendingVia", { provider: item.sendingProvider === "ses" ? "Amazon SES" : "Resend" })}
+                {t("domains.badge.sendingVia", {
+                  provider: item.sendingProvider === "ses" ? "Amazon SES" : "Resend",
+                })}
               </Badge>
             ) : item.sendingProvider === "none" ? (
               <Badge variant="secondary" className="gap-1 opacity-50">
@@ -120,10 +125,7 @@ export default function DomainItemCard({
                     title={`${record.toUpperCase()} · ${getDnsAuthStatusLabel(auth[record], t)}`}
                   >
                     <span className="uppercase">{record}</span>
-                    <StatusIcon
-                      ok={auth[record] === "ok"}
-                      className="h-3.5 w-3.5"
-                    />
+                    <StatusIcon ok={auth[record] === "ok"} className="h-3.5 w-3.5" />
                   </span>
                 </Fragment>
               ))}
@@ -163,9 +165,7 @@ export default function DomainItemCard({
             setupMessage={setupMessage}
           />
         ) : dnsError ? (
-          <div className="px-4 pb-4 pt-4 text-sm text-red-600 sm:px-5 sm:pb-5">
-            {dnsError}
-          </div>
+          <div className="px-4 pb-4 pt-4 text-sm text-red-600 sm:px-5 sm:pb-5">{dnsError}</div>
         ) : dnsLoading ? (
           <DomainDnsSkeleton />
         ) : null)}

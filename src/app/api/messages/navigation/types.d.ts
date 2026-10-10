@@ -1,8 +1,8 @@
 export type MessageNavigationEntry = {
-	id: string;
-	unread: boolean;
+  id: string;
+  unread: boolean;
 };
 
 export type MessageNavigationResponse = {
-	messages: MessageNavigationEntry[];
+  messages: MessageNavigationEntry[];
 };

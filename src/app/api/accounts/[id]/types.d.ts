@@ -1,3 +1,3 @@
 export type AccountRouteParams = {
-	params: Promise<{ id: string }>;
+  params: Promise<{ id: string }>;
 };

@@ -51,9 +51,7 @@ function getDispatchConfig(env: CloudflareEnv): UpdateDispatchConfig {
   }
 
   if (!repository) {
-    throw new Error(
-      "GITHUB_UPDATE_REPO must be configured as owner/repository",
-    );
+    throw new Error("GITHUB_UPDATE_REPO must be configured as owner/repository");
   }
 
   return { token, repository, ref: ref || undefined };
@@ -100,8 +98,7 @@ async function githubRequest<T>(
     };
   }
 
-  const data =
-    response.status === 204 ? undefined : ((await response.json()) as T);
+  const data = response.status === 204 ? undefined : ((await response.json()) as T);
 
   return { data, response };
 }
@@ -113,9 +110,7 @@ async function getDispatchRef(config: UpdateDispatchConfig): Promise<string> {
     `/repos/${config.repository}`,
   );
   if (!response.ok || !data?.default_branch) {
-    throw new Error(
-      data?.message ?? "Could not determine the repository default branch",
-    );
+    throw new Error(data?.message ?? "Could not determine the repository default branch");
   }
 
   return data.default_branch;
@@ -125,21 +120,14 @@ function parseVersion(version: string): number[] {
   const normalized = version.trim().replace(/^v/, "").split("-")[0];
   const parts = normalized.split(".");
 
-  if (
-    parts.length < 1 ||
-    parts.length > 3 ||
-    parts.some((part) => !/^\d+$/.test(part))
-  ) {
+  if (parts.length < 1 || parts.length > 3 || parts.some((part) => !/^\d+$/.test(part))) {
     throw new Error(`Invalid application version: ${version}`);
   }
 
   return [0, 1, 2].map((index) => Number(parts[index] ?? 0));
 }
 
-function isNewerVersion(
-  targetVersion: string,
-  currentVersion: string,
-): boolean {
+function isNewerVersion(targetVersion: string, currentVersion: string): boolean {
   const target = parseVersion(targetVersion);
   const current = parseVersion(currentVersion);
 
@@ -163,9 +151,7 @@ async function getTargetVersion(): Promise<string> {
   );
 
   if (!response.ok || !data?.content || data.encoding !== "base64") {
-    throw new Error(
-      data?.message ?? "Could not read the target repository version",
-    );
+    throw new Error(data?.message ?? "Could not read the target repository version");
   }
 
   const dataStr = atob(data.content.replace(/\n/g, ""));
@@ -178,9 +164,7 @@ async function getTargetVersion(): Promise<string> {
   return packageJson.version;
 }
 
-export async function getUpdateStatus(
-  env: CloudflareEnv,
-): Promise<UpdateStatus> {
+export async function getUpdateStatus(env: CloudflareEnv): Promise<UpdateStatus> {
   const currentVersion = packageMetadata.version;
   const configuration = getUpdateConfiguration(env);
   const configured = configuration.every((item) => item.configured);
@@ -215,14 +199,13 @@ export async function dispatchUpdateWorkflow() {
 
   // Dispatch by workflow file name; GitHub accepts it in place of the numeric
   // workflow id, so this does not depend on the workflow's display name.
-  const { data, response } =
-    await githubRequest<GitHubWorkflowDispatchResponse>(
-      `/repos/${repository}/actions/workflows/${UPDATE_WORKFLOW}/dispatches`,
-      {
-        method: "POST",
-        body: JSON.stringify({ ref }),
-      },
-    );
+  const { data, response } = await githubRequest<GitHubWorkflowDispatchResponse>(
+    `/repos/${repository}/actions/workflows/${UPDATE_WORKFLOW}/dispatches`,
+    {
+      method: "POST",
+      body: JSON.stringify({ ref }),
+    },
+  );
 
   if (!response.ok) {
     throw new Error(

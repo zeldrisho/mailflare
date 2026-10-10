@@ -8,25 +8,28 @@ import { deleteMessageAttachment } from "@/lib/email/attachments";
 import { userOwnsDraft } from "../../../utils";
 
 type DraftAttachmentRouteParams = {
-	params: Promise<{ id: string; attachmentId: string }>;
+  params: Promise<{ id: string; attachmentId: string }>;
 };
 
 /** Drop one file from a draft, e.g. an attachment carried over by Forward the user does not want to send. */
 export async function DELETE(request: Request, { params }: DraftAttachmentRouteParams) {
-	const { id, attachmentId } = await params;
-	const env = getEnv();
-	const user = await requireUser(env, request);
-	const db = getDb(env);
-	const [draft] = await db.select().from(messages).where(eq(messages.id, id)).limit(1);
+  const { id, attachmentId } = await params;
+  const env = getEnv();
+  const user = await requireUser(env, request);
+  const db = getDb(env);
+  const [draft] = await db.select().from(messages).where(eq(messages.id, id)).limit(1);
 
-	if (!userOwnsDraft(draft, user.id)) {
-		return NextResponse.json({ error: "Draft not found" }, { status: 404 });
-	}
+  if (!userOwnsDraft(draft, user.id)) {
+    return NextResponse.json({ error: "Draft not found" }, { status: 404 });
+  }
 
-	const removed = await deleteMessageAttachment(env, id, attachmentId);
-	if (!removed) {
-		return NextResponse.json({ error: "Attachment not found" }, { status: 404 });
-	}
-	await db.update(agentDraftMetadata).set({ revision: sql`${agentDraftMetadata.revision} + 1`, humanEditedAt: new Date() }).where(eq(agentDraftMetadata.draftId, id));
-	return NextResponse.json({ ok: true });
+  const removed = await deleteMessageAttachment(env, id, attachmentId);
+  if (!removed) {
+    return NextResponse.json({ error: "Attachment not found" }, { status: 404 });
+  }
+  await db
+    .update(agentDraftMetadata)
+    .set({ revision: sql`${agentDraftMetadata.revision} + 1`, humanEditedAt: new Date() })
+    .where(eq(agentDraftMetadata.draftId, id));
+  return NextResponse.json({ ok: true });
 }

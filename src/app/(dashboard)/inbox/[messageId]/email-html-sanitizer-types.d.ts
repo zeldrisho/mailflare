@@ -1,3 +1,3 @@
 export type SanitizeEmailHtmlOptions = {
-	forOutgoing?: boolean;
+  forOutgoing?: boolean;
 };

@@ -24,19 +24,18 @@ function withKey(text: string, key: string) {
   );
 }
 
-export function ShortcutsHelpDialog({
-  isOpen,
-  onClose,
-  shortcuts,
-}: ShortcutsHelpDialogProps) {
+export function ShortcutsHelpDialog({ isOpen, onClose, shortcuts }: ShortcutsHelpDialogProps) {
   const { t } = useLanguage();
   if (!isOpen) return null;
 
-  const grouped = shortcuts.reduce((acc, item) => {
-    if (!acc[item.category]) acc[item.category] = [];
-    acc[item.category].push(item);
-    return acc;
-  }, {} as Record<string, ShortcutDefinition[]>);
+  const grouped = shortcuts.reduce(
+    (acc, item) => {
+      if (!acc[item.category]) acc[item.category] = [];
+      acc[item.category].push(item);
+      return acc;
+    },
+    {} as Record<string, ShortcutDefinition[]>,
+  );
 
   const formatKey = (shortcut: ShortcutDefinition) => {
     const parts: string[] = [];
@@ -54,11 +53,7 @@ export function ShortcutsHelpDialog({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-neutral-900/40 backdrop-blur-xs animate-in fade-in duration-100">
-      <div
-        className="fixed inset-0"
-        onClick={onClose}
-        aria-hidden="true"
-      />
+      <div className="fixed inset-0" onClick={onClose} aria-hidden="true" />
       <div className="relative w-full max-w-2xl bg-white border border-neutral-200 rounded-2xl shadow-2xl overflow-hidden flex flex-col z-10 max-h-[85vh]">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-100">
@@ -70,9 +65,7 @@ export function ShortcutsHelpDialog({
               <h2 className="text-base font-semibold text-neutral-900">
                 {t("shortcutsHelp.title")}
               </h2>
-              <p className="text-xs text-neutral-400">
-                {t("shortcutsHelp.subtitle")}
-              </p>
+              <p className="text-xs text-neutral-400">{t("shortcutsHelp.subtitle")}</p>
             </div>
           </div>
           <button
@@ -94,13 +87,8 @@ export function ShortcutsHelpDialog({
               </h3>
               <div className="space-y-2">
                 {items.map((item, idx) => (
-                  <div
-                    key={idx}
-                    className="flex items-center justify-between text-sm"
-                  >
-                    <span className="text-neutral-700">
-                      {item.label}
-                    </span>
+                  <div key={idx} className="flex items-center justify-between text-sm">
+                    <span className="text-neutral-700">{item.label}</span>
                     <kbd className="px-2 py-0.5 text-xs font-mono font-medium text-neutral-600 bg-neutral-100 border border-neutral-200 rounded-md shadow-2xs">
                       {formatKey(item)}
                     </kbd>

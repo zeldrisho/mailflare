@@ -18,14 +18,14 @@ import {
 import { useLanguage } from "@/components/language-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
@@ -84,8 +84,12 @@ export default function BackupsPage() {
   const autoSaveSettings = useMutation({
     mutationFn: saveBackupSettings,
     onMutate: (nextSettings) => setSettings(nextSettings),
-    onSuccess: (_data, nextSettings) => { savedSettings.current = nextSettings; },
-    onError: () => { if (savedSettings.current) setSettings(savedSettings.current); },
+    onSuccess: (_data, nextSettings) => {
+      savedSettings.current = nextSettings;
+    },
+    onError: () => {
+      if (savedSettings.current) setSettings(savedSettings.current);
+    },
   });
 
   const runBackup = useMutation({
@@ -121,9 +125,7 @@ export default function BackupsPage() {
           <h1 className="text-2xl md:text-3xl font-medium text-neutral-900">
             {t("backups.title")}
           </h1>
-          <p className="mt-1 text-sm text-neutral-500">
-            {t("backups.description")}
-          </p>
+          <p className="mt-1 text-sm text-neutral-500">{t("backups.description")}</p>
         </div>
         <div className="flex items-center gap-2">
           <Input
@@ -138,23 +140,43 @@ export default function BackupsPage() {
               restore.mutate(file);
             }}
           />
-          <Button onClick={() => runBackup.mutate()} disabled={runBackup.isPending || !backupConfigured}>
+          <Button
+            onClick={() => runBackup.mutate()}
+            disabled={runBackup.isPending || !backupConfigured}
+          >
             <Play size={18} />
             {runBackup.isPending ? t("backups.starting") : t("backups.backUp")}
           </Button>
           <DropdownMenu.Root>
             <DropdownMenu.Trigger asChild>
-              <Button type="button" variant="outline" className="h-10 w-10 px-0" aria-label={t("backups.actions")}>
+              <Button
+                type="button"
+                variant="outline"
+                className="h-10 w-10 px-0"
+                aria-label={t("backups.actions")}
+              >
                 <MoreVertical className="h-4 w-4" />
               </Button>
             </DropdownMenu.Trigger>
             <DropdownMenu.Portal>
-              <DropdownMenu.Content align="end" sideOffset={6} className="z-50 min-w-48 rounded-lg border border-neutral-200 bg-white p-1 text-sm shadow-lg">
-                <DropdownMenu.Item disabled={restore.isPending} onSelect={() => restoreInput.current?.click()} className="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-neutral-900 outline-none hover:bg-neutral-100 focus:bg-neutral-100 data-[disabled]:pointer-events-none data-[disabled]:opacity-50">
+              <DropdownMenu.Content
+                align="end"
+                sideOffset={6}
+                className="z-50 min-w-48 rounded-lg border border-neutral-200 bg-white p-1 text-sm shadow-lg"
+              >
+                <DropdownMenu.Item
+                  disabled={restore.isPending}
+                  onSelect={() => restoreInput.current?.click()}
+                  className="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-neutral-900 outline-none hover:bg-neutral-100 focus:bg-neutral-100 data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
+                >
                   <Upload className="h-4 w-4" />
                   {restore.isPending ? t("backups.restoring") : t("backups.restore")}
                 </DropdownMenu.Item>
-                <DropdownMenu.Item disabled={!settings || autoSaveSettings.isPending} onSelect={() => setSettingsOpen(true)} className="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-neutral-900 outline-none hover:bg-neutral-100 focus:bg-neutral-100 data-[disabled]:pointer-events-none data-[disabled]:opacity-50">
+                <DropdownMenu.Item
+                  disabled={!settings || autoSaveSettings.isPending}
+                  onSelect={() => setSettingsOpen(true)}
+                  className="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-neutral-900 outline-none hover:bg-neutral-100 focus:bg-neutral-100 data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
+                >
                   <Settings className="h-4 w-4" />
                   {t("backups.settings")}
                 </DropdownMenu.Item>
@@ -170,20 +192,58 @@ export default function BackupsPage() {
             <DialogTitle>{t("backups.tablesTitle")}</DialogTitle>
             <DialogDescription>{t("backups.tablesDescription")}</DialogDescription>
           </DialogHeader>
-          {settings && <div className="space-y-5">
-            <div className="divide-y divide-neutral-100">
-              {BACKUP_TABLE_GROUPS.map((group) => {
-                const enabled = !settings.excludedTableGroups.includes(group.id);
-                const lastEnabled = enabled && settings.excludedTableGroups.length === BACKUP_TABLE_GROUPS.length - 1;
-                return <div key={group.id} className="flex items-start justify-between gap-4 py-4 first:pt-0 last:pb-0">
-                  <div className="min-w-0"><p className="text-sm font-medium text-neutral-900">{group.label}</p><p className="mt-1 break-words text-xs text-neutral-500">{t("backups.tables", { list: group.tables.join(", ") })}</p></div>
-                  <Switch checked={enabled} disabled={lastEnabled} onCheckedChange={(checked) => setSettings({ ...settings, excludedTableGroups: checked ? settings.excludedTableGroups.filter((id) => id !== group.id) : [...settings.excludedTableGroups, group.id] })} aria-label={t("backups.backUpGroup", { group: group.label })} />
-                </div>;
-              })}
+          {settings && (
+            <div className="space-y-5">
+              <div className="divide-y divide-neutral-100">
+                {BACKUP_TABLE_GROUPS.map((group) => {
+                  const enabled = !settings.excludedTableGroups.includes(group.id);
+                  const lastEnabled =
+                    enabled &&
+                    settings.excludedTableGroups.length === BACKUP_TABLE_GROUPS.length - 1;
+                  return (
+                    <div
+                      key={group.id}
+                      className="flex items-start justify-between gap-4 py-4 first:pt-0 last:pb-0"
+                    >
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-neutral-900">{group.label}</p>
+                        <p className="mt-1 break-words text-xs text-neutral-500">
+                          {t("backups.tables", { list: group.tables.join(", ") })}
+                        </p>
+                      </div>
+                      <Switch
+                        checked={enabled}
+                        disabled={lastEnabled}
+                        onCheckedChange={(checked) =>
+                          setSettings({
+                            ...settings,
+                            excludedTableGroups: checked
+                              ? settings.excludedTableGroups.filter((id) => id !== group.id)
+                              : [...settings.excludedTableGroups, group.id],
+                          })
+                        }
+                        aria-label={t("backups.backUpGroup", { group: group.label })}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+              {saveSettings.error && (
+                <p className="text-sm text-red-700">
+                  {saveSettings.error instanceof Error
+                    ? saveSettings.error.message
+                    : t("backups.saveSettingsFailed")}
+                </p>
+              )}
+              <Button
+                onClick={() => saveSettings.mutate(settings)}
+                disabled={saveSettings.isPending}
+              >
+                <Save className="h-4 w-4" />
+                {saveSettings.isPending ? t("common.saving") : t("backups.saveSettings")}
+              </Button>
             </div>
-            {saveSettings.error && <p className="text-sm text-red-700">{saveSettings.error instanceof Error ? saveSettings.error.message : t("backups.saveSettingsFailed")}</p>}
-            <Button onClick={() => saveSettings.mutate(settings)} disabled={saveSettings.isPending}><Save className="h-4 w-4" />{saveSettings.isPending ? t("common.saving") : t("backups.saveSettings")}</Button>
-          </div>}
+          )}
         </DialogContent>
       </Dialog>
 
@@ -199,9 +259,7 @@ export default function BackupsPage() {
             <div className="flex items-start gap-3">
               <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-700" />
               <div>
-                <CardTitle className="text-amber-950">
-                  {t("backups.setupTitle")}
-                </CardTitle>
+                <CardTitle className="text-amber-950">{t("backups.setupTitle")}</CardTitle>
                 <CardDescription className="mt-1 text-amber-800">
                   {t("backups.setupDescription")}
                 </CardDescription>
@@ -227,9 +285,7 @@ export default function BackupsPage() {
                 disabled={backups.isFetching}
                 onClick={() => void backups.refetch()}
               >
-                <RefreshCw
-                  className={`h-4 w-4 ${backups.isFetching ? "animate-spin" : ""}`}
-                />
+                <RefreshCw className={`h-4 w-4 ${backups.isFetching ? "animate-spin" : ""}`} />
                 {t("backups.checkAgain")}
               </Button>
             </div>
@@ -240,9 +296,7 @@ export default function BackupsPage() {
       <Card className="rounded-3xl border-0 bg-white p-6">
         <CardHeader className="py-0">
           <CardTitle>{t("backups.automatic")}</CardTitle>
-          <CardDescription>
-            {t("backups.scheduleNote")}
-          </CardDescription>
+          <CardDescription>{t("backups.scheduleNote")}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-5 pt-5">
           {settings && (
@@ -260,24 +314,21 @@ export default function BackupsPage() {
                 <>
                   <div className="grid gap-4">
                     <div className="flex items-center justify-between gap-4">
-                      <Label htmlFor="schedule-type" className="flex-1">{t("backups.frequency")}</Label>
+                      <Label htmlFor="schedule-type" className="flex-1">
+                        {t("backups.frequency")}
+                      </Label>
                       <Select
                         id="schedule-type"
                         value={settings.scheduleType}
                         containerClassName="w-1/2 max-w-52 shrink-0 text-sm"
                         disabled={autoSaveSettings.isPending}
                         onChange={(event) => {
-                          const scheduleType = event.target
-                            .value as BackupSettings["scheduleType"];
+                          const scheduleType = event.target.value as BackupSettings["scheduleType"];
                           autoSaveSettings.mutate({
                             ...settings,
                             scheduleType,
                             scheduleValue:
-                              scheduleType === "weekly"
-                                ? 1
-                                : scheduleType === "monthly"
-                                  ? 1
-                                  : null,
+                              scheduleType === "weekly" ? 1 : scheduleType === "monthly" ? 1 : null,
                           });
                         }}
                         className="px-3 py-2"
@@ -302,8 +353,8 @@ export default function BackupsPage() {
                               scheduleValue: Number(event.target.value),
                             })
                           }
-                          
-                        className="px-3 py-2 text-sm"
+
+                          className="px-3 py-2 text-sm"
                         >
                           {WEEKDAYS.map((day) => (
                             <option key={day.value} value={day.value}>
@@ -332,8 +383,13 @@ export default function BackupsPage() {
                             })
                           }
                           onBlur={(event) => {
-                            if (event.currentTarget.checkValidity()) autoSaveSettings.mutate(settings);
-                            else setSettings({ ...settings, scheduleValue: savedSettings.current?.scheduleValue ?? 1 });
+                            if (event.currentTarget.checkValidity())
+                              autoSaveSettings.mutate(settings);
+                            else
+                              setSettings({
+                                ...settings,
+                                scheduleValue: savedSettings.current?.scheduleValue ?? 1,
+                              });
                           }}
                         />
                       </div>
@@ -357,9 +413,7 @@ export default function BackupsPage() {
                     </div>
 
                     <div className="flex items-center justify-between gap-4">
-                      <Label htmlFor="retention-days">
-                        {t("backups.deleteOlderThan")}
-                      </Label>
+                      <Label htmlFor="retention-days">{t("backups.deleteOlderThan")}</Label>
                       <div className="flex w-1/2 max-w-52 shrink-0 items-center gap-2 relative">
                         <Input
                           id="retention-days"
@@ -376,11 +430,18 @@ export default function BackupsPage() {
                             })
                           }
                           onBlur={(event) => {
-                            if (event.currentTarget.checkValidity()) autoSaveSettings.mutate(settings);
-                            else setSettings({ ...settings, retentionDays: savedSettings.current?.retentionDays ?? 30 });
+                            if (event.currentTarget.checkValidity())
+                              autoSaveSettings.mutate(settings);
+                            else
+                              setSettings({
+                                ...settings,
+                                retentionDays: savedSettings.current?.retentionDays ?? 30,
+                              });
                           }}
                         />
-                        <span className="text-sm text-neutral-500 absolute z-10 right-6">{t("backups.days")}</span>
+                        <span className="text-sm text-neutral-500 absolute z-10 right-6">
+                          {t("backups.days")}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -424,12 +485,8 @@ export default function BackupsPage() {
             <Badge variant="outline" className={getStatusClass(backup.status)}>
               {t(`backups.status.${backup.status}` as TranslationKey)}
             </Badge>
-            <span className="text-sm text-neutral-600">
-              {formatBackupSize(backup.size)}
-            </span>
-            <span className="text-sm text-neutral-600">
-              {formatBackupDate(backup.createdAt)}
-            </span>
+            <span className="text-sm text-neutral-600">{formatBackupSize(backup.size)}</span>
+            <span className="text-sm text-neutral-600">{formatBackupDate(backup.createdAt)}</span>
             <div className="flex gap-1">
               <Button
                 size="sm"

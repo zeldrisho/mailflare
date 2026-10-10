@@ -52,9 +52,7 @@ export function AuthShell({
               {title}
             </h1>
             {description && (
-              <p className="mt-5 max-w-md text-base leading-7 text-neutral-600">
-                {description}
-              </p>
+              <p className="mt-5 max-w-md text-base leading-7 text-neutral-600">{description}</p>
             )}
           </div>
         </section>
@@ -64,16 +62,10 @@ export function AuthShell({
             <div className="mb-7 flex flex-wrap gap-2 text-xs font-semibold">
               {steps.map((step, index) => (
                 <span key={step.label} className="flex items-center gap-2">
-                  <span
-                    className={
-                      step.active ? "text-blue-700" : "text-neutral-400"
-                    }
-                  >
+                  <span className={step.active ? "text-blue-700" : "text-neutral-400"}>
                     {index + 1} {step.label}
                   </span>
-                  {index < steps.length - 1 && (
-                    <span className="text-neutral-300">/</span>
-                  )}
+                  {index < steps.length - 1 && <span className="text-neutral-300">/</span>}
                 </span>
               ))}
             </div>
@@ -82,11 +74,7 @@ export function AuthShell({
           <div className="mt-8 max-w-48">
             <LanguageSelector />
           </div>
-          {footer && (
-            <div className="mt-8 text-sm font-medium text-blue-700">
-              {footer}
-            </div>
-          )}
+          {footer && <div className="mt-8 text-sm font-medium text-blue-700">{footer}</div>}
         </section>
       </main>
     </div>

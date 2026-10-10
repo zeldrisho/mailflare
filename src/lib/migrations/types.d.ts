@@ -1,18 +1,18 @@
 export interface BundledMigration {
-	name: string;
-	statements: string[];
+  name: string;
+  statements: string[];
 }
 
 export interface MigrationStatus {
-	ready: boolean;
-	pending: string[];
-	unknown: string[];
+  ready: boolean;
+  pending: string[];
+  unknown: string[];
 }
 
 export interface MigrationResult extends MigrationStatus {
-	applied: string[];
+  applied: string[];
 }
 
 export interface MigrationNameRow {
-	name: string;
+  name: string;
 }

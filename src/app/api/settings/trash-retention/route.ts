@@ -10,28 +10,31 @@ import type { UpdateTrashRetentionSettingsInput } from "./types";
 import { parseUpdateTrashRetentionSettingsRequest } from "./utils";
 
 export async function GET(request: Request) {
-	const env = getEnv();
-	const auth = await requireSessionUser(env, request);
-	if (auth.error) return auth.error;
-	return NextResponse.json({ days: normalizeTrashRetentionDays(auth.user.trashRetentionDays) });
+  const env = getEnv();
+  const auth = await requireSessionUser(env, request);
+  if (auth.error) return auth.error;
+  return NextResponse.json({ days: normalizeTrashRetentionDays(auth.user.trashRetentionDays) });
 }
 
 export async function PATCH(request: Request) {
-	const env = getEnv();
-	const auth = await requireSessionUser(env, request);
-	if (auth.error) return auth.error;
+  const env = getEnv();
+  const auth = await requireSessionUser(env, request);
+  if (auth.error) return auth.error;
 
-	let input: UpdateTrashRetentionSettingsInput;
-	try {
-		input = await parseUpdateTrashRetentionSettingsRequest(request);
-	} catch (error) {
-		return NextResponse.json({ error: error instanceof ZodError ? error.flatten() : "Invalid request" }, { status: 400 });
-	}
+  let input: UpdateTrashRetentionSettingsInput;
+  try {
+    input = await parseUpdateTrashRetentionSettingsRequest(request);
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof ZodError ? error.flatten() : "Invalid request" },
+      { status: 400 },
+    );
+  }
 
-	await getDb(env)
-		.update(users)
-		.set({ trashRetentionDays: input.days })
-		.where(eq(users.id, auth.user.id));
+  await getDb(env)
+    .update(users)
+    .set({ trashRetentionDays: input.days })
+    .where(eq(users.id, auth.user.id));
 
-	return NextResponse.json({ days: input.days });
+  return NextResponse.json({ days: input.days });
 }

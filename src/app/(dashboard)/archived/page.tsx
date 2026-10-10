@@ -4,5 +4,5 @@ import { archivedFolderConfig } from "@/components/messages/message-folder-confi
 import { MessageFolderPage } from "@/components/messages/message-folder-page";
 
 export default function ArchivedPage() {
-	return <MessageFolderPage config={archivedFolderConfig} />;
+  return <MessageFolderPage config={archivedFolderConfig} />;
 }

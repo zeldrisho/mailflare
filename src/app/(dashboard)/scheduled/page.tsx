@@ -4,5 +4,5 @@ import { scheduledFolderConfig } from "@/components/messages/message-folder-conf
 import { MessageFolderPage } from "@/components/messages/message-folder-page";
 
 export default function ScheduledPage() {
-	return <MessageFolderPage config={scheduledFolderConfig} />;
+  return <MessageFolderPage config={scheduledFolderConfig} />;
 }

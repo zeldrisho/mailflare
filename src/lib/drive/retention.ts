@@ -12,27 +12,41 @@ const MAX_PASSES = 20;
  * rows and stored objects both. Runs once a day from the scheduled handler. Each pass handles one batch of each kind
  * and passes repeat until nothing is left (up to a cap), so a large backlog is cleared in a single daily run.
  */
-export async function runDriveTrashRetention(env: CloudflareEnv, now = new Date()): Promise<number> {
-	const db = getDb(env);
-	const cutoff = new Date(now.getTime() - DRIVE_TRASH_RETENTION_DAYS * 24 * 60 * 60_000);
-	let removed = 0;
+export async function runDriveTrashRetention(
+  env: CloudflareEnv,
+  now = new Date(),
+): Promise<number> {
+  const db = getDb(env);
+  const cutoff = new Date(now.getTime() - DRIVE_TRASH_RETENTION_DAYS * 24 * 60 * 60_000);
+  let removed = 0;
 
-	for (let pass = 0; pass < MAX_PASSES; pass += 1) {
-		const expiredItems = await db.select().from(driveItems).where(and(isNotNull(driveItems.trashedAt), lte(driveItems.trashedAt, cutoff))).limit(BATCH_SIZE);
-		if (expiredItems.length) await deleteDriveItems(env, expiredItems);
+  for (let pass = 0; pass < MAX_PASSES; pass += 1) {
+    const expiredItems = await db
+      .select()
+      .from(driveItems)
+      .where(and(isNotNull(driveItems.trashedAt), lte(driveItems.trashedAt, cutoff)))
+      .limit(BATCH_SIZE);
+    if (expiredItems.length) await deleteDriveItems(env, expiredItems);
 
-		const expiredAttachments = await db
-			.select({ id: messageAttachments.id, r2Key: messageAttachments.r2Key })
-			.from(messageAttachments)
-			.where(and(isNotNull(messageAttachments.trashedAt), lte(messageAttachments.trashedAt, cutoff)))
-			.limit(BATCH_SIZE);
-		if (expiredAttachments.length) {
-			await env.BUCKET.delete(expiredAttachments.map((row) => row.r2Key));
-			await db.delete(messageAttachments).where(inArray(messageAttachments.id, expiredAttachments.map((row) => row.id)));
-		}
+    const expiredAttachments = await db
+      .select({ id: messageAttachments.id, r2Key: messageAttachments.r2Key })
+      .from(messageAttachments)
+      .where(
+        and(isNotNull(messageAttachments.trashedAt), lte(messageAttachments.trashedAt, cutoff)),
+      )
+      .limit(BATCH_SIZE);
+    if (expiredAttachments.length) {
+      await env.BUCKET.delete(expiredAttachments.map((row) => row.r2Key));
+      await db.delete(messageAttachments).where(
+        inArray(
+          messageAttachments.id,
+          expiredAttachments.map((row) => row.id),
+        ),
+      );
+    }
 
-		removed += expiredItems.length + expiredAttachments.length;
-		if (expiredItems.length < BATCH_SIZE && expiredAttachments.length < BATCH_SIZE) break;
-	}
-	return removed;
+    removed += expiredItems.length + expiredAttachments.length;
+    if (expiredItems.length < BATCH_SIZE && expiredAttachments.length < BATCH_SIZE) break;
+  }
+  return removed;
 }

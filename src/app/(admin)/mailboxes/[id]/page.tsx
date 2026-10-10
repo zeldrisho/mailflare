@@ -7,13 +7,7 @@ import { useEffect, useState } from "react";
 import { useLanguage } from "@/components/language-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
@@ -123,9 +117,7 @@ export default function MailboxSettingsPage() {
             {t("mailbox.title")}
           </h1>
           {address ? (
-            <p className="mt-1 truncate no-font-mono text-sm text-neutral-500">
-              {address}
-            </p>
+            <p className="mt-1 truncate no-font-mono text-sm text-neutral-500">{address}</p>
           ) : (
             <Skeleton className="mt-2 h-4 w-52" />
           )}
@@ -134,17 +126,13 @@ export default function MailboxSettingsPage() {
           {mailbox.data?.type === "shared" && (
             <Badge variant="secondary">{t("mailboxes.shared")}</Badge>
           )}
-          {mailbox.data?.isPrimary && (
-            <Badge variant="secondary">{t("mailbox.primary")}</Badge>
-          )}
+          {mailbox.data?.isPrimary && <Badge variant="secondary">{t("mailbox.primary")}</Badge>}
         </div>
       </div>
 
       {mailbox.isError && (
         <p className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-          {mailbox.error instanceof Error
-            ? mailbox.error.message
-            : t("mailbox.loadFailed")}
+          {mailbox.error instanceof Error ? mailbox.error.message : t("mailbox.loadFailed")}
         </p>
       )}
 
@@ -180,10 +168,10 @@ export default function MailboxSettingsPage() {
               disabled={mailbox.isLoading || updateName.isPending}
             />
             <span>
-              <span className="block text-sm font-medium text-neutral-900">{t("aliases.useAll")}</span>
-              <span className="mt-1 block text-sm text-neutral-500">
-                {t("mailbox.useAllHint")}
+              <span className="block text-sm font-medium text-neutral-900">
+                {t("aliases.useAll")}
               </span>
+              <span className="mt-1 block text-sm text-neutral-500">{t("mailbox.useAllHint")}</span>
             </span>
           </label>
           {updateName.isError && (
@@ -193,9 +181,7 @@ export default function MailboxSettingsPage() {
                 : t("mailbox.updateFailed")}
             </p>
           )}
-          {updateName.isSuccess && (
-            <p className="text-sm text-green-700">{t("mailbox.saved")}</p>
-          )}
+          {updateName.isSuccess && <p className="text-sm text-green-700">{t("mailbox.saved")}</p>}
           <Button
             onClick={() => updateName.mutate()}
             disabled={mailbox.isLoading || updateName.isPending}
@@ -209,9 +195,7 @@ export default function MailboxSettingsPage() {
       <Card className="rounded-3xl border-0 bg-white p-6">
         <CardHeader className="py-0">
           <CardTitle>{t("mailbox.aliases")}</CardTitle>
-          <CardDescription>
-            {t("mailbox.aliasesDescription")}
-          </CardDescription>
+          <CardDescription>{t("mailbox.aliasesDescription")}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4 pt-5">
           {aliases.isLoading && <Skeleton className="h-12 w-full rounded-2xl" />}
@@ -230,7 +214,9 @@ export default function MailboxSettingsPage() {
                 type="button"
                 size="icon"
                 variant="ghost"
-                aria-label={t("mailbox.removeAddress", { address: `${alias.localPart}@${alias.hostname}` })}
+                aria-label={t("mailbox.removeAddress", {
+                  address: `${alias.localPart}@${alias.hostname}`,
+                })}
                 disabled={removeAlias.isPending}
                 onClick={() => removeAlias.mutate(alias.id)}
               >
@@ -281,7 +267,9 @@ export default function MailboxSettingsPage() {
           </div>
           {addAlias.isError && (
             <p className="text-sm text-red-600">
-              {addAlias.error instanceof Error ? addAlias.error.message : t("mailbox.aliasAddFailed")}
+              {addAlias.error instanceof Error
+                ? addAlias.error.message
+                : t("mailbox.aliasAddFailed")}
             </p>
           )}
           {removeAlias.isError && (
@@ -298,9 +286,7 @@ export default function MailboxSettingsPage() {
         <Card className="rounded-3xl border-0 bg-white p-6">
           <CardHeader className="py-0">
             <CardTitle>{t("mailbox.sharedAccess")}</CardTitle>
-            <CardDescription>
-              {t("mailbox.sharedAccessDescription")}
-            </CardDescription>
+            <CardDescription>{t("mailbox.sharedAccessDescription")}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4 pt-5">
             {sharedAccess.isLoading && <Skeleton className="h-16 w-full rounded-2xl" />}
@@ -368,7 +354,9 @@ export default function MailboxSettingsPage() {
             </div>
             {addMember.isError && (
               <p className="text-sm text-red-600">
-                {addMember.error instanceof Error ? addMember.error.message : t("mailbox.accountAddFailed")}
+                {addMember.error instanceof Error
+                  ? addMember.error.message
+                  : t("mailbox.accountAddFailed")}
               </p>
             )}
           </CardContent>
@@ -394,12 +382,7 @@ export default function MailboxSettingsPage() {
             variant="destructive"
             disabled={!mailbox.data || removeMailbox.isPending}
             onClick={() => {
-              if (
-                !window.confirm(
-                  t("mailbox.deleteConfirm", { address }),
-                )
-              )
-                return;
+              if (!window.confirm(t("mailbox.deleteConfirm", { address }))) return;
               removeMailbox.mutate();
             }}
           >
@@ -409,7 +392,7 @@ export default function MailboxSettingsPage() {
         </CardContent>
       </Card>
 
-{/* 
+      {/* 
       <Card className="rounded-3xl border-0 bg-white p-6">
         <CardHeader className="py-0">
           <CardTitle>Address</CardTitle>

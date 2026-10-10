@@ -1,3 +1,3 @@
 export type MessageDragPayload = {
-	messageIds: string[];
+  messageIds: string[];
 };

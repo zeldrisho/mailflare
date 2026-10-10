@@ -2,7 +2,14 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { AlertTriangle, ArrowRight, CheckCircle2, LoaderCircle, MailPlus, XCircle } from "lucide-react";
+import {
+  AlertTriangle,
+  ArrowRight,
+  CheckCircle2,
+  LoaderCircle,
+  MailPlus,
+  XCircle,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { useLanguage } from "@/components/language-provider";
 import { AuthShell } from "@/components/auth/auth-shell";
@@ -25,11 +32,11 @@ export function RegisterClient() {
   const { t } = useLanguage();
   const router = useRouter();
   const [hasAdminAccount, setHasAdminAccount] = useState<boolean | null>(null);
-  const [hasPrimaryDomain, setHasPrimaryDomain] = useState<boolean | null>(
-    null,
-  );
+  const [hasPrimaryDomain, setHasPrimaryDomain] = useState<boolean | null>(null);
   const [primaryDomain, setPrimaryDomain] = useState<string | null>(null);
-  const [primaryDomainSendingRequested, setPrimaryDomainSendingRequested] = useState<boolean | null>(null);
+  const [primaryDomainSendingRequested, setPrimaryDomainSendingRequested] = useState<
+    boolean | null
+  >(null);
   const [setupDomain, setSetupDomain] = useState<string | null>(null);
   const [domainCheck, setDomainCheck] = useState<DomainPreflight | null>(null);
   const [domainChecking, setDomainChecking] = useState(false);
@@ -115,7 +122,9 @@ export function RegisterClient() {
     setLoading(true);
     setError(null);
 
-    const hostname = String(new FormData(e.currentTarget).get("domain") ?? "").toLowerCase().trim();
+    const hostname = String(new FormData(e.currentTarget).get("domain") ?? "")
+      .toLowerCase()
+      .trim();
     const usedCachedCheck = domainCheck?.hostname === hostname;
     const result: { ok: boolean; data: DomainSetupResult } = usedCachedCheck
       ? { ok: true, data: { domain: domainCheck } }
@@ -123,9 +132,7 @@ export function RegisterClient() {
     const { ok, data } = result;
     setLoading(false);
     if (!ok || !data.domain) {
-      setError(
-        typeof data.error === "string" ? data.error : t("setup.domainFailed"),
-      );
+      setError(typeof data.error === "string" ? data.error : t("setup.domainFailed"));
       return;
     }
     setSetupDomain(data.domain.hostname);
@@ -170,7 +177,7 @@ export function RegisterClient() {
       domain,
       enableSending: setupDomain
         ? setupEnableSending
-        : primaryDomainSendingRequested ?? undefined,
+        : (primaryDomainSendingRequested ?? undefined),
       replaceMxRecords,
     });
     setLoading(false);
@@ -182,9 +189,7 @@ export function RegisterClient() {
         setTurnstileReset((value) => value + 1);
         return;
       }
-      setError(
-        typeof data.error === "string" ? data.error : t("setup.registrationFailed"),
-      );
+      setError(typeof data.error === "string" ? data.error : t("setup.registrationFailed"));
       setTurnstileReset((value) => value + 1);
       return;
     }
@@ -199,10 +204,7 @@ export function RegisterClient() {
         icon={MailPlus}
         title={t("setup.closedTitle")}
         footer={
-          <Link
-            href="/login"
-            className="inline-flex items-center gap-2 hover:underline"
-          >
+          <Link href="/login" className="inline-flex items-center gap-2 hover:underline">
             {t("setup.signInInstead")}
             <ArrowRight className="h-4 w-4" />
           </Link>
@@ -227,25 +229,27 @@ export function RegisterClient() {
   return (
     <AuthShell
       icon={MailPlus}
-      title={step === 1 ? t("setup.prepareTitle") : showDomainStep ? t("setup.addDomainTitle") : t("setup.createMailboxTitle")}
+      title={
+        step === 1
+          ? t("setup.prepareTitle")
+          : showDomainStep
+            ? t("setup.addDomainTitle")
+            : t("setup.createMailboxTitle")
+      }
       // description={
       // 	showDomainStep
       // 		? "Connect the primary Cloudflare zone first so routing records can be created before the first mailbox."
       // 		: `Choose a mailbox username on ${accountDomain ?? "the primary domain"} and add a recovery email.`
       // }
-      steps={
-        [
-          { label: t("setup.stepSystem"), active: step === 1 },
-          { label: t("setup.stepDomain"), active: step === 2 },
-          { label: t("setup.stepAccount"), active: step === 3 },
-        ]
-      }
+      steps={[
+        { label: t("setup.stepSystem"), active: step === 1 },
+        { label: t("setup.stepDomain"), active: step === 2 },
+        { label: t("setup.stepAccount"), active: step === 3 },
+      ]}
     >
       {step === 1 ? (
         <div className="space-y-5">
-          <p className="text-sm leading-6 text-neutral-600">
-            {t("setup.prepareIntro")}
-          </p>
+          <p className="text-sm leading-6 text-neutral-600">{t("setup.prepareIntro")}</p>
           <div className="space-y-2">
             {loading && checks.length === 0 && (
               <div className="flex items-center gap-3 rounded-2xl bg-neutral-50 px-4 py-3 text-sm text-neutral-600">
@@ -254,7 +258,10 @@ export function RegisterClient() {
               </div>
             )}
             {checks.map((check) => (
-              <div key={check.key} className="flex items-start gap-3 rounded-2xl bg-neutral-50 px-4 py-3">
+              <div
+                key={check.key}
+                className="flex items-start gap-3 rounded-2xl bg-neutral-50 px-4 py-3"
+              >
                 {check.configured ? (
                   <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-green-600" />
                 ) : (
@@ -262,7 +269,9 @@ export function RegisterClient() {
                 )}
                 <div>
                   <p className="text-sm font-medium text-neutral-800">{check.key}</p>
-                  {!check.configured && <p className="mt-1 text-xs leading-5 text-neutral-500">{check.message}</p>}
+                  {!check.configured && (
+                    <p className="mt-1 text-xs leading-5 text-neutral-500">{check.message}</p>
+                  )}
                 </div>
               </div>
             ))}
@@ -316,9 +325,7 @@ export function RegisterClient() {
                 }
               }}
             />
-            <p className="text-xs leading-5 text-neutral-500">
-              {t("setup.zoneHint")}
-            </p>
+            <p className="text-xs leading-5 text-neutral-500">{t("setup.zoneHint")}</p>
           </div>
           <div className="flex items-center justify-between gap-4 rounded-2xl bg-neutral-50 px-4 py-3">
             <div>
@@ -361,36 +368,34 @@ export function RegisterClient() {
         </form>
       ) : (
         <form method="post" onSubmit={onSubmit} className="space-y-5">
-					{mxChecking && (
-						<div className="flex items-center gap-3 rounded-2xl bg-neutral-50 px-4 py-3 text-sm text-neutral-600">
-							<LoaderCircle className="h-4 w-4 animate-spin" />
-							{t("setup.checkingMx")}
-						</div>
-					)}
-					{mxRecordsExist === false && (
-						<div className="flex items-center gap-3 rounded-2xl bg-green-50 px-4 py-3 text-sm text-green-700">
-							<CheckCircle2 className="h-4 w-4" />
-							{t("setup.noMx")}
-						</div>
-					)}
-					{mxRecordsExist === true && (
-						<label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4 text-amber-900">
-							<Checkbox
-								checked={replaceMxRecords}
-								onChange={(event) => setReplaceMxRecords(event.target.checked)}
-								className="mt-1"
-							/>
-							<span>
-								<span className="flex items-center gap-2 text-sm font-medium">
-									<AlertTriangle className="h-4 w-4" />
-									{t("setup.replaceMx")}
-								</span>
-								<span className="mt-1 block text-xs leading-5">
-									{t("setup.replaceMxHint")}
-								</span>
-							</span>
-						</label>
-					)}
+          {mxChecking && (
+            <div className="flex items-center gap-3 rounded-2xl bg-neutral-50 px-4 py-3 text-sm text-neutral-600">
+              <LoaderCircle className="h-4 w-4 animate-spin" />
+              {t("setup.checkingMx")}
+            </div>
+          )}
+          {mxRecordsExist === false && (
+            <div className="flex items-center gap-3 rounded-2xl bg-green-50 px-4 py-3 text-sm text-green-700">
+              <CheckCircle2 className="h-4 w-4" />
+              {t("setup.noMx")}
+            </div>
+          )}
+          {mxRecordsExist === true && (
+            <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4 text-amber-900">
+              <Checkbox
+                checked={replaceMxRecords}
+                onChange={(event) => setReplaceMxRecords(event.target.checked)}
+                className="mt-1"
+              />
+              <span>
+                <span className="flex items-center gap-2 text-sm font-medium">
+                  <AlertTriangle className="h-4 w-4" />
+                  {t("setup.replaceMx")}
+                </span>
+                <span className="mt-1 block text-xs leading-5">{t("setup.replaceMxHint")}</span>
+              </span>
+            </label>
+          )}
           <div className="space-y-2">
             <Label htmlFor="username">{t("setup.username")}</Label>
             <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 relative">
@@ -400,7 +405,7 @@ export function RegisterClient() {
                 placeholder={t("setup.usernamePlaceholder")}
                 autoComplete="username"
                 required
-								className="pr-34"
+                className="pr-34"
               />
               <span className="max-w-36 truncate text-sm font-medium text-neutral-500 absolute top-2.5 right-5">
                 @{accountDomain ?? t("setup.domainFallback")}
@@ -436,24 +441,31 @@ export function RegisterClient() {
               {error}
             </p>
           )}
-					{!mxChecking && mxRecordsExist === null && (
-						<Button
-							type="button"
-							variant="outline"
-							className="h-11 w-full rounded-full px-6 active:scale-[0.98]"
-							onClick={() => setMxCheckRevision((value) => value + 1)}
-						>
-							{t("setup.checkMxAgain")}
-						</Button>
-					)}
+          {!mxChecking && mxRecordsExist === null && (
+            <Button
+              type="button"
+              variant="outline"
+              className="h-11 w-full rounded-full px-6 active:scale-[0.98]"
+              onClick={() => setMxCheckRevision((value) => value + 1)}
+            >
+              {t("setup.checkMxAgain")}
+            </Button>
+          )}
           <TurnstileField resetSignal={turnstileReset} />
-					<Button
-						type="submit"
-						className="h-11 w-full rounded-full px-6 active:scale-[0.98] mt-8"
-						disabled={loading || mxChecking || mxRecordsExist === null || (mxRecordsExist && !replaceMxRecords) || hasAdminAccount === null || hasPrimaryDomain === null}
-					>
-						{loading ? t("setup.creating") : t("setup.createAccount")}
-					</Button>
+          <Button
+            type="submit"
+            className="h-11 w-full rounded-full px-6 active:scale-[0.98] mt-8"
+            disabled={
+              loading ||
+              mxChecking ||
+              mxRecordsExist === null ||
+              (mxRecordsExist && !replaceMxRecords) ||
+              hasAdminAccount === null ||
+              hasPrimaryDomain === null
+            }
+          >
+            {loading ? t("setup.creating") : t("setup.createAccount")}
+          </Button>
         </form>
       )}
     </AuthShell>

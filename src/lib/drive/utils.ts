@@ -15,46 +15,53 @@ export const DRIVE_MAX_NAME_LENGTH = 255;
 export const DRIVE_MAX_DEPTH = 64;
 
 export function normalizeDriveName(value: unknown): string | null {
-	if (typeof value !== "string") return null;
-	const name = value.replace(/[\u0000-\u001f/\\]/g, " ").replace(/\s+/g, " ").trim().slice(0, DRIVE_MAX_NAME_LENGTH);
-	return name && name !== "." && name !== ".." ? name : null;
+  if (typeof value !== "string") return null;
+  const name = value
+    .replace(/[\u0000-\u001f/\\]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, DRIVE_MAX_NAME_LENGTH);
+  return name && name !== "." && name !== ".." ? name : null;
 }
 
 export function canEditDrive(role: DriveRole | null): boolean {
-	return role === "owner" || role === "edit";
+  return role === "owner" || role === "edit";
 }
 
 export function driveObjectKey(ownerId: string, itemId: string): string {
-	return `drive/${ownerId}/${itemId}`;
+  return `drive/${ownerId}/${itemId}`;
 }
 
 export function toDriveCrumbs(chain: DriveRow[]): DriveCrumb[] {
-	return chain.map((item) => ({ id: item.id, name: item.name }));
+  return chain.map((item) => ({ id: item.id, name: item.name }));
 }
 
 export function formatDriveSize(bytes: number): string {
-	if (bytes < 1024) return `${bytes} B`;
-	const units = ["KB", "MB", "GB", "TB"];
-	let value = bytes / 1024;
-	let unit = 0;
-	while (value >= 1024 && unit < units.length - 1) { value /= 1024; unit += 1; }
-	return `${value >= 10 ? Math.round(value) : value.toFixed(1)} ${units[unit]}`;
+  if (bytes < 1024) return `${bytes} B`;
+  const units = ["KB", "MB", "GB", "TB"];
+  let value = bytes / 1024;
+  let unit = 0;
+  while (value >= 1024 && unit < units.length - 1) {
+    value /= 1024;
+    unit += 1;
+  }
+  return `${value >= 10 ? Math.round(value) : value.toFixed(1)} ${units[unit]}`;
 }
 
 export function driveContentDisposition(filename: string, inline: boolean): string {
-	const ascii = filename.replace(/[^\x20-\x7e]/g, "_").replace(/["\\]/g, "_");
-	return `${inline ? "inline" : "attachment"}; filename="${ascii}"; filename*=UTF-8''${encodeURIComponent(filename)}`;
+  const ascii = filename.replace(/[^\x20-\x7e]/g, "_").replace(/["\\]/g, "_");
+  return `${inline ? "inline" : "attachment"}; filename="${ascii}"; filename*=UTF-8''${encodeURIComponent(filename)}`;
 }
 
 /** Types that are safe to render in the browser; everything else (HTML, SVG, scripts) is forced to download. */
 export function isDriveInlineSafe(contentType: string): boolean {
-	return (
-		contentType === "application/pdf" ||
-		contentType.startsWith("audio/") ||
-		contentType.startsWith("video/") ||
-		(contentType.startsWith("image/") && contentType !== "image/svg+xml") ||
-		contentType === "text/plain" ||
-		contentType === "text/csv" ||
-		contentType === "application/json"
-	);
+  return (
+    contentType === "application/pdf" ||
+    contentType.startsWith("audio/") ||
+    contentType.startsWith("video/") ||
+    (contentType.startsWith("image/") && contentType !== "image/svg+xml") ||
+    contentType === "text/plain" ||
+    contentType === "text/csv" ||
+    contentType === "application/json"
+  );
 }

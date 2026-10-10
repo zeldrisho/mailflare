@@ -1,3 +1,3 @@
 export type MailboxAvatarRouteParams = {
-	params: Promise<{ id: string }>;
+  params: Promise<{ id: string }>;
 };

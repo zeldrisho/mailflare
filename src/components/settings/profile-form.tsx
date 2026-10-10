@@ -10,11 +10,7 @@ import { dispatchProfileNameChanged } from "@/lib/profile/name-client";
 import { ProfileAvatarForm } from "./profile-avatar-form";
 import type { ProfileFormProps, ProfileFormResponse } from "./types";
 
-export function ProfileForm({
-  initialName,
-  initialResetEmail,
-  email,
-}: ProfileFormProps) {
+export function ProfileForm({ initialName, initialResetEmail, email }: ProfileFormProps) {
   const { t } = useLanguage();
   const [name, setName] = useState(initialName);
   const [resetEmail, setResetEmail] = useState(initialResetEmail);
@@ -36,9 +32,7 @@ export function ProfileForm({
 
       if (!res.ok) {
         throw new Error(
-          typeof data.error === "string"
-            ? data.error
-            : t("settings.profile.updateFailed"),
+          typeof data.error === "string" ? data.error : t("settings.profile.updateFailed"),
         );
       }
 
@@ -50,9 +44,7 @@ export function ProfileForm({
       setSavedResetEmail(savedResetEmail);
       dispatchProfileNameChanged(savedName);
     } catch (error) {
-      throw error instanceof Error
-        ? error
-        : new Error(t("settings.profile.updateFailed"));
+      throw error instanceof Error ? error : new Error(t("settings.profile.updateFailed"));
     }
   }
 
@@ -64,9 +56,7 @@ export function ProfileForm({
       await saveProfile(name, savedResetEmail);
       setProfileStatus(t("common.saved"));
     } catch (error) {
-      setProfileStatus(
-        error instanceof Error ? error.message : t("settings.profile.updateFailed"),
-      );
+      setProfileStatus(error instanceof Error ? error.message : t("settings.profile.updateFailed"));
     } finally {
       setSavingProfile(false);
     }
@@ -81,9 +71,7 @@ export function ProfileForm({
       setRecoveryStatus(t("common.saved"));
     } catch (error) {
       setRecoveryStatus(
-        error instanceof Error
-          ? error.message
-          : t("settings.profile.recoveryFailed"),
+        error instanceof Error ? error.message : t("settings.profile.recoveryFailed"),
       );
     } finally {
       setSavingRecovery(false);
@@ -130,22 +118,14 @@ export function ProfileForm({
         </div>
 
         <div className="flex items-center gap-3">
-          <Button
-            type="submit"
-            disabled={savingProfile || name.trim() === savedName}
-          >
+          <Button type="submit" disabled={savingProfile || name.trim() === savedName}>
             {savingProfile ? t("common.saving") : t("settings.profile.save")}
           </Button>
-          {profileStatus && (
-            <p className="text-sm text-neutral-500">{profileStatus}</p>
-          )}
+          {profileStatus && <p className="text-sm text-neutral-500">{profileStatus}</p>}
         </div>
       </form>
 
-      <form
-        onSubmit={onRecoverySubmit}
-        className="space-y-4 rounded-lg bg-white p-6"
-      >
+      <form onSubmit={onRecoverySubmit} className="space-y-4 rounded-lg bg-white p-6">
         <div>
           <h3 className="text-lg font-semibold text-neutral-900">
             {t("settings.profile.recoveryTitle")}
@@ -165,15 +145,10 @@ export function ProfileForm({
           />
         </div>
         <div className="flex items-center gap-3">
-          <Button
-            type="submit"
-            disabled={savingRecovery || resetEmail.trim() === savedResetEmail}
-          >
+          <Button type="submit" disabled={savingRecovery || resetEmail.trim() === savedResetEmail}>
             {savingRecovery ? t("common.saving") : t("settings.profile.saveRecovery")}
           </Button>
-          {recoveryStatus && (
-            <p className="text-sm text-neutral-500">{recoveryStatus}</p>
-          )}
+          {recoveryStatus && <p className="text-sm text-neutral-500">{recoveryStatus}</p>}
         </div>
       </form>
     </>
