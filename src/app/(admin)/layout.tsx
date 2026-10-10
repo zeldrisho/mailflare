@@ -1,7 +1,5 @@
 "use client";
 
-import Link from "next/link";
-import { HelpCircle, Search } from "lucide-react";
 import { useLanguage } from "@/components/language-provider";
 import { AuthGuard } from "@/components/auth/auth-guard";
 import { ComposeProvider } from "@/components/compose/compose-context";
@@ -34,6 +32,7 @@ const primaryOnlyPrefixes = [
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { t } = useLanguage();
   const pathname = usePathname();
+
   const requirePrimary = primaryOnlyPrefixes.some(
     (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
   );
@@ -64,6 +63,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     <MailboxSelector />
                   </span>
                   <main
+                    id="main-content"
+                    tabIndex={-1}
                     className={clsx(
                       "page-flush min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-contain rounded-tl-3xl max-md:rounded-t-3xl max-md:bg-white max-md:pb-24 px-6 py-10 scrollbar-gutter-stable lg:px-12",
                       mobileTitle && "max-md:[&_h1]:hidden",

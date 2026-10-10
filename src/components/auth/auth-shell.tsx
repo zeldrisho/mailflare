@@ -24,7 +24,11 @@ export function AuthShell({
 
   return (
     <div className="min-h-dvh bg-[#f1f4fa] px-4 py-6 text-neutral-900 sm:px-6 lg:flex lg:items-center lg:px-10 lg:py-10">
-      <main className="mx-auto grid w-full max-w-6xl overflow-hidden rounded-4xl bg-white lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)]">
+      <main
+        id="main-content"
+        tabIndex={-1}
+        className="mx-auto grid w-full max-w-6xl overflow-hidden rounded-4xl bg-white lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)]"
+      >
         <section className="flex flex-col p-7 sm:p-10 lg:p-14">
           <div className="flex items-center gap-2">
             <span className="flex items-center justify-center overflow-hidden">
@@ -42,7 +46,7 @@ export function AuthShell({
                 />
               )}
             </span>
-            <span className="truncate text-md font-semibold text-neutral-800">
+            <span className="truncate text-base font-semibold text-neutral-800">
               {branding.appName}
             </span>
           </div>

@@ -1,7 +1,5 @@
 "use client";
 
-import Link from "next/link";
-import { HelpCircle } from "lucide-react";
 import { AuthGuard } from "@/components/auth/auth-guard";
 import { ComposeProvider } from "@/components/compose/compose-context";
 import { FloatingComposer } from "@/components/compose/floating-composer";
@@ -43,7 +41,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                       <LicenseIndicator />
                       <MailboxSelector />
                     </header>
-                    <main className="page-flush min-h-0 flex-1 overflow-y-auto max-md:rounded-t-3xl max-md:bg-white overscroll-contain scrollbar-gutter-stable">
+                    <main
+                      id="main-content"
+                      tabIndex={-1}
+                      className="page-flush min-h-0 flex-1 overflow-y-auto max-md:rounded-t-3xl max-md:bg-white overscroll-contain scrollbar-gutter-stable"
+                    >
                       {children}
                     </main>
                   </div>

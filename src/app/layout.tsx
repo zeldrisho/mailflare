@@ -46,6 +46,7 @@ export const metadata: Metadata = {
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const locale = await getRequestLocale();
   const messages = locale === DEFAULT_LOCALE ? undefined : await loadServerMessages(locale);
+
   return (
     <html lang={locale} dir={getDirection(locale)} suppressHydrationWarning>
       <head>
@@ -54,6 +55,9 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         <link rel="icon" href="/api/branding/icon"></link>
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        <a href="#main-content" className="skip-link">
+          Skip to main content
+        </a>
         <LanguageProvider initialLocale={locale} initialMessages={messages}>
           <Providers>{children}</Providers>
         </LanguageProvider>

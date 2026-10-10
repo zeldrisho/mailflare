@@ -16,6 +16,7 @@ import { DriveNav } from "./drive-nav";
 
 function DriveFrame({ children }: { children: React.ReactNode }) {
   const { mobile, toggle } = useSidebar();
+
   // Same grid and sidebar width as the dashboard, so the menu and the search line up and resizing carries over.
   return (
     <div
@@ -40,7 +41,13 @@ function DriveFrame({ children }: { children: React.ReactNode }) {
           <LicenseIndicator />
           <MailboxSelector />
         </header>
-        <main className="min-h-0 min-w-0 flex-1 overflow-hidden md:pr-4">{children}</main>
+        <main
+          id="main-content"
+          tabIndex={-1}
+          className="min-h-0 min-w-0 flex-1 overflow-hidden md:pr-4"
+        >
+          {children}
+        </main>
       </div>
     </div>
   );

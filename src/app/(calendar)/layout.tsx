@@ -28,8 +28,10 @@ export default function CalendarLayout({ children }: { children: React.ReactNode
   const { t } = useLanguage();
   const pathname = usePathname();
   const router = useRouter();
+
   const { assistantOpen, setAssistantOpen, assistantFullSize, setAssistantFullSize } =
     useDashboardState();
+
   const assistantEnabled = useAssistantAvailability();
   const assistantVisible = assistantEnabled === true && assistantOpen;
 
@@ -136,6 +138,8 @@ export default function CalendarLayout({ children }: { children: React.ReactNode
                     <div className="flex min-h-0 min-w-0 flex-1 overflow-hidden">
                       <AssistantOpenContext.Provider value={assistantVisible}>
                         <main
+                          id="main-content"
+                          tabIndex={-1}
                           className="min-h-0 min-w-0 flex-1 overflow-hidden bg-[#f6f8fc] overscroll-contain scrollbar-gutter-stable"
                           aria-hidden={assistantVisible && assistantFullSize}
                           inert={assistantVisible && assistantFullSize}

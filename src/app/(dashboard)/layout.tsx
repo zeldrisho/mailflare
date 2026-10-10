@@ -25,8 +25,10 @@ import { clsx } from "cn";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { t } = useLanguage();
+
   const { assistantOpen, setAssistantOpen, assistantFullSize, setAssistantFullSize } =
     useDashboardState();
+
   const assistantEnabled = useAssistantAvailability();
   const assistantVisible = assistantEnabled === true && assistantOpen;
 
@@ -92,6 +94,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     <div className="flex min-h-0 min-w-0 flex-1 overflow-hidden">
                       <AssistantOpenContext.Provider value={assistantVisible}>
                         <main
+                          id="main-content"
+                          tabIndex={-1}
                           className="min-h-0 min-w-0 flex-1 overflow-y-auto rounded-t-3xl bg-white overscroll-contain scrollbar-gutter-stable"
                           aria-hidden={assistantVisible && assistantFullSize}
                           inert={assistantVisible && assistantFullSize}
