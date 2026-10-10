@@ -2,13 +2,13 @@ import assert from "node:assert/strict";
 import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
-import test, { after } from "node:test";
+import { test, afterAll } from "vite-plus/test";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { build } from "esbuild";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const outDir = mkdtempSync(join(tmpdir(), "mailflare-i18n-"));
-after(() => rmSync(outDir, { recursive: true, force: true }));
+afterAll(() => rmSync(outDir, { recursive: true, force: true }));
 const outfile = join(outDir, "i18n.mjs");
 
 // Catalogs other than English are static assets; tests serve them from public/ for both the browser

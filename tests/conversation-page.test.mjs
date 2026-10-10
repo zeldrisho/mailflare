@@ -1,14 +1,14 @@
 import assert from "node:assert/strict";
 import { mkdtempSync, rmSync } from "node:fs";
 import { dirname, join } from "node:path";
-import test, { after } from "node:test";
+import { test, afterAll } from "vite-plus/test";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { build } from "esbuild";
 import { at, createConversationFixture } from "./conversation-page-utils.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const outDir = mkdtempSync(join(root, "tests", ".tmp-conversation-page-"));
-after(() => rmSync(outDir, { recursive: true, force: true }));
+afterAll(() => rmSync(outDir, { recursive: true, force: true }));
 
 await build({
   entryPoints: {
@@ -34,7 +34,7 @@ test("deep conversation pages use two queries and report the real total", async 
     at(index, `m${String(index).padStart(5, "0")}`),
   );
   const fixture = createConversationFixture(SqliteDatabase, rows);
-  t.after(() => fixture.database.db.close());
+  t.onTestFinished(() => fixture.database.db.close());
   const page = await loadConversationPage({
     db: fixture.db,
     where: fixture.where,
@@ -54,7 +54,7 @@ test("a long conversation does not consume one query per batch of messages", asy
     at(index, `m${String(index).padStart(5, "0")}`, "long-thread"),
   );
   const fixture = createConversationFixture(SqliteDatabase, rows);
-  t.after(() => fixture.database.db.close());
+  t.onTestFinished(() => fixture.database.db.close());
   const page = await loadConversationPage({
     db: fixture.db,
     where: fixture.where,
@@ -73,7 +73,7 @@ test("equal timestamps select one head per thread before applying the offset", a
     at(100, "c", "same-thread"),
     at(100, "b", null),
   ]);
-  t.after(() => fixture.database.db.close());
+  t.onTestFinished(() => fixture.database.db.close());
   const first = await loadConversationPage({
     db: fixture.db,
     where: fixture.where,
@@ -98,7 +98,7 @@ test("counts and conversation heads share mailbox and status filters", async (t)
     at(300, "archived", "shared-thread", "mine", "archived"),
     at(400, "hidden-thread", "hidden", "theirs"),
   ]);
-  t.after(() => fixture.database.db.close());
+  t.onTestFinished(() => fixture.database.db.close());
   const page = await loadConversationPage({
     db: fixture.db,
     where: fixture.where,
@@ -111,7 +111,7 @@ test("counts and conversation heads share mailbox and status filters", async (t)
 
 test("an offset past the end returns no heads and retains the real total", async (t) => {
   const fixture = createConversationFixture(SqliteDatabase, [at(1, "only-message")]);
-  t.after(() => fixture.database.db.close());
+  t.onTestFinished(() => fixture.database.db.close());
   const page = await loadConversationPage({
     db: fixture.db,
     where: fixture.where,

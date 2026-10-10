@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { dirname, join } from "node:path";
-import test, { after } from "node:test";
+import { test, afterAll } from "vite-plus/test";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { build } from "esbuild";
 import { JSDOM } from "jsdom";
@@ -9,7 +9,7 @@ import { JSDOM } from "jsdom";
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const outDir = mkdtempSync(join(root, "tests", ".tmp-aws-credentials-panel-"));
 const outfile = join(outDir, "panel.mjs");
-after(() => rmSync(outDir, { recursive: true, force: true }));
+afterAll(() => rmSync(outDir, { recursive: true, force: true }));
 
 const dom = new JSDOM("<!doctype html><html><body></body></html>", {
   url: "https://mail.example/",

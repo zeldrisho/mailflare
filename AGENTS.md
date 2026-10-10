@@ -12,7 +12,7 @@
 | Workers development             | `vp run dev`                                           |
 | Node development                | `vp run dev:node`                                      |
 | Check changed files             | `vp check <paths>`                                     |
-| Test one file                   | `node --test tests/<name>.test.mjs`                    |
+| Test one file                   | `vp run test -- tests/<name>.test.mjs`                  |
 | Repository checks / tests       | `vp check` / `vp run test`                             |
 | Explicit type check             | `vp exec tsc --noEmit`                                 |
 | Worker build / preview / deploy | `vp run build` / `vp run preview` / `vp run deploy`    |
@@ -24,7 +24,7 @@
 ## Key Conventions
 
 - Read the relevant guide in `node_modules/next/dist/docs/` before changing framework code; this Next.js version has breaking changes.
-- Tests use `node:test`; Workers-binding integration checks belong in `scripts/` against the running development server.
+- Tests use Vitest via `vite-plus/test`; Workers-binding integration checks belong in `scripts/` against the running development server.
 - Do not rely on builds to catch type errors; run the explicit type check.
 - Access bindings through `getEnv()` / `getEnvAsync()` in `src/lib/cloudflare.ts`, then `getDb(env)` from `src/db`; keep application logic shared across Workers and Node.
 - Access blobs through wrapped `env.BUCKET` (`src/lib/storage/index.ts`), not directly through `cloudflare:workers` env.

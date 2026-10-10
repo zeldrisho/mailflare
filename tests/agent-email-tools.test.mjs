@@ -3,7 +3,7 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { createServer } from "node:http";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
-import test from "node:test";
+import { test } from "vite-plus/test";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { build } from "esbuild";
 
@@ -47,11 +47,11 @@ const {
 } = await import(pathToFileURL(join(bundleDirectory, "entry.mjs")).href);
 
 test("assistant reads mail, creates an editable reply draft, and invokes tools through chat", async (t) => {
-  t.after(() => rmSync(bundleDirectory, { recursive: true, force: true }));
+  t.onTestFinished(() => rmSync(bundleDirectory, { recursive: true, force: true }));
   const directory = mkdtempSync(join(tmpdir(), "mailflare-agent-"));
-  t.after(() => rmSync(directory, { recursive: true, force: true }));
+  t.onTestFinished(() => rmSync(directory, { recursive: true, force: true }));
   const database = new SqliteDatabase(join(directory, "mailflare.sqlite"));
-  t.after(() => database.db.close());
+  t.onTestFinished(() => database.db.close());
   await applyMigrations(database, join(process.cwd(), "drizzle", "migrations"));
   database.db.exec(`
 		INSERT INTO users (id, email, password_hash, name, created_at) VALUES ('user-1', 'owner@example.com', 'hash', 'Owner', 1);
@@ -103,7 +103,7 @@ test("assistant reads mail, creates an editable reply draft, and invokes tools t
     response.end("data: [DONE]\n\n");
   });
   await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
-  t.after(() => server.close());
+  t.onTestFinished(() => server.close());
   const address = server.address();
   const env = {
     DB: database,
@@ -199,7 +199,7 @@ test("assistant reads mail, creates an editable reply draft, and invokes tools t
     0,
   );
   globalThis.__mailflareNodeEnv = env;
-  t.after(() => {
+  t.onTestFinished(() => {
     delete globalThis.__mailflareNodeEnv;
   });
   const token = await createSession(env, "user-1");

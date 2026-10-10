@@ -1,13 +1,13 @@
 import assert from "node:assert/strict";
 import { mkdtempSync, rmSync } from "node:fs";
 import { dirname, join } from "node:path";
-import test, { after } from "node:test";
+import { test, afterAll } from "vite-plus/test";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { build } from "esbuild";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const directory = mkdtempSync(join(root, "node_modules", "mailflare-routing-rule-test-"));
-after(() => rmSync(directory, { recursive: true, force: true }));
+afterAll(() => rmSync(directory, { recursive: true, force: true }));
 await build({
   stdin: {
     contents: `

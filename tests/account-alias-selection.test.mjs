@@ -1,13 +1,13 @@
 import assert from "node:assert/strict";
 import { mkdtempSync, rmSync } from "node:fs";
 import { dirname, join } from "node:path";
-import test, { after } from "node:test";
+import { test, afterAll, vi } from "vite-plus/test";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { build } from "esbuild";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const directory = mkdtempSync(join(root, "node_modules", "mailflare-account-test-"));
-after(() => rmSync(directory, { recursive: true, force: true }));
+afterAll(() => rmSync(directory, { recursive: true, force: true }));
 await build({
   stdin: {
     contents: `
@@ -59,7 +59,7 @@ const key = generateApiKey();
 
 async function fixture(t, { rules = [], failAddress, slowAddress } = {}) {
   const database = new SqliteDatabase(":memory:");
-  t.after(() => database.db.close());
+  t.onTestFinished(() => database.db.close());
   await applyMigrations(database, join(root, "drizzle/migrations"));
   database.db.exec(`
 		INSERT INTO users (id, email, password_hash, name, role, created_at) VALUES
@@ -80,14 +80,14 @@ async function fixture(t, { rules = [], failAddress, slowAddress } = {}) {
     .run("key", "admin", "Test", key.prefix, key.hash, '["accounts"]', 1);
   const env = { DB: database, CF_TOKEN: "test-only", MAILFLARE_RUNTIME: "node" };
   globalThis.__mailflareNodeEnv = env;
-  t.after(() => {
+  t.onTestFinished(() => {
     delete globalThis.__mailflareNodeEnv;
   });
   const session = await createSession(env, "admin");
   const currentRules = structuredClone(rules);
   const calls = [];
   let nextRule = 0;
-  t.mock.method(globalThis, "fetch", async (url, init = {}) => {
+  vi.spyOn(globalThis, "fetch").mockImplementation(async (url, init = {}) => {
     const parsed = new URL(url);
     assert.equal(
       parsed.origin,
@@ -454,7 +454,7 @@ for (const separateDomains of [false, true]) {
       for (const alias of aliases) insert.run(alias.domainId, `${alias.domainId}.test`);
     }
     const prepare = f.database.prepare.bind(f.database);
-    t.mock.method(f.database, "prepare", (query) => {
+    vi.spyOn(f.database, "prepare").mockImplementation((query) => {
       const statement = prepare(query);
       const bind = statement.bind.bind(statement);
       statement.bind = (...values) => {
