@@ -60,7 +60,7 @@ test("Worker catch-all PUT is skipped on Node and kept on Workers (issue #42)", 
   assert.match(
     before,
     /if\s*\(\s*(?:!isNodeRuntime\(\s*env\s*\)|shouldBindEmailCatchAllToWorker\(\s*env\s*\))\s*\)\s*\{/,
-    "ensureEmailRoutingCatchAllToWorker must be gated by Node runtime so Docker/Node does not PUT worker catch-all",
+    "ensureEmailRoutingCatchAllToWorker must be gated by Node runtime so it does not PUT worker catch-all",
   );
 
   const enableRouting = src.match(/if\s*\(\s*enableRouting\s*\)\s*\{([\s\S]*?)\n\t\}/);

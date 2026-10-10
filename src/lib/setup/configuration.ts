@@ -38,7 +38,7 @@ export function getSetupRequirementChecks(env: CloudflareEnv): SetupRequirementC
     {
       key: "D1 database",
       configured: !!env.DB,
-      message: "Deploy the Worker with the DB binding from wrangler.jsonc.",
+      message: "Deploy the Worker with the DB binding from cloudflare.config.ts.",
     },
   ];
 }

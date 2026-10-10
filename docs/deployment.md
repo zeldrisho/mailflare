@@ -44,7 +44,7 @@ Paste only the token secret into the `CF_TOKEN` field in step 2. Do not include 
 
 ### Optional Web Push configuration
 
-To enable background new-mail notifications, run `npm run push:keys` once and
+To enable background new-mail notifications, run `vp run push:keys` once and
 store `VAPID_PRIVATE_KEY` as a Worker secret. Configure `VAPID_PUBLIC_KEY` and
 `VAPID_SUBJECT` as Worker variables; the subject must be a `mailto:` URI or the
 public HTTPS URL of the installation. The same VAPID key pair should be kept
@@ -61,9 +61,9 @@ Setup applies the committed migrations through the Worker's D1 binding before cr
 
 ### Compatibility and staging
 
-The production compatibility date is pinned in `wrangler.jsonc`; advance it deliberately after checking Cloudflare's compatibility-date notes and running Worker integration tests. Do not copy a date from an example or upgrade it automatically during unrelated deploys.
+The production compatibility date is pinned in `cloudflare.config.ts`; advance it deliberately after checking Cloudflare's compatibility-date notes and running Worker integration tests. Do not copy a date from an example or upgrade it automatically during unrelated deploys.
 
-The root Wrangler configuration deploys the production Worker and its production bindings. There is no named staging environment in this repository. For staging, use a separate Worker configuration/account and isolated D1 database, R2 bucket, queues, Durable Object namespace, and secrets. Do not deploy the root configuration with `--env` unless a fully isolated environment with every non-inheritable binding has first been configured.
+The root `cloudflare.config.ts` deploys the production Worker and its production bindings. There is no named staging environment in this repository. For staging, use a separate Worker configuration/account and isolated D1 database, R2 bucket, queues, Durable Object namespace, and secrets. Do not deploy the root configuration with `--env` unless a fully isolated environment with every non-inheritable binding has first been configured.
 
 Backup restore uploads are capped at 32 MiB to bound multipart and restore memory usage. Larger backups should be restored through a separately provisioned operational path rather than increasing the request cap without memory testing.
 
@@ -73,7 +73,7 @@ The Worker configuration routes messages that exhaust their retries to dedicated
 queues: `mailflare-inbound-dlq`, `mailflare-outbound-dlq`, and
 `mailflare-agent-dlq`. Create these queues in the same Cloudflare account before
 deploying a configuration that references them (for example, with
-`wrangler queues create mailflare-inbound-dlq`, and likewise for the other two).
+`vp exec cf queues create --queue-name mailflare-inbound-dlq`, and likewise for the other two).
 Monitor them in the Cloudflare Queues dashboard. For recovery, inspect the
 message body and failure logs, fix the underlying issue, then use the dashboard's
 DLQ replay action or re-enqueue the validated payload to its original queue.
@@ -101,26 +101,26 @@ Your inbox should be ready to send and receive emails
 
 ## Manual deployment
 
-Install dependencies, configure the Cloudflare bindings in `wrangler.jsonc`, and run:
+Install dependencies, configure the Cloudflare bindings in `cloudflare.config.ts`, and run:
 
 ```bash
-npm install
-npm run deploy:local
+vp install
+vp run deploy
 ```
 
-The local deploy command builds with vinext and uploads the complete Worker with Wrangler. The Cloudflare Vite plugin generates `dist/server/wrangler.json` and redirects Wrangler to that build. It does not modify D1. The complete Worker is required because `worker.ts` also handles inbound email, queues, scheduled backups, and the real-time Durable Object.
+The `cf` CLI builds with the Cloudflare Vite plugin and deploys the complete Worker. It does not modify D1. The complete Worker is required because `worker.ts` also handles inbound email, queues, scheduled backups, and the real-time Durable Object.
 
 For manual recovery, pending migrations can still be applied with:
 
 ```bash
-npm run db:migrate:remote
+vp run db:migrate:remote
 ```
 
-Remote migrations require the target account's `database_id` in your local `wrangler.jsonc`. Do not commit an account-specific database ID to a reusable repository.
+The migration script resolves the `mailflare` D1 database ID from the authenticated account with `vp exec cf d1 list`; do not commit account-specific database IDs to a reusable repository.
 
 ## Object storage (R2, Backblaze B2 or AWS S3)
 
-Raw mail, attachments, Drive files, avatars, branding icons, JMAP uploads and backups all live in one bucket. By default that is the `BUCKET` R2 binding in `wrangler.jsonc`. To use Backblaze B2 instead, set four Worker variables (as secrets, or in `.dev.vars` locally):
+Raw mail, attachments, Drive files, avatars, branding icons, JMAP uploads and backups all live in one bucket. By default that is the `BUCKET` R2 binding in `cloudflare.config.ts`. To use Backblaze B2 instead, set four Worker variables (as secrets, or in `.dev.vars` locally):
 
 | Variable             | Example                          | Purpose                                                                 |
 | -------------------- | -------------------------------- | ----------------------------------------------------------------------- |
@@ -129,16 +129,18 @@ Raw mail, attachments, Drive files, avatars, branding icons, JMAP uploads and ba
 | `B2_BUCKET`          | `mailflare`                      | Bucket name                                                             |
 | `B2_ENDPOINT`        | `s3.us-west-004.backblazeb2.com` | S3-compatible endpoint from the bucket page; the region is read from it |
 
+The `cf` CLI does not yet support setting a single Worker secret. Use Wrangler only for this unsupported operation, passing the Worker name because the legacy config has been removed:
+
 ```bash
-npx wrangler secret put B2_KEY_ID
-npx wrangler secret put B2_APPLICATION_KEY
-npx wrangler secret put B2_BUCKET
-npx wrangler secret put B2_ENDPOINT
+vp exec wrangler secret put B2_KEY_ID --name mailflare
+vp exec wrangler secret put B2_APPLICATION_KEY --name mailflare
+vp exec wrangler secret put B2_BUCKET --name mailflare
+vp exec wrangler secret put B2_ENDPOINT --name mailflare
 ```
 
 To use AWS S3 instead, set `S3_BUCKET`, `S3_REGION` and credentials: `S3_ACCESS_KEY_ID` and `S3_SECRET_ACCESS_KEY`, which fall back to `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` so one IAM user can serve SES and storage. The bucket must be private and in the named region; the IAM user needs `s3:GetObject`, `s3:PutObject`, `s3:DeleteObject` and `s3:AbortMultipartUpload` on `arn:aws:s3:::<bucket>/*`. If both are configured, B2 wins.
 
-When all four B2 variables (or the S3 ones) are present that storage replaces R2 everywhere; with any missing, R2 stays in use (a partial setup is reported by `GET /api/v1/storage`). The R2 binding can stay in `wrangler.jsonc` and is simply unused. Use a bucket-restricted application key with read and write access, and keep the bucket private. Notes:
+When all four B2 variables (or the S3 ones) are present that storage replaces R2 everywhere; with any missing, R2 stays in use (a partial setup is reported by `GET /api/v1/storage`). The R2 binding can stay in `cloudflare.config.ts` and is simply unused. Use a bucket-restricted application key with read and write access, and keep the bucket private. Notes:
 
 - **Switching does not copy data.** Objects already in R2 are not moved; copy them to the bucket first (for example with `rclone`, keeping the same keys) or old mail bodies, attachments and Drive files will report as missing.
 - **Drive upload parts** are buffered one at a time in the Worker (64 MB each). B2 and S3 require every part but the last to be at least 5 MB, which holds.
@@ -147,11 +149,11 @@ When all four B2 variables (or the S3 ones) are present that storage replaces R2
 
 ## Database backups
 
-Mailflare exports its D1 records as JSON and stores the backup files in the configured storage bucket (R2, or Backblaze B2 when configured). A cron trigger in `wrangler.jsonc` runs daily at 02:00 UTC and applies the schedule selected under **Admin → Backups**. Manual backups run the same record export directly from the admin API.
+Mailflare exports its D1 records as JSON and stores the backup files in the configured storage bucket (R2, or Backblaze B2 when configured). A cron trigger in `cloudflare.config.ts` runs daily at 02:00 UTC and applies the schedule selected under **Admin → Backups**. Manual backups run the same record export directly from the admin API.
 
-Deploy the complete Worker with `npm run deploy` whenever the cron trigger is added or changed.
+Deploy the complete Worker with `vp run deploy` whenever the cron trigger is added or changed.
 
-After upgrading an existing installation and confirming the cron trigger is active, the old Workflow can be removed with `npx wrangler workflows delete mailflare-database-backup`. Deleting it also removes its historical Workflow instances; backup files in storage and rows in Mailflare's backup history are unaffected.
+After upgrading an existing installation and confirming the cron trigger is active, the old Workflow can be removed with `vp exec cf workflows delete mailflare-database-backup`. Deleting it also removes its historical Workflow instances; backup files in storage and rows in Mailflare's backup history are unaffected.
 
 ## Email assistant and MCP
 
@@ -193,13 +195,13 @@ After the GitHub Action completes successfully, wait for the connected Cloudflar
 
 Deployment and database migration are separate. After Cloudflare deploys a repository push or an admin-triggered update, open or refresh **Admin settings**. The application update card shows any pending database migrations. Select **Update database** to apply them through the Worker's D1 binding. The same runner initializes a new database during setup.
 
-If the Cloudflare dashboard has a custom deploy command containing `wrangler d1 migrations apply DB --remote`, remove that part and use `npm run deploy`.
+If the Cloudflare dashboard has a custom deploy command containing a D1 migration apply operation, remove that part and use `vp run deploy`.
 
-Each migration and its `d1_migrations` history entry run in one D1 batch. If a migration fails, its changes are rolled back, the failed filename is shown, and it can be retried after the problem is corrected. Wrangler remains available as a manual recovery tool.
+Each migration and its `d1_migrations` history entry run in one D1 batch. If a migration fails, its changes are rolled back, the failed filename is shown, and it can be retried after the problem is corrected. The migration script remains available as a manual recovery tool.
 
 New application releases must remain compatible with the previous schema until an administrator applies their migrations. Prefer additive changes, keep old columns during the transition, and avoid making authentication or the admin settings page depend immediately on a newly added column. Plan a maintenance window for an incompatible schema change.
 
-When adding a schema change, create a new uniquely named SQL file in `drizzle/migrations` and do not edit an applied migration. Build and development commands generate the Worker migration bundle from those files. `npm run db:bundle` can generate it explicitly.
+When adding a schema change, create a new uniquely named SQL file in `drizzle/migrations` and do not edit an applied migration. Build and development commands generate the Worker migration bundle from those files. `vp run db:bundle` can generate it explicitly.
 
 ## Branding license
 

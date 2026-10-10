@@ -50,22 +50,13 @@ A sending-only Resend key cannot add domains or webhooks. Replace it with a full
 
 ## D1 error 7404: Database could not be found
 
-D1 database IDs belong to a specific Cloudflare account. This error commonly means `wrangler.jsonc` contains an ID copied from another account.
+D1 database IDs belong to a specific Cloudflare account. Check that `vp exec cf auth` is using the account where the `mailflare` database exists.
 
-For a reusable one-click deployment repository, remove the committed `database_id` and keep only `database_name`. Cloudflare can then provision the database in the target account.
-
-For remote migrations after the first deployment:
-
-1. Open the Worker's **Settings → Bindings** page in Cloudflare.
-2. Open the `DB` D1 binding and copy its database ID.
-3. Add that ID to your local `wrangler.jsonc`.
-4. Run `npm run db:migrate:remote`.
-
-Do not commit that account-specific ID to a reusable public repository.
+For a reusable one-click deployment repository, keep the binding identified by database name in `cloudflare.config.ts`; Cloudflare can provision the database in the target account. The remote migration script resolves its ID from `vp exec cf d1 list` and does not require an account-specific ID committed to the repository.
 
 ## Scheduled backups are not running
 
-Deploy the complete Worker with `npm run deploy`. A local Next.js server or a source-only update does not provision the cron trigger declared in `wrangler.jsonc`.
+Deploy the complete Worker with `vp run deploy`. A local Node.js server or a source-only update does not provision the cron trigger declared in `cloudflare.config.ts`.
 
 Also confirm that automatic backups are enabled under **Admin → Backups** and that the Worker has its `DB` and `BUCKET` bindings.
 
@@ -74,7 +65,7 @@ Also confirm that automatic backups are enabled under **Admin → Backups** and 
 Confirm that:
 
 - The deployed Worker is named `mailflare`.
-- `services[].service` in `wrangler.jsonc` is also `mailflare`.
+- The `WORKER_SELF_REFERENCE` service name in `cloudflare.config.ts` is also `mailflare`.
 - Email Routing is enabled for the domain in Cloudflare.
 - The mailbox has an Email Routing rule pointing to the Worker.
 - If the domain receives through Resend or Amazon SES instead, its receiving checklist is all green, the MX record points at that provider, and `APP_URL` is a public HTTPS address.

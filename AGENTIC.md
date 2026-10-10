@@ -11,7 +11,7 @@ Recommended first release:
 - A mailbox-aware side panel with nine email tools, persistent private conversations, streaming responses, visible tool activity, and links into the existing composer.
 - Opt-in auto-drafting per mailbox, with one designated reviewer and durable background jobs.
 - An authenticated `/mcp` endpoint exposing the same mail operations, plus mailbox discovery and draft updates. External assistants request a send review; approval happens in Mailflare.
-- Cloudflare and Docker support through shared application services and runtime-specific model/queue adapters.
+- Cloudflare and Node.js support through shared application services and runtime-specific model/queue adapters.
 
 Keep autonomous sending, arbitrary third-party MCP connections, attachment interpretation, web browsing, permanent email deletion, bulk actions, and collaborative shared chat out of the first release.
 
@@ -48,7 +48,7 @@ Important distinction: the reference MCP send descriptions ask the caller to obt
 | External API authentication        | `src/lib/api/key-auth.ts`, `src/lib/api/scopes.ts`                                                             | Reuse key hashing/authentication, but add MCP-specific scopes and mailbox restrictions. Existing scopes are `send`, `read`, `jmap`, and `domains`.       |
 | Realtime                           | `src/lib/realtime/`, `src/hooks/message-realtime-utils.ts`                                                     | Extend the event union and query invalidation for draft/job changes; current notifications are `new_message`.                                            |
 | Runtime portability                | `src/lib/runtime.ts`, `server/runtime/env.ts`, `server/runtime/queue.ts`, `server/runtime/scheduler.ts`        | Node queue timers are in-memory. Persist AI jobs and recover them after restart.                                                                         |
-| Schema/deployment                  | `src/db/schema/index.ts`, `drizzle/migrations/`, `wrangler*.jsonc`, `env.d.ts`                                 | Add additive migrations, model configuration, queue bindings, and documented runtime configuration.                                                      |
+| Schema/deployment                  | `src/db/schema/index.ts`, `drizzle/migrations/`, `cloudflare.config.ts`, `env.d.ts`                            | Add additive migrations, model configuration, queue bindings, and documented runtime configuration.                                                      |
 
 There are no AI SDK/Agents/MCP dependencies in the inspected `package.json`.
 
@@ -139,7 +139,7 @@ OAuth discovery/authorization for clients without header-based credential setup 
 
 ## Architecture and storage
 
-Recommended architecture is a portable AI SDK service using existing Next.js streaming routes, with D1/SQLite persistence. Use Workers AI on Cloudflare and a configured server-side HTTP model provider on Docker. This avoids introducing a second mailbox database or two different chat persistence implementations.
+Recommended architecture is a portable AI SDK service using existing Next.js streaming routes, with D1/SQLite persistence. Use Workers AI on Cloudflare and a configured server-side HTTP model provider on Node.js. This avoids introducing a second mailbox database or two different chat persistence implementations.
 
 Cloudflare's `AIChatAgent` is a valid alternative when Durable Object persistence and resumable streaming are the priority; those capabilities are provided by [`@cloudflare/ai-chat`](https://developers.cloudflare.com/agents/communication-channels/chat/chat-agents/). It would require a separate Node adapter and additional authorization around agent instance routing. Defer that dependency in the initial portable implementation; automatic stream resumption is not promised by the proposed plain HTTP streaming approach.
 
@@ -192,7 +192,7 @@ New code should follow the repository convention: helper functions in separate f
 | `src/lib/realtime/`, relevant hooks                        | Draft/job event types and authorized notifications/query invalidation on both runtimes.                                                                                    |
 | Schema/migrations/config/docs                              | Additive schema, AI queue and provider configuration, MCP scopes/key UI, deployment and self-hosting instructions.                                                         |
 
-Dependencies to evaluate and pin during implementation: `ai`, its React integration, `workers-ai-provider`, an HTTP model-provider adapter, the official MCP TypeScript SDK, and a Markdown renderer if needed. Mailflare uses Zod 4; the reference uses Zod 3, so do not copy its dependency versions or tool typings blindly. No model/provider credentials enter client bundles. On Cloudflare, add the [`AI` binding](https://developers.cloudflare.com/workers-ai/configuration/bindings/) and a dedicated agent queue; use a frequent recovery schedule alongside the existing backup cron. Docker uses persisted jobs with its local scheduler and server-only provider credentials. Missing AI configuration disables generation gracefully; authorized MCP reads/draft CRUD can still work without a model.
+Dependencies to evaluate and pin during implementation: `ai`, its React integration, `workers-ai-provider`, an HTTP model-provider adapter, the official MCP TypeScript SDK, and a Markdown renderer if needed. Mailflare uses Zod 4; the reference uses Zod 3, so do not copy its dependency versions or tool typings blindly. No model/provider credentials enter client bundles. On Cloudflare, add the [`AI` binding](https://developers.cloudflare.com/workers-ai/configuration/bindings/) and a dedicated agent queue; use a frequent recovery schedule alongside the existing backup cron. The Node.js runtime uses persisted jobs with its local scheduler and server-only provider credentials. Missing AI configuration disables generation gracefully; authorized MCP reads/draft CRUD can still work without a model.
 
 ## Delivery sequence and acceptance criteria
 
@@ -224,7 +224,7 @@ Acceptance: one eligible inbound message produces at most one initial AI draft; 
 
 ### Phase 5 — Runtime and rollout completion
 
-Complete Cloudflare and Docker configuration, model budgets, usage/error visibility, retention, backup/restore handling, and operational docs. Exercise the authorization, approval, retry, and interruption scenarios above when implementation work is authorized; avoid unrelated cleanup.
+Complete Cloudflare and Node.js configuration, model budgets, usage/error visibility, retention, backup/restore handling, and operational docs. Exercise the authorization, approval, retry, and interruption scenarios above when implementation work is authorized; avoid unrelated cleanup.
 
 Acceptance: both deployments support the documented feature set, with helpful disabled states when providers are unavailable. Disabling the feature stops new runs/dispatches, expires pending agent approvals, and leaves existing drafts editable. Already confirmed delivery commands require an explicit cancellation decision rather than silently disappearing.
 

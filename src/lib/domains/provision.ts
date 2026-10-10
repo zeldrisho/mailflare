@@ -14,7 +14,7 @@ import { removeMxRecords } from "@/lib/domains/mx-records";
 import { rollbackDomainProvisioning } from "@/lib/domains/rollback";
 import { ensureSendingSubdomain } from "@/lib/domains/sending-subdomain";
 
-/** Node/Docker has no Email Worker; a catch-all PUT to one 404s (CF 2016). */
+/** The Node.js runtime has no Email Worker; a catch-all PUT to one 404s (CF 2016). */
 export function shouldBindEmailCatchAllToWorker(
   env?: Pick<CloudflareEnv, "MAILFLARE_RUNTIME">,
 ): boolean {

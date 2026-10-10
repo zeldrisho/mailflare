@@ -4,6 +4,7 @@
 
 - Install dependencies with `vp install`; keep the pnpm lockfile.
 - Run `package.json` scripts with `vp run <name>` rather than the similarly named built-ins; development/build/preview scripts bundle migrations first.
+- Run the project-local Cloudflare CLI as `vp exec cf`; do not assume `cf` is installed globally. Migrate from Wrangler when `cf` supports the workflow, and keep Wrangler only for operations it still does not support.
 
 ## Commands
 
@@ -12,7 +13,7 @@
 | Workers development             | `vp run dev`                                           |
 | Node development                | `vp run dev:node`                                      |
 | Check changed files             | `vp check <paths>`                                     |
-| Test one file                   | `vp run test -- tests/<name>.test.mjs`                  |
+| Test one file                   | `vp run test -- tests/<name>.test.mjs`                 |
 | Repository checks / tests       | `vp check` / `vp run test`                             |
 | Explicit type check             | `vp exec tsc --noEmit`                                 |
 | Worker build / preview / deploy | `vp run build` / `vp run preview` / `vp run deploy`    |
@@ -29,9 +30,9 @@
 - Access bindings through `getEnv()` / `getEnvAsync()` in `src/lib/cloudflare.ts`, then `getDb(env)` from `src/db`; keep application logic shared across Workers and Node.
 - Access blobs through wrapped `env.BUCKET` (`src/lib/storage/index.ts`), not directly through `cloudflare:workers` env.
 - Preserve `worker.ts` platform handlers and its `RealtimeHub` export; inbound email stores MIME and queues processing instead of parsing inline.
-- Keep the Worker name, `CF_EMAIL_WORKER_NAME`, and `WORKER_SELF_REFERENCE` service name in `wrangler.jsonc` identical.
+- Keep the Worker name, `CF_EMAIL_WORKER_NAME`, and `WORKER_SELF_REFERENCE` service name in `cloudflare.config.ts` identical.
 - Put non-trivial types and pure helpers in sibling `*-types.d.ts` and `*-utils.ts` files.
-- Regenerate `cloudflare-env.d.ts` with `vp run cf-typegen`; never hand-edit it.
+- Regenerate Cloudflare binding types with `vp run cf-typegen`; never hand-edit generated types.
 - Prefer `requireSessionUser` (`src/lib/api/auth.ts`) for session-authenticated routes; API keys require scope checks.
 - Authorize messages by accessible mailbox IDs through `src/lib/mailboxes/access.ts`, not by `userId` alone.
 - Set routing-rule `scope` explicitly; preserve domain routing order: rejects, exact mailboxes/aliases, then catch-all fallbacks (`src/lib/email/routing.ts`).
@@ -54,8 +55,8 @@
 
 | Need                             | File                                                             |
 | -------------------------------- | ---------------------------------------------------------------- |
-| Setup and deployment             | `README.md`, `docs/deployment.md`, `wrangler.jsonc`              |
-| Node/Docker runtime              | `docs/self-hosting.md`, `server/runtime/env.ts`                  |
+| Setup and deployment             | `README.md`, `docs/deployment.md`, `cloudflare.config.ts`        |
+| Node.js runtime                  | `docs/self-hosting.md`, `server/runtime/env.ts`                  |
 | Providers and DNS                | `docs/providers.md`                                              |
 | API and integrations             | `docs/api.md`, `docs/email-assistant-and-mcp.md`                 |
 | Localization and spam protection | `docs/localization.md`, `docs/spam-protection.md`                |

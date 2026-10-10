@@ -78,22 +78,21 @@ You choose the provider per domain and can switch anytime (see [Sending and rece
 
 Paste the prompt below into an agent with terminal access. Give it your Cloudflare account ID and **two separate scoped API tokens** through the agent's secret input. Never put them in a public chat, repository, or committed file.
 
-- **Deployment token** (Wrangler uses it as `CLOUDFLARE_API_TOKEN`): scope it to the target account with **Workers Scripts Edit** (or **Workers Admin** if you see Cloudflare's newer roles), **D1 Edit**, **Workers R2 Storage Edit**, **Queues Edit**, and **Account Settings Read**. Add **Workers Routes Edit** for the target zone only if the agent should attach a custom domain or route. See Cloudflare's [token permissions](https://developers.cloudflare.com/fundamentals/api/reference/permissions/) and [Workers roles](https://developers.cloudflare.com/workers/authorization/workers/).
+- **Deployment token** (the `cf` CLI uses it as `CLOUDFLARE_API_TOKEN`): scope it to the target account with **Workers Scripts Edit** (or **Workers Admin** if you see Cloudflare's newer roles), **D1 Edit**, **Workers R2 Storage Edit**, **Queues Edit**, and **Account Settings Read**. Add **Workers Routes Edit** for the target zone only if the agent should attach a custom domain or route. See Cloudflare's [token permissions](https://developers.cloudflare.com/fundamentals/api/reference/permissions/) and [Workers roles](https://developers.cloudflare.com/workers/authorization/workers/).
 - **Runtime token** (stored as the Worker secret `CF_TOKEN`): use the domain permissions above. Add **Email Sending Edit** to send mail. It must cover the zones you will connect in Mailflare.
 
 ```text
 Install Mailflare from https://github.com/hieunc229/mailflare in my Cloudflare account.
 Ask me for my Cloudflare account ID, a scoped deployment API token, and a separate
 runtime CF_TOKEN through a secret input. Never print, commit, or place either token
-in a command argument or a tracked file. Use the deployment token only for Wrangler
-authentication (CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID).
+in a command argument or a tracked file. Use the deployment token only for `cf`
+authentication (`CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`).
 
-Read README.md, docs/deployment.md, and wrangler.jsonc first. Keep the Worker name
+Read README.md, docs/deployment.md, and cloudflare.config.ts first. Keep the Worker name
 exactly mailflare. In the selected account, create or reuse the D1 database
 mailflare, R2 bucket mailflare-raw, and Queues mailflare-inbound,
-mailflare-outbound, and mailflare-agent. Set the D1 database_id in the local
-Wrangler config without committing that account-specific ID. Install dependencies,
-run npm run deploy, and set the runtime CF_TOKEN as a Worker secret. Do not run
+mailflare-outbound, and mailflare-agent. Install dependencies with vp install,
+run vp run deploy, and set the runtime CF_TOKEN as a Worker secret. Do not run
 remote D1 migrations manually; the /setup flow initializes the database.
 
 Give me the deployed URL and any remaining Cloudflare account actions. I will
@@ -102,38 +101,29 @@ open /setup, create the first admin account, and connect my domain there.
 
 See the [deployment guide](docs/deployment.md) for permissions, manual deployment, backups, and updates.
 
-### Self-host with Docker
+### Self-host on Node.js
 
-Mailflare also runs as one container on any server. It uses SQLite and local files instead of D1 and R2 (Backblaze B2 can replace the local files).
-
-- **Inbound mail**: a built-in SMTP listener, or a small Cloudflare relay Worker if you want to keep MX on Cloudflare.
-- **Outbound mail**: any SMTP relay, Cloudflare Email Sending, Resend, or Amazon SES.
-
-```bash
-cp .env.docker.example .env.docker
-docker compose up -d --build
-```
-
-See [docs/self-hosting.md](docs/self-hosting.md).
+Mailflare can also run on a Node.js server using SQLite and local files instead of D1 and R2. See [docs/self-hosting.md](docs/self-hosting.md) for setup, mail providers, and operations.
 
 ## Local development
 
 ```bash
+vp exec cf auth login
 cp .dev.vars.example .dev.vars
-npm install
-npm run db:migrate:local
-npm run dev
+vp install
+vp run db:migrate:local
+vp run dev
 ```
 
-Add your Cloudflare credentials to `.dev.vars`, then open [http://localhost:3000](http://localhost:3000). To load sample data, run `npm run db:seed` while the dev server is running.
+Add your Cloudflare credentials to `.dev.vars`, then open [http://localhost:3000](http://localhost:3000). To load sample data, run `vp run db:seed` while the dev server is running.
 
-The Cloudflare app uses vinext and the Cloudflare Vite plugin, with local D1, R2, Queues, and Durable Objects. Remote bindings are off by default. To use Workers AI locally, log in with Wrangler, set `CLOUDFLARE_ACCOUNT_ID`, and run `CLOUDFLARE_REMOTE_BINDINGS=true npm run dev`.
+The Cloudflare app uses vinext and the Cloudflare Vite plugin, with local D1, R2, Queues, and Durable Objects. Remote bindings are off by default. To use Workers AI locally, authenticate with `vp exec cf auth login`, set `CLOUDFLARE_ACCOUNT_ID`, and run `CLOUDFLARE_REMOTE_BINDINGS=true vp run dev`.
 
-- `npm run build`: build the full Worker.
-- `npm run start`: preview that build locally.
-- `npm run deploy`: build and deploy.
+- `vp run build`: build the full Worker.
+- `vp run start`: preview that build locally.
+- `vp run deploy`: build and deploy.
 
-The Node/Docker runtime still uses Next.js with `build:node`, `start:node`, and `dev:node`.
+The Node.js runtime uses Next.js with `build:node`, `start:node`, and `dev:node`.
 
 ## Languages
 

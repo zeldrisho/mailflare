@@ -1,6 +1,6 @@
 /**
  * The Queue producer API with an in-process consumer. Delivery order and the
- * retry policy match wrangler.jsonc (three retries, ten seconds apart on
+ * retry policy match cloudflare.config.ts (three retries, ten seconds apart on
  * failure). Jobs live in memory: inbound mail is already on disk before it is
  * enqueued, so a restart at worst leaves a message unprocessed in the blob
  * store, never lost.

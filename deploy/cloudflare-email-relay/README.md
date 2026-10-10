@@ -6,7 +6,7 @@ receiving mail through Cloudflare Email Routing (no port 25, no MX changes).
 1. `npm install`, then `npx wrangler secret put MAILFLARE_URL` (your server's
    public URL, e.g. `https://mail.example.com`) and
    `npx wrangler secret put INBOUND_WEBHOOK_SECRET` (the same value as in the
-   server's `.env.docker`).
+   server's environment configuration).
 2. `npm run deploy`.
 3. In the Cloudflare dashboard, under Email Routing for your zone, route the
    catch-all, or the addresses you want, to the `mailflare-email-relay` Worker.

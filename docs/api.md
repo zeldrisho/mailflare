@@ -226,4 +226,4 @@ Terms combine with AND. Admins can check or rebuild the index with `GET` / `POST
 
 Mailflare uses a Durable Object WebSocket hub to notify connected users after an inbound message is stored. Mailbox owners, the domain administrator, and delegated users receive events for mailboxes they can access.
 
-The `REALTIME` binding and its migration are declared in `wrangler.jsonc`. When a WebSocket is temporarily unavailable, the app retries the connection and uses a slower refresh until it recovers.
+The `REALTIME` binding and its migration are declared in `cloudflare.config.ts`. When a WebSocket is temporarily unavailable, the app retries the connection and uses a slower refresh until it recovers.

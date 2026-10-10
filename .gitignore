@@ -22,7 +22,6 @@
 /build
 /dist
 /data
-.env.docker
 
 # misc
 .DS_Store

@@ -3,7 +3,7 @@ import { runAgentMaintenance } from "@/lib/agent/maintenance";
 import { runTrashRetention } from "@/lib/email/trash-retention";
 import { runDriveTrashRetention } from "@/lib/drive/retention";
 
-/** Fire the daily 02:00 UTC backup and the recurring maintenance jobs, matching the cron triggers in wrangler.jsonc. */
+/** Fire the daily 02:00 UTC backup and the recurring maintenance jobs, matching the cron triggers in cloudflare.config.ts. */
 export function startScheduler(env: CloudflareEnv) {
   let lastRunDay = "";
   const timer = setInterval(() => {

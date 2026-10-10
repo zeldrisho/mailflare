@@ -10,7 +10,7 @@ CF_TOKEN=your_api_token_with_zone_email_permissions
 # CF_EMAIL=you@example.com
 # CF_API_KEY=your_global_api_key
 
-# The Worker uses the AI binding in wrangler.jsonc. Override its chat/draft model if needed.
+# The Worker uses the AI binding in cloudflare.config.ts. Override its chat/draft model if needed.
 # AI_MODEL=@cf/moonshotai/kimi-k2.5
 
 # Optional: send and receive through Resend or Amazon SES instead of Cloudflare.

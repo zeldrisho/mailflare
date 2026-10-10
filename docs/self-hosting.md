@@ -1,21 +1,23 @@
-# Self-hosting Mailflare (Docker)
+# Self-hosting Mailflare on Node.js
 
-Mailflare can run as a single container on any host instead of Cloudflare
-Workers. The same code serves both; the container provides its own database
-(SQLite on a volume), blob storage (files on the same volume), job queue,
-realtime WebSocket, backup schedule and an SMTP listener for inbound mail.
+Mailflare can run on a Node.js host instead of Cloudflare Workers. The same
+code serves both; the Node.js runtime provides its own database (SQLite),
+blob storage (local files), job queue, realtime WebSocket, backup schedule
+and an SMTP listener for inbound mail.
 
 ## Quick start
 
+Install dependencies with `vp install`, configure the environment variables
+below, then build and start the Node.js server:
+
 ```bash
-git clone https://github.com/hieunc229/mailflare && cd mailflare
-cp .env.docker.example .env.docker      # edit: how to receive and send mail
-docker compose up -d --build
+vp run build:node
+MAILFLARE_RUNTIME=node NODE_ENV=production DATA_DIR=./data node dist/server.mjs
 ```
 
 Open `http://your-host:3000/setup`, create the admin account and add your
-domain. All data lives in the `mailflare-data` volume (`/data` in the
-container): the SQLite database, raw messages, attachments and backups.
+domain. SQLite data, raw messages, attachments and backups are stored under
+`DATA_DIR`.
 
 Behind a reverse proxy, set `APP_URL=https://mail.example.com` so links in
 password-reset mail and the JMAP session point at the public address, and
@@ -40,7 +42,7 @@ exception). Users can then enable push under **Settings → Inbox → Notificati
 
 Pick one; both can be on at once.
 
-**Built-in SMTP listener (default).** The container listens on port 25 and
+**Built-in SMTP listener (default).** The Node.js server listens on port 25 and
 accepts mail for every domain you add. Point the domain's MX record at the
 host, set `MAIL_HOSTNAME` to that host's name, and make sure port 25 is
 reachable from the internet (several clouds block it by default; Hetzner and
@@ -49,7 +51,7 @@ DMARC records to create. Domain routing rules work as on Cloudflare: reject
 rules answer the sender with a 550 during delivery, forward rules relay the
 message through your outbound SMTP.
 
-Optional: `SMTP_TLS_KEY` and `SMTP_TLS_CERT` (paths inside the container)
+Optional: `SMTP_TLS_KEY` and `SMTP_TLS_CERT` (file paths)
 enable STARTTLS with your own certificate. Without them STARTTLS is not
 offered, which is safe but means transport encryption depends on the sender.
 
@@ -119,26 +121,17 @@ and the DNS page shows what to set by hand.
 - **Backups.** The daily 02:00 UTC backup and the admin Backups page work
   unchanged; files land under `/data/blobs/backups`. Back up the whole volume
   for a full copy.
-- **Updates.** Pull the new image and recreate the container; migrations run
-  at start. The in-app update button is disabled on self-hosted installs.
-- **Logs.** `docker compose logs -f mailflare`.
+- **Updates.** Rebuild and restart the Node.js server with the new release; migrations run at start. The in-app update button is disabled on self-hosted installs.
+- **Logs.** Use the process manager or service manager configured for your Node.js deployment.
 - **Queues.** Jobs are held in memory. Inbound mail is written to the volume
   before it is queued, so a restart never loses a message; at worst one
   stays unparsed until it is re-imported.
 
 ## Email assistant and MCP
 
-Set `AI_BASE_URL`, `AI_API_KEY`, and `AI_MODEL` in the container environment to configure the built-in assistant. These values stay on the server. Assistant chat is available by default when a provider is configured; a mailbox manager can change its writing instructions and availability through the settings button in the assistant panel. Automatic reply drafts remain off until enabled there. Auto-draft work is recorded in SQLite and retried after a restart by the local scheduler. AI failure does not reject inbound mail. Out-of-office auto-replies and AI auto-drafts are separate features; turn off out-of-office replies before enabling auto-drafts for a mailbox.
+Set `AI_BASE_URL`, `AI_API_KEY`, and `AI_MODEL` in the Node.js process environment to configure the built-in assistant. These values stay on the server. Assistant chat is available by default when a provider is configured; a mailbox manager can change its writing instructions and availability through the settings button in the assistant panel. Automatic reply drafts remain off until enabled there. Auto-draft work is recorded in SQLite and retried after a restart by the local scheduler. AI failure does not reject inbound mail. Out-of-office auto-replies and AI auto-drafts are separate features; turn off out-of-office replies before enabling auto-drafts for a mailbox.
 
 The MCP endpoint is `/mcp`. Create a dedicated mailbox-scoped Bearer key in **Assistant → MCP** and give the key to a client that supports custom HTTP headers. The endpoint uses Streamable HTTP; `request_send` gives the client a review URL, and only an authenticated Mailflare browser session can confirm delivery. MCP read and draft tools remain available when no AI model is configured.
-
-## Running without Docker
-
-```bash
-npm ci
-npm run build:node
-MAILFLARE_RUNTIME=node NODE_ENV=production DATA_DIR=./data node dist/server.mjs
-```
 
 Port 25 needs root or a capability (`setcap cap_net_bind_service=+ep`); use
 `SMTP_INBOUND_PORT=2525` behind a port forward otherwise.
