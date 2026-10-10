@@ -1,3 +1,4 @@
+import { readJsonBody } from "@/lib/http/request";
 import { NextResponse } from "next/server";
 import { and, eq, or } from "drizzle-orm";
 import { getEnv } from "@/lib/cloudflare";
@@ -35,7 +36,8 @@ export async function POST(request: Request) {
   const env = getEnv();
   const auth = await authenticateAdminApiKey(env, request, "mailboxes");
   if (!auth) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  const parsed = mailboxSchema.safeParse(await request.json().catch(() => null));
+  const parsed = mailboxSchema.safeParse(await readJsonBody(request).catch(() => null));
+
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   const db = getDb(env);
   const mailboxType = parsed.data.type ?? "personal";

@@ -1,3 +1,4 @@
+import { readJsonBody } from "@/lib/http/request";
 import { and, eq, ne } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { getDb } from "@/db";
@@ -77,7 +78,8 @@ export async function POST(request: Request, { params }: MailboxRouteParams) {
   const { id } = await params;
   const env = getEnv();
   const user = await requireUser(env, request);
-  const parsed = createMailboxAliasSchema.safeParse(await request.json());
+  const parsed = createMailboxAliasSchema.safeParse(await readJsonBody(request));
+
   if (!parsed.success) {
     return NextResponse.json({ error: "Enter a valid alias username and domain" }, { status: 400 });
   }

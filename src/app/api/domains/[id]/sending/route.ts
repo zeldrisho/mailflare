@@ -1,3 +1,4 @@
+import { readJsonBody } from "@/lib/http/request";
 import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
@@ -38,7 +39,8 @@ export async function PUT(request: Request, { params }: Params) {
     return NextResponse.json({ error: "Invalid origin" }, { status: 403 });
   const domain = await getDomainForUser(env, user.id, id);
   if (!domain) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  const parsed = schema.safeParse(await request.json().catch(() => null));
+  const parsed = schema.safeParse(await readJsonBody(request).catch(() => null));
+
   if (!parsed.success)
     return NextResponse.json({ error: "Unknown sending provider" }, { status: 400 });
   const { provider, replaceMx } = parsed.data;
@@ -122,7 +124,8 @@ export async function DELETE(request: Request, { params }: Params) {
     return NextResponse.json({ error: "Invalid origin" }, { status: 403 });
   const domain = await getDomainForUser(env, user.id, id);
   if (!domain) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  const parsed = removeSchema.safeParse(await request.json().catch(() => null));
+  const parsed = removeSchema.safeParse(await readJsonBody(request).catch(() => null));
+
   if (!parsed.success) return NextResponse.json({ error: "Unknown provider" }, { status: 400 });
   if (parsed.data.target === domain.sendingProvider) {
     return NextResponse.json(

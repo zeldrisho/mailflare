@@ -1,3 +1,4 @@
+import { readJsonBody } from "@/lib/http/request";
 import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { getDb } from "@/db";
@@ -19,7 +20,7 @@ export async function PATCH(request: Request) {
     );
   if (!hasValidSessionMutationOrigin(request))
     return NextResponse.json({ error: "Invalid origin" }, { status: 403 });
-  const body = (await request.json().catch(() => null)) as BookingSettingsInput | null;
+  const body = (await readJsonBody(request).catch(() => null)) as BookingSettingsInput | null;
   const username = normalizeBookingUsername(body?.username);
   if (!username)
     return NextResponse.json(

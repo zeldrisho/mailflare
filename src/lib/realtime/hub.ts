@@ -1,3 +1,4 @@
+import { readJsonBody } from "@/lib/http/request";
 import { DurableObject } from "cloudflare:workers";
 import { getUserMailRevision } from "./revision";
 import type {
@@ -28,7 +29,10 @@ export class RealtimeHub extends DurableObject<CloudflareEnv> {
     }
 
     if (url.pathname === "/notify" && request.method === "POST") {
-      const payload = (await request.json()) as NewMessageNotification | AgentDraftNotification;
+      const payload = (await readJsonBody(request)) as
+        | NewMessageNotification
+        | AgentDraftNotification;
+
       const message = JSON.stringify(payload);
 
       for (const socket of this.ctx.getWebSockets()) {

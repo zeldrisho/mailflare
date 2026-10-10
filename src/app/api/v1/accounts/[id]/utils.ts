@@ -1,3 +1,4 @@
+import { readJsonBody } from "@/lib/http/request";
 import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { getEnv } from "@/lib/cloudflare";
@@ -52,7 +53,11 @@ export async function PATCH(request: Request, { params }: AdminAccountRouteParam
   const account = await selectAccountById(db, id);
   if (!account || (account.id !== auth.userId && account.createdByUserId !== auth.userId))
     return NextResponse.json({ error: "Account not found" }, { status: 404 });
-  const parsed = updateManagedAccountSchema.safeParse(await request.json().catch(() => null));
+
+  const parsed = updateManagedAccountSchema.safeParse(
+    await readJsonBody(request).catch(() => null),
+  );
+
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   if (
     !isPrimaryAdmin(auth.user) &&

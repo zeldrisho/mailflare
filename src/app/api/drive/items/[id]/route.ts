@@ -1,3 +1,4 @@
+import { readJsonBody } from "@/lib/http/request";
 import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { driveItems } from "@/db/schema";
@@ -14,7 +15,12 @@ export async function PATCH(request: Request, { params }: DriveItemParams) {
   const { db, user } = auth;
   const item = await getDriveItem(db, id);
   if (!item) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  const body = (await request.json().catch(() => ({}))) as { name?: unknown; trashed?: unknown };
+
+  const body = (await readJsonBody(request).catch(() => ({}))) as {
+    name?: unknown;
+    trashed?: unknown;
+  };
+
   const restoring = body.trashed === false && !!item.trashedAt;
   const role = await getDriveRole(db, user.id, item, restoring);
   if (!canEditDrive(role)) return NextResponse.json({ error: "Not found" }, { status: 404 });

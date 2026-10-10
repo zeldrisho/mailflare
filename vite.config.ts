@@ -98,6 +98,7 @@ export default defineConfig({
       "typescript/ban-ts-comment": "error",
       "typescript/no-duplicate-enum-values": "error",
       "typescript/no-empty-object-type": "error",
+      "typescript/no-floating-promises": "error",
       "typescript/no-explicit-any": "error",
       "typescript/no-extra-non-null-assertion": "error",
       "typescript/no-misused-new": "error",
@@ -1190,6 +1191,7 @@ export default defineConfig({
           VTTRegion: "readonly",
           WakeLock: "readonly",
           WakeLockSentinel: "readonly",
+          // oxlint-disable-next-line anti-slop/no-shape-in-symbol-names -- Standard Web Audio API global name.
           WaveShaperNode: "readonly",
           WebGL2RenderingContext: "readonly",
           WebGLActiveInfo: "readonly",

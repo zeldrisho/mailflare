@@ -1,3 +1,4 @@
+import { readJsonBody } from "@/lib/http/request";
 import { NextResponse } from "next/server";
 import { getEnv } from "@/lib/cloudflare";
 import { getCurrentUser } from "@/lib/auth/cookies";
@@ -16,7 +17,8 @@ export async function POST(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const payload = (await request.json()) as MessageStatusPayload;
+  const payload = (await readJsonBody(request)) as MessageStatusPayload;
+
   if (!isAllowedMessageStatus(payload.status)) {
     return NextResponse.json({ error: "Invalid message status" }, { status: 400 });
   }

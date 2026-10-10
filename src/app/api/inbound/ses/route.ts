@@ -1,12 +1,22 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { getEnv } from "@/lib/cloudflare";
 import { requireAwsConfig } from "@/lib/aws/config";
 import { deleteObject, getObject } from "@/lib/aws/s3";
 import { getSesReceivingState, SES_OBJECT_PREFIX } from "@/lib/aws/ses-receiving";
 import { intakeProviderMail } from "@/lib/email/provider-intake";
 import { parseSesNotification, safeEqual, type SnsEnvelope } from "@/lib/aws/ses-notification";
+import { readBoundedBody } from "@/lib/http/request";
+import { RequestBodyTooLargeError } from "@/lib/http/errors";
 
 export const dynamic = "force-dynamic";
+
+const snsEnvelopeSchema = z.object({
+  Type: z.string().optional(),
+  TopicArn: z.string().optional(),
+  Message: z.string().optional(),
+  SubscribeURL: z.string().optional(),
+});
 
 /**
  * Amazon SNS endpoint for SES inbound mail. SNS posts JSON as text/plain.
@@ -24,9 +34,16 @@ export async function POST(request: Request) {
 
   let envelope: SnsEnvelope;
   try {
-    envelope = JSON.parse(await request.text()) as SnsEnvelope;
-  } catch {
-    return NextResponse.json({ error: "Invalid body" }, { status: 400 });
+    const body = await readBoundedBody(request, 1024 * 1024);
+    envelope = snsEnvelopeSchema.parse(JSON.parse(new TextDecoder().decode(body)));
+  } catch (error) {
+    return NextResponse.json(
+      {
+        error:
+          error instanceof RequestBodyTooLargeError ? "Request body is too large" : "Invalid body",
+      },
+      { status: error instanceof RequestBodyTooLargeError ? 413 : 400 },
+    );
   }
   if (envelope.TopicArn !== state.topicArn)
     return NextResponse.json({ error: "Unknown topic" }, { status: 403 });
@@ -49,7 +66,12 @@ export async function POST(request: Request) {
     ) {
       return NextResponse.json({ error: "Invalid subscription URL" }, { status: 400 });
     }
-    const confirmed = await fetch(url, { redirect: "manual" });
+
+    const confirmed = await fetch(url, {
+      redirect: "manual",
+      signal: AbortSignal.timeout(10_000),
+    });
+
     return NextResponse.json({ confirmed: confirmed.ok }, { status: confirmed.ok ? 200 : 502 });
   }
   if (envelope.Type !== "Notification") return NextResponse.json({ ignored: true });

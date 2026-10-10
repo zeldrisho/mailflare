@@ -52,6 +52,8 @@
   ],
   "observability": {
     "enabled": true,
+    "logs": { "head_sampling_rate": 1 },
+    "traces": { "enabled": true, "head_sampling_rate": 0.01 },
   },
   "upload_source_maps": true,
   "send_email": [
@@ -92,16 +94,19 @@
     "consumers": [
       {
         "queue": "mailflare-inbound",
+        "dead_letter_queue": "mailflare-inbound-dlq",
         "max_batch_size": 5,
         "max_retries": 3,
       },
       {
         "queue": "mailflare-outbound",
+        "dead_letter_queue": "mailflare-outbound-dlq",
         "max_batch_size": 5,
         "max_retries": 3,
       },
       {
         "queue": "mailflare-agent",
+        "dead_letter_queue": "mailflare-agent-dlq",
         "max_batch_size": 1,
         "max_retries": 3,
       },

@@ -1,3 +1,4 @@
+import { readJsonBody } from "@/lib/http/request";
 import { z } from "zod";
 import { isValidTimeZone, normalizeTimeZone } from "@/lib/time/utils";
 import type { UpdateTimeZoneInput } from "./types";
@@ -13,7 +14,7 @@ const updateTimeZoneSchema = z.object({
 });
 
 export async function parseTimeZoneUpdate(request: Request): Promise<UpdateTimeZoneInput | null> {
-  const body = await request.json().catch(() => null);
+  const body = await readJsonBody(request).catch(() => null);
   const parsed = updateTimeZoneSchema.safeParse(body);
   return parsed.success
     ? { timeZone: parsed.data.timeZone ? normalizeTimeZone(parsed.data.timeZone) : null }

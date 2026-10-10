@@ -39,19 +39,26 @@ export async function processInboundMessage(
   const decision = await resolveInboundAddress(db, payload.to, payload.from);
 
   if (!decision) {
-    console.warn(`No routing for inbound address: ${payload.to}`);
+    console.warn(JSON.stringify({ event: "email.inbound_unrouted" }));
+
     return;
   }
 
   if (decision.action === "reject") {
-    console.warn(`Rejected inbound: ${payload.to}`);
+    console.warn(JSON.stringify({ event: "email.inbound_rejected" }));
+
     return;
   }
 
   // A forward decision only reaches the queue when the rule keeps a copy; without a
   // destination mailbox there is nothing to store.
   if (decision.action === "forward" && !decision.keepCopy) {
-    console.info(`Forward ${payload.to} -> ${decision.forwardTo}`);
+    console.info(
+      JSON.stringify({
+        event: "email.inbound_forwarded_without_copy",
+      }),
+    );
+
     return;
   }
 
@@ -93,7 +100,8 @@ export async function processInboundMessage(
 
   const raw = await env.BUCKET.get(payload.rawR2Key);
   if (!raw) {
-    console.error(`Missing R2 object: ${payload.rawR2Key}`);
+    console.error(JSON.stringify({ event: "email.inbound_raw_missing" }));
+
     return;
   }
 
@@ -101,7 +109,12 @@ export async function processInboundMessage(
   const parsed = await parseRawMime(buffer);
   const attachmentLimitReason = inboundAttachmentLimitReason(parsed.attachments);
   if (attachmentLimitReason) {
-    console.warn(`Inbound attachment limit reached for ${payload.to}: ${attachmentLimitReason}`);
+    console.warn(
+      JSON.stringify({
+        event: "email.inbound_attachment_limit",
+        reason: attachmentLimitReason,
+      }),
+    );
     await env.BUCKET.delete(payload.rawR2Key);
     return;
   }
@@ -139,7 +152,14 @@ export async function processInboundMessage(
     } catch (error) {
       spamAnalysisError =
         error instanceof Error ? error.message.slice(0, 300) : "Spam analysis failed";
-      console.error(`Spam analysis failed for ${messageId}`, error);
+      console.error(
+        JSON.stringify({
+          event: "email.spam_analysis_failed",
+          messageId,
+          error:
+            error instanceof Error ? { name: error.name, message: error.message } : String(error),
+        }),
+      );
     }
   }
   if (destination.status === "spam" && spamAnalysis) {

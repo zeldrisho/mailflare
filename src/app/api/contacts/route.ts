@@ -1,3 +1,4 @@
+import { readJsonBody } from "@/lib/http/request";
 import { NextResponse } from "next/server";
 import { getDb } from "@/db";
 import { requireUser } from "@/lib/auth/cookies";
@@ -27,7 +28,7 @@ export async function GET(request: Request) {
   const account = await getPersonalIdentityForAddress(db, access.mailbox.userId, email);
   const contact = account
     ? {
-        ...(storedContact ?? {}),
+        ...storedContact,
         email,
         displayName: account.name,
         hasAvatar: !!account.avatarKey,
@@ -51,7 +52,7 @@ export async function GET(request: Request) {
 export async function PATCH(request: Request) {
   const env = getEnv();
   const user = await requireUser(env, request);
-  const body = (await request.json()) as ContactRequestInput;
+  const body = (await readJsonBody(request)) as ContactRequestInput;
   const email = normalizeEmailAddress(body.address ?? "");
   const displayName = body.displayName?.trim() ?? "";
   if (!body.mailboxId || !email || !displayName || displayName.length > 100) {

@@ -4,6 +4,8 @@ import { requireUser } from "@/lib/auth/cookies";
 import { getBranding, updateBranding } from "@/lib/branding/service";
 import { getEnv } from "@/lib/cloudflare";
 import { BRANDING_ICON_TYPES, isBrandingIcon, MAX_BRANDING_ICON_SIZE } from "./utils";
+import { readFormDataBody } from "@/lib/http/request";
+import { RequestBodyTooLargeError } from "@/lib/http/errors";
 
 export async function GET() {
   return NextResponse.json(await getBranding(getEnv()), {
@@ -19,8 +21,21 @@ export async function PUT(request: Request) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const form = await request.formData();
-  const appName = String(form.get("appName") ?? "").trim();
+  let form: FormData;
+
+  try {
+    form = await readFormDataBody(request, 2_100_000);
+  } catch (error) {
+    const status = error instanceof RequestBodyTooLargeError ? 413 : 400;
+
+    return NextResponse.json(
+      { error: status === 413 ? "Branding upload is too large" : "Expected multipart form data" },
+      { status },
+    );
+  }
+
+  const appNameValue = form.get("appName");
+  const appName = (appNameValue instanceof File ? "" : (appNameValue ?? "")).trim();
   const iconValue = form.get("icon");
   if (!appName || appName.length > 60) {
     return NextResponse.json(

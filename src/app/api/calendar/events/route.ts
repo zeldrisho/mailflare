@@ -1,3 +1,4 @@
+import { readJsonBody } from "@/lib/http/request";
 import { and, eq, gte, lt, ne, or } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { getDb } from "@/db";
@@ -45,7 +46,7 @@ export async function POST(request: Request) {
   const env = getEnv();
   const { user, key, error } = await authorizeCalendarRequest(env, request, "calendar:write");
   if (error) return error;
-  const input = (await request.json()) as CalendarEventInput;
+  const input = (await readJsonBody(request)) as CalendarEventInput;
   const startsAt = new Date(input.startsAt);
   const endsAt = new Date(input.endsAt);
   if (

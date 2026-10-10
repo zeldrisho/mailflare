@@ -1,3 +1,4 @@
+import { readJsonBody } from "@/lib/http/request";
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { getEnv } from "@/lib/cloudflare";
@@ -20,7 +21,7 @@ import { SESSION_COOKIE } from "@/lib/auth/session";
 export async function POST(request: Request) {
   if (!isSameOrigin(request)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   const env = getEnv();
-  const body = (await request.json().catch(() => null)) as { userId?: unknown } | null;
+  const body = (await readJsonBody(request).catch(() => null)) as { userId?: unknown } | null;
   const userId = typeof body?.userId === "string" ? body.userId : "";
   const jar = await cookies();
   const accounts = await resolveAccounts(env, parseAccountTokens(jar.get(ACCOUNTS_COOKIE)?.value));

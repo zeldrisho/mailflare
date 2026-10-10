@@ -15,14 +15,17 @@ export class ResendRestrictedKeyError extends Error {
 }
 
 async function resendRequest<T>(apiKey: string, path: string, init?: RequestInit): Promise<T> {
+  const headers = new Headers(init?.headers);
+  headers.set("Authorization", `Bearer ${apiKey}`);
+  headers.set("Content-Type", "application/json");
+
   const response = await fetch(`${RESEND_API}${path}`, {
     ...init,
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-      ...init?.headers,
-    },
+    signal: init?.signal ?? AbortSignal.timeout(15_000),
+    headers,
   });
+
+  // SAFETY: only optional error fields are read here; successful payload shape is owned by each typed caller.
   const body = (await response.json().catch(() => null)) as {
     message?: string;
     name?: string;
@@ -34,6 +37,8 @@ async function resendRequest<T>(apiKey: string, path: string, init?: RequestInit
     }
     throw new Error(`Resend: ${body?.message ?? `request failed (${response.status})`}`);
   }
+
+  // SAFETY: each API call selects its response type and consumes the corresponding Resend endpoint.
   return body as T;
 }
 
@@ -124,6 +129,7 @@ export async function checkResendKey(
     headers: { Authorization: `Bearer ${apiKey}` },
   });
   if (response.ok) return { valid: true, canManageDomains: true };
+  // SAFETY: only the optional error name is inspected below.
   const body = (await response.json().catch(() => null)) as { name?: string } | null;
   if (response.status === 401 && body?.name === "restricted_api_key")
     return { valid: true, canManageDomains: false };

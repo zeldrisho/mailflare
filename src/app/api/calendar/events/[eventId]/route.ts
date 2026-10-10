@@ -1,3 +1,4 @@
+import { readJsonBody } from "@/lib/http/request";
 import { and, eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { getDb } from "@/db";
@@ -30,7 +31,7 @@ export async function PATCH(request: Request, { params }: CalendarEventRoutePara
   if (error) return error;
   const { eventId } = await params;
   const occurrence = parseCalendarOccurrenceId(eventId);
-  const input = (await request.json()) as CalendarEventInput;
+  const input = (await readJsonBody(request)) as CalendarEventInput;
   const startsAt = new Date(input.startsAt);
   const endsAt = new Date(input.endsAt);
   const effectiveFrom = input.effectiveFrom ? new Date(input.effectiveFrom) : occurrence?.startsAt;
@@ -242,7 +243,7 @@ export async function DELETE(request: Request, { params }: CalendarEventRoutePar
   if (error) return error;
   const { eventId } = await params;
   const occurrence = parseCalendarOccurrenceId(eventId);
-  const input = (await request.json().catch(() => ({}))) as CalendarEventInput;
+  const input = (await readJsonBody(request).catch(() => ({}))) as CalendarEventInput;
   const effectiveFrom = input.effectiveFrom ? new Date(input.effectiveFrom) : occurrence?.startsAt;
   if (effectiveFrom && Number.isNaN(effectiveFrom.getTime()))
     return NextResponse.json({ error: "Invalid repeat start" }, { status: 400 });

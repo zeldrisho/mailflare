@@ -1,3 +1,4 @@
+import { readJsonBody } from "@/lib/http/request";
 import { NextResponse } from "next/server";
 import { and, eq, or } from "drizzle-orm";
 import { getEnv } from "@/lib/cloudflare";
@@ -60,7 +61,8 @@ export async function GET(request: Request, { params }: AdminMailboxRouteParams)
 export async function PATCH(request: Request, { params }: AdminMailboxRouteParams) {
   const access = await managedMailbox(request, (await params).id);
   if (access.error) return access.error;
-  const parsed = updateMailboxSchema.safeParse(await request.json().catch(() => null));
+  const parsed = updateMailboxSchema.safeParse(await readJsonBody(request).catch(() => null));
+
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   const db = getDb(access.env);
   if (parsed.data.useAllDomains === true) {

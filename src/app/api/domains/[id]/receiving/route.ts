@@ -1,3 +1,4 @@
+import { readJsonBody } from "@/lib/http/request";
 import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
@@ -24,7 +25,8 @@ export async function PUT(request: Request, { params }: Params) {
   if (!domain) return NextResponse.json({ error: "Not found" }, { status: 404 });
   const parsed = z
     .object({ provider: z.enum(["none", "cloudflare", "resend", "ses"]) })
-    .safeParse(await request.json().catch(() => null));
+    .safeParse(await readJsonBody(request).catch(() => null));
+
   if (!parsed.success)
     return NextResponse.json({ error: "Unknown receiving provider" }, { status: 400 });
   await getDb(env)
@@ -61,7 +63,8 @@ export async function DELETE(request: Request, { params }: Params) {
   if (!domain) return NextResponse.json({ error: "Not found" }, { status: 404 });
   const parsed = z
     .object({ target: z.enum(["cloudflare", "resend", "ses"]) })
-    .safeParse(await request.json().catch(() => null));
+    .safeParse(await readJsonBody(request).catch(() => null));
+
   if (!parsed.success) return NextResponse.json({ error: "Unknown provider" }, { status: 400 });
   if (parsed.data.target === domain.receivingProvider)
     return NextResponse.json(

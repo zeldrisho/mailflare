@@ -1,3 +1,4 @@
+import { readJsonBody } from "@/lib/http/request";
 import { and, eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { getDb } from "@/db";
@@ -48,7 +49,8 @@ export async function POST(request: Request) {
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   if (!hasValidSessionMutationOrigin(request))
     return NextResponse.json({ error: "Invalid origin" }, { status: 403 });
-  const input = parseBookingEventInput(await request.json().catch(() => null));
+  const input = parseBookingEventInput(await readJsonBody(request).catch(() => null));
+
   if (!input)
     return NextResponse.json(
       { error: "Enter valid booking details and availability." },

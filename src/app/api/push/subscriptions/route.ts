@@ -1,3 +1,4 @@
+import { readJsonBody } from "@/lib/http/request";
 import { and, eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { z } from "zod";
@@ -29,7 +30,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Push notifications are not configured" }, { status: 503 });
   }
 
-  const parsed = subscriptionSchema.safeParse(await request.json().catch(() => null));
+  const parsed = subscriptionSchema.safeParse(await readJsonBody(request).catch(() => null));
+
   if (!parsed.success)
     return NextResponse.json({ error: "Invalid push subscription" }, { status: 400 });
   if (!isSupportedPushEndpoint(parsed.data.endpoint) || !hasValidPushKeys(parsed.data.keys)) {
@@ -72,7 +74,8 @@ export async function DELETE(request: Request) {
   const env = getEnv();
   const auth = await requireSessionUser(env, request);
   if (auth.error) return auth.error;
-  const parsed = deleteSchema.safeParse(await request.json().catch(() => null));
+  const parsed = deleteSchema.safeParse(await readJsonBody(request).catch(() => null));
+
   if (!parsed.success)
     return NextResponse.json({ error: "Invalid push subscription" }, { status: 400 });
 

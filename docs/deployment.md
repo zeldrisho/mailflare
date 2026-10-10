@@ -59,6 +59,31 @@ across deployments so existing browser subscriptions remain valid.
 
 Setup applies the committed migrations through the Worker's D1 binding before creating the first admin account.
 
+### Compatibility and staging
+
+The production compatibility date is pinned in `wrangler.jsonc`; advance it deliberately after checking Cloudflare's compatibility-date notes and running Worker integration tests. Do not copy a date from an example or upgrade it automatically during unrelated deploys.
+
+The root Wrangler configuration deploys the production Worker and its production bindings. There is no named staging environment in this repository. For staging, use a separate Worker configuration/account and isolated D1 database, R2 bucket, queues, Durable Object namespace, and secrets. Do not deploy the root configuration with `--env` unless a fully isolated environment with every non-inheritable binding has first been configured.
+
+Backup restore uploads are capped at 32 MiB to bound multipart and restore memory usage. Larger backups should be restored through a separately provisioned operational path rather than increasing the request cap without memory testing.
+
+### Queue dead-letter queues
+
+The Worker configuration routes messages that exhaust their retries to dedicated
+queues: `mailflare-inbound-dlq`, `mailflare-outbound-dlq`, and
+`mailflare-agent-dlq`. Create these queues in the same Cloudflare account before
+deploying a configuration that references them (for example, with
+`wrangler queues create mailflare-inbound-dlq`, and likewise for the other two).
+Monitor them in the Cloudflare Queues dashboard. For recovery, inspect the
+message body and failure logs, fix the underlying issue, then use the dashboard's
+DLQ replay action or re-enqueue the validated payload to its original queue.
+Replay one message first and confirm the resulting database/provider state
+before bulk replaying. Inbound processing is deduplicated by its stored raw
+object key. Outbound delivery is at-least-once: a provider may accept a send
+before a later failure is recorded, so replaying can send a duplicate. Check the
+provider's delivery records and the outbound job/message status before replay; do
+not blindly replay an outbound DLQ batch.
+
 ## Step 4: Connect your primary domain and create an account
 
 1. Enter a domain that already uses Cloudflare DNS on the same account as your `CF_TOKEN`.

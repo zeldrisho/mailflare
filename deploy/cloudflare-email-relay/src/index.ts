@@ -57,6 +57,7 @@ export default {
           ),
         },
         body: raw,
+        signal: AbortSignal.timeout(20_000),
       });
       if (response.status === 413) {
         message.setReject(
@@ -65,9 +66,16 @@ export default {
         return;
       }
       if (!response.ok) throw new Error(`Mailflare answered ${response.status}`);
+      // SAFETY: response is from the configured Mailflare HTTPS endpoint; routing action handling below is exhaustive.
       decision = (await response.json()) as Decision;
     } catch (error) {
-      console.error("Relay to Mailflare failed", error);
+      console.error(
+        JSON.stringify({
+          event: "email.relay_delivery_failed",
+          error:
+            error instanceof Error ? { name: error.name, message: error.message } : String(error),
+        }),
+      );
       // A rejection with a temporary-sounding reason makes most senders retry later.
       message.setReject("Mailflare is temporarily unavailable, please retry");
       return;
@@ -81,7 +89,13 @@ export default {
       try {
         await message.forward(decision.forwardTo, new Headers(decision.forwardHeaders ?? {}));
       } catch (error) {
-        console.error(`Forward to ${decision.forwardTo} failed`, error);
+        console.error(
+          JSON.stringify({
+            event: "email.relay_forward_failed",
+            error:
+              error instanceof Error ? { name: error.name, message: error.message } : String(error),
+          }),
+        );
       }
     }
   },

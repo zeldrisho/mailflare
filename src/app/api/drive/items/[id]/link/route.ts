@@ -1,3 +1,4 @@
+import { readJsonBody } from "@/lib/http/request";
 import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { driveItems } from "@/db/schema";
@@ -14,7 +15,8 @@ export async function POST(request: Request, { params }: DriveItemParams) {
   const item = await getDriveItem(auth.db, id);
   if (!item || item.ownerId !== auth.user.id || item.trashedAt)
     return NextResponse.json({ error: "Not found" }, { status: 404 });
-  const body = (await request.json().catch(() => ({}))) as { enabled?: unknown };
+  const body = (await readJsonBody(request).catch(() => ({}))) as { enabled?: unknown };
+
   const linkToken = body.enabled
     ? (item.linkToken ?? `${newId()}${newId()}`.replace(/[^A-Za-z0-9]/g, "").slice(0, 32))
     : null;

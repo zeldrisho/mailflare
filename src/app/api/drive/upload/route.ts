@@ -1,3 +1,4 @@
+import { readJsonBody } from "@/lib/http/request";
 import { NextResponse } from "next/server";
 import { and, eq, isNotNull, isNull, lt } from "drizzle-orm";
 import { driveItems, driveUploadParts } from "@/db/schema";
@@ -22,7 +23,8 @@ export async function POST(request: Request) {
   const auth = await authorizeDrive(request, true);
   if (auth.error) return auth.error;
   const { env, db, user } = auth;
-  const body = (await request.json().catch(() => ({}))) as {
+
+  const body = (await readJsonBody(request).catch(() => ({}))) as {
     name?: unknown;
     size?: unknown;
     contentType?: unknown;

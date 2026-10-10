@@ -1,3 +1,4 @@
+import { readJsonBody } from "@/lib/http/request";
 import { NextResponse } from "next/server";
 import { getEnv } from "@/lib/cloudflare";
 import { authenticateAdminApiKey } from "@/lib/api/admin-auth";
@@ -45,7 +46,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const parsed = addDomainSchema.safeParse(await request.json().catch(() => null));
+  const parsed = addDomainSchema.safeParse(await readJsonBody(request).catch(() => null));
+
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }

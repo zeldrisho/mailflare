@@ -12,6 +12,8 @@ import type { AccountRouteParams } from "../types";
 import { getManagedAccount } from "./utils";
 import { requireTeamAdmin } from "../../utils";
 import { selectAccountById } from "../utils";
+import { readFormDataBody } from "@/lib/http/request";
+import { RequestBodyTooLargeError } from "@/lib/http/errors";
 
 export async function GET(request: Request, { params }: AccountRouteParams) {
   const { id } = await params;
@@ -27,7 +29,19 @@ export async function POST(request: Request, { params }: AccountRouteParams) {
   const { access, account } = await getManagedAccount(request, id);
   if (access.error) return access.error;
   if (!account) return NextResponse.json({ error: "Account not found" }, { status: 404 });
-  const form = await request.formData();
+  let form: FormData;
+
+  try {
+    form = await readFormDataBody(request, 1_100_000);
+  } catch (error) {
+    const status = error instanceof RequestBodyTooLargeError ? 413 : 400;
+
+    return NextResponse.json(
+      { error: status === 413 ? "Avatar upload is too large" : "Expected multipart form data" },
+      { status },
+    );
+  }
+
   const images = getOptimizedAvatarFiles(form);
   if (!images)
     return NextResponse.json(

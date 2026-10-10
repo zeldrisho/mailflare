@@ -1,3 +1,4 @@
+import { readJsonBody } from "@/lib/http/request";
 import { NextResponse } from "next/server";
 import { getDb } from "@/db";
 import { requireUser } from "@/lib/auth/cookies";
@@ -9,7 +10,8 @@ import type { BlockContactRequest } from "./types";
 export async function POST(request: Request) {
   const env = getEnv();
   const user = await requireUser(env, request);
-  const body = (await request.json()) as BlockContactRequest;
+  const body = (await readJsonBody(request)) as BlockContactRequest;
+
   if (!body.mailboxId || !body.address?.trim()) {
     return NextResponse.json({ error: "Mailbox and contact are required" }, { status: 400 });
   }

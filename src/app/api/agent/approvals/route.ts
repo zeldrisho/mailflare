@@ -1,3 +1,4 @@
+import { readJsonBody } from "@/lib/http/request";
 import { z } from "zod";
 import { getEnv } from "@/lib/cloudflare";
 import { getCurrentUser } from "@/lib/auth/cookies";
@@ -15,7 +16,8 @@ export async function POST(request: Request) {
   if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
   if (!hasValidSessionMutationOrigin(request))
     return Response.json({ error: "Invalid origin" }, { status: 403 });
-  const parsed = schema.safeParse(await request.json().catch(() => null));
+  const parsed = schema.safeParse(await readJsonBody(request).catch(() => null));
+
   if (!parsed.success) return Response.json({ error: "Invalid request" }, { status: 400 });
   try {
     return Response.json(

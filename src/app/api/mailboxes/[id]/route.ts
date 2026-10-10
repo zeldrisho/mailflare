@@ -1,3 +1,4 @@
+import { readJsonBody } from "@/lib/http/request";
 import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { getDb } from "@/db";
@@ -47,7 +48,7 @@ export async function PATCH(request: Request, { params }: MailboxRouteParams) {
   const { id } = await params;
   const env = getEnv();
   const user = await requireUser(env, request);
-  const parsed = updateMailboxSchema.safeParse(await request.json());
+  const parsed = updateMailboxSchema.safeParse(await readJsonBody(request));
 
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });

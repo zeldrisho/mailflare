@@ -1,3 +1,4 @@
+import { readJsonBody } from "@/lib/http/request";
 import { and, eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { getDb } from "@/db";
@@ -41,7 +42,8 @@ export async function GET(request: Request, { params }: MailboxAccessRouteParams
 export async function POST(request: Request, { params }: MailboxAccessRouteParams) {
   const access = await requireTeamSharingAdmin(request);
   if (access.error) return access.error;
-  const parsed = mailboxAccessSchema.safeParse(await request.json());
+  const parsed = mailboxAccessSchema.safeParse(await readJsonBody(request));
+
   if (!parsed.success)
     return NextResponse.json({ error: "Choose a valid account" }, { status: 400 });
   const { id } = await params;

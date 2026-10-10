@@ -1,3 +1,4 @@
+import { readJsonBody } from "@/lib/http/request";
 import { NextResponse } from "next/server";
 import { getDb } from "@/db";
 import { routingRules } from "@/db/schema";
@@ -50,7 +51,8 @@ export async function POST(request: Request) {
   const auth = await requireSessionUser(env, request);
   if (auth.error) return auth.error;
   const user = auth.user;
-  const parsed = domainRoutingRuleSchema.safeParse(await request.json());
+  const parsed = domainRoutingRuleSchema.safeParse(await readJsonBody(request));
+
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }

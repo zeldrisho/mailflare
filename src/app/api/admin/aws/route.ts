@@ -1,3 +1,4 @@
+import { readJsonBody } from "@/lib/http/request";
 import { z } from "zod";
 import { getEnv } from "@/lib/cloudflare";
 import { requireSessionUser } from "@/lib/api/auth";
@@ -47,7 +48,8 @@ export async function GET(request: Request) {
 export async function PUT(request: Request) {
   const access = await authorize(request, true);
   if (access.error) return access.error;
-  const parsed = schema.safeParse(await request.json().catch(() => null));
+  const parsed = schema.safeParse(await readJsonBody(request).catch(() => null));
+
   if (!parsed.success)
     return Response.json(
       { error: parsed.error.issues[0]?.message ?? "Enter an access key ID, secret and region" },

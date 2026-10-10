@@ -1,3 +1,4 @@
+import { readJsonBody } from "@/lib/http/request";
 import { NextResponse } from "next/server";
 import { and, eq } from "drizzle-orm";
 import { getEnv } from "@/lib/cloudflare";
@@ -33,7 +34,8 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const env = getEnv();
   const user = await requireUser(env, request);
-  const parsed = routingRuleSchema.safeParse(await request.json());
+  const parsed = routingRuleSchema.safeParse(await readJsonBody(request));
+
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }

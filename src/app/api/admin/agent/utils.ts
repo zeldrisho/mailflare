@@ -1,3 +1,4 @@
+import { readJsonBody } from "@/lib/http/request";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { getDb } from "@/db";
@@ -60,7 +61,7 @@ export async function PUT(request: Request) {
   if (access.error) return access.error;
   if (!hasValidSessionMutationOrigin(request))
     return Response.json({ error: "Invalid origin" }, { status: 403 });
-  const body = await request.json().catch(() => null);
+  const body = await readJsonBody(request).catch(() => null);
   const enabled = enabledSchema.safeParse(body);
   if (enabled.success && Object.keys(body).length === 1) {
     const db = getDb(access.env);

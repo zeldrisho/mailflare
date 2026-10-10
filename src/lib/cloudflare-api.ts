@@ -22,15 +22,17 @@ export async function cfRequest<T>(
   init?: RequestInit,
 ): Promise<T> {
   const auth = getCloudflareAuth(env);
+  const headers = new Headers(getCloudflareAuthHeaders(auth));
+  headers.set("Content-Type", "application/json");
+  new Headers(init?.headers).forEach((value, name) => headers.set(name, value));
+
   const res = await fetch(`https://api.cloudflare.com/client/v4${path}`, {
     ...init,
-    headers: {
-      ...getCloudflareAuthHeaders(auth),
-      "Content-Type": "application/json",
-      ...(init?.headers ?? {}),
-    },
+    signal: init?.signal ?? AbortSignal.timeout(15_000),
+    headers,
   });
-  const json = (await res.json()) as CfResponse<T>;
+
+  const json: CfResponse<T> = await res.json();
 
   if (!json.success) {
     throw new CloudflareApiError(
@@ -76,7 +78,9 @@ export async function getEmailRoutingDns(
   }>(env, `/zones/${zoneId}/email/routing/dns`);
   return {
     records: result.record ?? [],
-    missing: (result.errors ?? []).map((e) => e.missing).filter(Boolean) as CfDnsRecord[],
+    missing: (result.errors ?? [])
+      .map((error) => error.missing)
+      .filter((record): record is CfDnsRecord => record !== undefined),
   };
 }
 
@@ -86,7 +90,7 @@ export async function enableEmailRouting(env: CloudflareEnv, zoneId: string, hos
     `/zones/${zoneId}/email/routing/dns`,
     {
       method: "POST",
-      ...(hostname ? { body: JSON.stringify({ name: hostname }) } : {}),
+      body: hostname ? JSON.stringify({ name: hostname }) : undefined,
     },
   );
 }

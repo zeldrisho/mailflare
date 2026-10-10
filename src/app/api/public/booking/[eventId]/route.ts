@@ -1,3 +1,4 @@
+import { readJsonBody } from "@/lib/http/request";
 import { NextResponse } from "next/server";
 import { availableBookingSlots } from "@/lib/booking/availability";
 import { getEnv } from "@/lib/cloudflare";
@@ -23,7 +24,7 @@ export async function POST(request: Request, { params }: PublicBookingRouteConte
     new URL(request.url).searchParams.get("username"),
   );
   if (!found) return NextResponse.json({ error: "Booking event not found" }, { status: 404 });
-  const body = (await request.json().catch(() => null)) as PublicBookingSubmission | null;
+  const body = (await readJsonBody(request).catch(() => null)) as PublicBookingSubmission | null;
   const name = typeof body?.name === "string" ? body.name.trim() : "";
   const email = typeof body?.email === "string" ? body.email.trim().toLowerCase() : "";
   if (

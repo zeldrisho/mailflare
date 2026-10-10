@@ -1,3 +1,4 @@
+import { readJsonBody } from "@/lib/http/request";
 import { z } from "zod";
 import { getDb } from "@/db";
 import { appSettings } from "@/db/schema";
@@ -42,7 +43,8 @@ export async function PUT(request: Request) {
   if (!isPrimaryAdmin(auth.user)) return Response.json({ error: "Forbidden" }, { status: 403 });
   if (!hasValidSessionMutationOrigin(request))
     return Response.json({ error: "Invalid origin" }, { status: 403 });
-  const parsed = schema.safeParse(await request.json().catch(() => null));
+  const parsed = schema.safeParse(await readJsonBody(request).catch(() => null));
+
   if (
     !parsed.success ||
     (parsed.data.outboundAttachmentMaxMb === undefined &&

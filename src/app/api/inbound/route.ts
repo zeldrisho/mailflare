@@ -3,6 +3,8 @@ import { getEnv } from "@/lib/cloudflare";
 import { intakeIncomingMail } from "@/lib/email/intake";
 import { verifyInboundSignature } from "@/lib/email/intake-signature";
 import { inboundAttachmentLimitReasonFromRaw } from "@/lib/email/inbound-attachments";
+import { readBoundedBody } from "@/lib/http/request";
+import { RequestBodyTooLargeError } from "@/lib/http/errors";
 
 export const dynamic = "force-dynamic";
 
@@ -21,12 +23,19 @@ export async function POST(request: Request) {
       { status: 503 },
     );
 
-  const raw = await request.arrayBuffer();
-  if (raw.byteLength > 25 * 1024 * 1024)
-    return NextResponse.json(
-      { error: "Message exceeds the 25 MiB receiving limit" },
-      { status: 413 },
-    );
+  let raw: ArrayBuffer;
+
+  try {
+    raw = await readBoundedBody(request, 25 * 1024 * 1024);
+  } catch (error) {
+    if (error instanceof RequestBodyTooLargeError)
+      return NextResponse.json(
+        { error: "Message exceeds the 25 MiB receiving limit" },
+        { status: 413 },
+      );
+    throw error;
+  }
+
   const from = request.headers.get("x-mailflare-from") ?? "";
   const to = request.headers.get("x-mailflare-to") ?? "";
   const signature = request.headers.get("x-mailflare-signature") ?? "";
@@ -39,6 +48,7 @@ export async function POST(request: Request) {
 
   let headers: Record<string, string> = {};
   try {
+    // SAFETY: relay headers are advisory; parsed data is used only as string-valued metadata.
     headers = JSON.parse(request.headers.get("x-mailflare-headers") ?? "{}") as Record<
       string,
       string

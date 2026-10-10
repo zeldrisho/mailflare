@@ -1,3 +1,4 @@
+import { readJsonBody } from "@/lib/http/request";
 import { and, eq, inArray } from "drizzle-orm";
 import { z } from "zod";
 import { getDb } from "@/db";
@@ -72,7 +73,8 @@ export async function POST(request: Request) {
   if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
   if (!hasValidSessionMutationOrigin(request))
     return Response.json({ error: "Invalid origin" }, { status: 403 });
-  const parsed = createSchema.safeParse(await request.json().catch(() => null));
+  const parsed = createSchema.safeParse(await readJsonBody(request).catch(() => null));
+
   if (!parsed.success) return Response.json({ error: "Invalid key request" }, { status: 400 });
   const db = getDb(env);
   const mailboxIds = [...new Set(parsed.data.mailboxIds)];

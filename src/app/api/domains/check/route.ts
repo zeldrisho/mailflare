@@ -1,3 +1,4 @@
+import { readJsonBody } from "@/lib/http/request";
 import { NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth/cookies";
 import { getEnv } from "@/lib/cloudflare";
@@ -7,7 +8,8 @@ import { setupDomainSchema } from "@/lib/validators";
 export async function POST(request: Request) {
   const env = getEnv();
   await requireUser(env, request);
-  const parsed = setupDomainSchema.safeParse(await request.json());
+  const parsed = setupDomainSchema.safeParse(await readJsonBody(request));
+
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }

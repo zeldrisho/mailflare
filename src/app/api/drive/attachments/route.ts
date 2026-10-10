@@ -1,3 +1,4 @@
+import { readJsonBody } from "@/lib/http/request";
 import { eq, inArray } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { getDb } from "@/db";
@@ -21,7 +22,12 @@ export async function POST(request: Request) {
   if (auth.error) return auth.error;
   const { env, user } = auth;
   const db = getDb(env);
-  const body = (await request.json().catch(() => ({}))) as { action?: unknown; ids?: unknown };
+
+  const body = (await readJsonBody(request).catch(() => ({}))) as {
+    action?: unknown;
+    ids?: unknown;
+  };
+
   const ids = Array.isArray(body.ids)
     ? [...new Set(body.ids.filter((id): id is string => typeof id === "string"))]
     : [];

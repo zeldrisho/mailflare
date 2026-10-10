@@ -1,3 +1,4 @@
+import { readJsonBody } from "@/lib/http/request";
 import { z } from "zod";
 import { getEnv } from "@/lib/cloudflare";
 import { requireSessionUser } from "@/lib/api/auth";
@@ -19,7 +20,8 @@ export async function POST(request: Request) {
   if (!isPrimaryAdmin(session.user)) return Response.json({ error: "Forbidden" }, { status: 403 });
   if (!hasValidSessionMutationOrigin(request))
     return Response.json({ error: "Invalid origin" }, { status: 403 });
-  const parsed = requestSchema.safeParse(await request.json().catch(() => null));
+  const parsed = requestSchema.safeParse(await readJsonBody(request).catch(() => null));
+
   if (!parsed.success) return Response.json({ error: "Invalid provider details" }, { status: 400 });
   try {
     const result =

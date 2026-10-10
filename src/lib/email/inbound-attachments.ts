@@ -1,3 +1,4 @@
+import type { RawEmail } from "postal-mime";
 import {
   MAX_ATTACHMENT_COUNT,
   MAX_ATTACHMENT_SIZE,
@@ -24,9 +25,7 @@ export function inboundAttachmentLimitReason(attachments: AttachmentContent[]): 
   return null;
 }
 
-export async function inboundAttachmentLimitReasonFromRaw(
-  raw: ArrayBuffer,
-): Promise<string | null> {
+export async function inboundAttachmentLimitReasonFromRaw(raw: RawEmail): Promise<string | null> {
   const parsed = await parseRawMime(raw);
   return inboundAttachmentLimitReason(parsed.attachments);
 }

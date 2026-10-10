@@ -25,6 +25,7 @@ async function parseError(response: Response): Promise<AwsError> {
   let code = response.headers.get("x-amzn-errortype")?.split(":")[0] ?? "";
   let message = "";
   try {
+    // SAFETY: AWS error JSON fields are optional and only used to enrich an error message.
     const json = JSON.parse(text) as { __type?: string; message?: string; Message?: string };
     code ||= json.__type?.split("#").pop() ?? "";
     message = json.message ?? json.Message ?? "";
@@ -51,6 +52,8 @@ export type AwsRequest = {
   headers?: Record<string, string>;
   /** Region used to sign; defaults to the config's. */
   region?: string;
+  /** Overrides the default 30-second request timeout. */
+  signal?: AbortSignal;
 };
 
 export async function awsRequest(request: AwsRequest): Promise<Response> {
@@ -76,6 +79,7 @@ export async function awsRequest(request: AwsRequest): Promise<Response> {
     method,
     headers,
     body: method === "GET" || method === "HEAD" ? undefined : body,
+    signal: request.signal ?? AbortSignal.timeout(30_000),
   });
   if (!response.ok) throw await parseError(response);
   return response;
@@ -89,6 +93,8 @@ export async function awsJson<T>(request: AwsRequest & { json?: unknown }): Prom
     headers: { "Content-Type": "application/json", ...request.headers },
   });
   const text = await response.text();
+
+  // SAFETY: the caller selects T for this AWS JSON operation and owns its response contract.
   return (text ? JSON.parse(text) : {}) as T;
 }
 

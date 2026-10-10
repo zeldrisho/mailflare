@@ -1,3 +1,4 @@
+import { readJsonBody } from "@/lib/http/request";
 import { and, desc, eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { getDb } from "@/db";
@@ -35,7 +36,8 @@ export async function POST(request: Request) {
   if (auth.error) return auth.error;
   if (!hasValidSessionMutationOrigin(request))
     return NextResponse.json({ error: "Invalid origin" }, { status: 403 });
-  const input = (await request.json().catch(() => null)) as {
+
+  const input = (await readJsonBody(request).catch(() => null)) as {
     mailboxId?: string | null;
     from?: string;
     title?: string;

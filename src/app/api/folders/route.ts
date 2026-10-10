@@ -1,3 +1,4 @@
+import { readJsonBody } from "@/lib/http/request";
 import { and, eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { getDb } from "@/db";
@@ -30,7 +31,8 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const env = getEnv();
   const user = await requireUser(env, request);
-  const parsed = folderSchema.safeParse(await request.json());
+  const parsed = folderSchema.safeParse(await readJsonBody(request));
+
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }

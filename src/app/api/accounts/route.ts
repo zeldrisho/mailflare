@@ -1,3 +1,4 @@
+import { readJsonBody } from "@/lib/http/request";
 import { NextResponse } from "next/server";
 import { getDb } from "@/db";
 import { createUserAccountSchema } from "@/lib/validators";
@@ -24,7 +25,8 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const access = await requireTeamAdmin(request);
   if (access.error) return access.error;
-  const parsed = createUserAccountSchema.safeParse(await request.json().catch(() => null));
+  const parsed = createUserAccountSchema.safeParse(await readJsonBody(request).catch(() => null));
+
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }

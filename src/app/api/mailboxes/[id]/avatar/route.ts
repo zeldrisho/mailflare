@@ -15,6 +15,8 @@ import { tracksAccountIdentity } from "@/lib/profile/identity-utils";
 import { syncPersonalIdentity } from "@/lib/profile/sync";
 import type { MailboxAvatarRouteParams } from "./types";
 import { mailboxAvatarKeyFor } from "./utils";
+import { readFormDataBody } from "@/lib/http/request";
+import { RequestBodyTooLargeError } from "@/lib/http/errors";
 
 export async function GET(request: Request, { params }: MailboxAvatarRouteParams) {
   const { id } = await params;
@@ -59,9 +61,14 @@ export async function POST(request: Request, { params }: MailboxAvatarRouteParam
 
   let form: FormData;
   try {
-    form = await request.formData();
-  } catch {
-    return NextResponse.json({ error: "Expected multipart form data" }, { status: 400 });
+    form = await readFormDataBody(request, 1_100_000);
+  } catch (error) {
+    const status = error instanceof RequestBodyTooLargeError ? 413 : 400;
+
+    return NextResponse.json(
+      { error: status === 413 ? "Avatar upload is too large" : "Expected multipart form data" },
+      { status },
+    );
   }
   const images = getOptimizedAvatarFiles(form);
   if (!images)

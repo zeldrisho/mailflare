@@ -1,3 +1,4 @@
+import { readJsonBody } from "@/lib/http/request";
 import { NextResponse } from "next/server";
 import { getEnv } from "@/lib/cloudflare";
 import { requireUser } from "@/lib/auth/cookies";
@@ -57,7 +58,8 @@ export async function POST(request: Request, { params }: Params) {
     return NextResponse.json({ error: "Invalid origin" }, { status: 403 });
   const domain = await getDomainForUser(env, user.id, id);
   if (!domain) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  const body = (await request.json().catch(() => ({}))) as { action?: string };
+  const body = (await readJsonBody(request).catch(() => ({}))) as { action?: string };
+
   if (body.action !== "setup" && body.action !== "verify" && body.action !== "test")
     return NextResponse.json({ error: "Unknown action" }, { status: 400 });
   try {

@@ -1,3 +1,4 @@
+import { readJsonBody } from "@/lib/http/request";
 import { NextResponse } from "next/server";
 import { eq, or } from "drizzle-orm";
 import { getEnv } from "@/lib/cloudflare";
@@ -34,7 +35,8 @@ export async function POST(request: Request) {
       { error: "A Pro or Team license is required to manage accounts" },
       { status: 403 },
     );
-  const parsed = createUserAccountSchema.safeParse(await request.json().catch(() => null));
+  const parsed = createUserAccountSchema.safeParse(await readJsonBody(request).catch(() => null));
+
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   if (parsed.data.role === "admin" && !isPrimaryAdmin(auth.user)) {
     return NextResponse.json(

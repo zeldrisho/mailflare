@@ -1,3 +1,4 @@
+import { readJsonBody } from "@/lib/http/request";
 import { NextResponse } from "next/server";
 import { assertPrimaryAdmin } from "@/lib/auth/admin";
 import { requireUser } from "@/lib/auth/cookies";
@@ -36,7 +37,8 @@ export async function GET(request: Request) {
 export async function PUT(request: Request) {
   try {
     const { env } = await requireAdmin(request);
-    const input = parseBackupSettingsInput(await request.json());
+    const input = parseBackupSettingsInput(await readJsonBody(request));
+
     if (!input) return NextResponse.json({ error: "Invalid backup settings" }, { status: 400 });
     await updateBackupSettings(env, input);
     return NextResponse.json({ ok: true });

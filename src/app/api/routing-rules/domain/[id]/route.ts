@@ -1,3 +1,4 @@
+import { readJsonBody } from "@/lib/http/request";
 import { and, eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { getDb } from "@/db";
@@ -49,7 +50,7 @@ export async function PATCH(request: Request, { params }: DomainRoutingRuleRoute
   const loaded = await loadRule(request, id);
   if (loaded.error) return loaded.error;
 
-  const body = (await request.json()) as Record<string, unknown>;
+  const body = (await readJsonBody(request)) as Record<string, unknown>;
   // The rule's own domain always wins, so a request cannot move a rule to another domain.
   const parsed = domainRoutingRuleSchema.safeParse({ ...body, domainId: loaded.rule.domainId });
   if (!parsed.success) {

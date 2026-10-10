@@ -1,4 +1,4 @@
-import PostalMime from "postal-mime";
+import PostalMime, { type RawEmail } from "postal-mime";
 import { formatPostalAddress, formatPostalAddressList } from "@/lib/email/address";
 import { normalizeMessageId, parseMessageIdList } from "@/lib/email/threading";
 import { normalizeAttachmentContent } from "@/lib/email/attachments";
@@ -23,7 +23,7 @@ export type ParsedEmail = {
   attachments: AttachmentContent[];
 };
 
-export async function parseRawMime(raw: ArrayBuffer): Promise<ParsedEmail> {
+export async function parseRawMime(raw: RawEmail): Promise<ParsedEmail> {
   const email = await PostalMime.parse(raw);
   const date = email.date ? new Date(email.date) : null;
   return {

@@ -16,6 +16,8 @@ import { getMailboxAccessLevel } from "@/lib/mailboxes/access";
 import { avatarKeyFor } from "@/app/api/profile/avatar/utils";
 import { getPersonalIdentityForAddress, syncPersonalIdentity } from "@/lib/profile/sync";
 import { contactAvatarKeyFor } from "./utils";
+import { readFormDataBody } from "@/lib/http/request";
+import { RequestBodyTooLargeError } from "@/lib/http/errors";
 
 export async function GET(request: Request) {
   const env = getEnv();
@@ -45,14 +47,19 @@ export async function POST(request: Request) {
   const user = await requireUser(env, request);
   let form: FormData;
   try {
-    form = await request.formData();
-  } catch {
-    return NextResponse.json({ error: "Expected multipart form data" }, { status: 400 });
+    form = await readFormDataBody(request, 1_100_000);
+  } catch (error) {
+    const status = error instanceof RequestBodyTooLargeError ? 413 : 400;
+
+    return NextResponse.json(
+      { error: status === 413 ? "Avatar upload is too large" : "Expected multipart form data" },
+      { status },
+    );
   }
   const mailboxEntry = form.get("mailboxId");
   const addressEntry = form.get("address");
-  const mailboxId = typeof mailboxEntry === "string" ? mailboxEntry : "";
-  const email = normalizeEmailAddress(typeof addressEntry === "string" ? addressEntry : "");
+  const mailboxId = mailboxEntry instanceof File ? "" : (mailboxEntry ?? "");
+  const email = normalizeEmailAddress(addressEntry instanceof File ? "" : (addressEntry ?? ""));
   const images = getOptimizedAvatarFiles(form);
   if (!mailboxId || !email || !images) {
     return NextResponse.json(

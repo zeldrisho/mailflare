@@ -1,3 +1,4 @@
+import { readJsonBody } from "@/lib/http/request";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { getDb } from "@/db";
@@ -42,7 +43,8 @@ export async function GET(request: Request) {
 export async function PUT(request: Request) {
   const access = await authorize(request, true);
   if (access.error) return access.error;
-  const parsed = schema.safeParse(await request.json().catch(() => null));
+  const parsed = schema.safeParse(await readJsonBody(request).catch(() => null));
+
   if (!parsed.success) return Response.json({ error: "Enter a Resend API key" }, { status: 400 });
   const check = await checkResendKey(parsed.data.apiKey).catch(() => null);
   if (!check)

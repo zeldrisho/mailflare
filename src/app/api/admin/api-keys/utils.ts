@@ -1,3 +1,4 @@
+import { readJsonBody } from "@/lib/http/request";
 import { NextResponse } from "next/server";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
@@ -57,7 +58,8 @@ export async function POST(request: Request) {
   if (access.error) return access.error;
   if (!hasValidSessionMutationOrigin(request))
     return NextResponse.json({ error: "Invalid origin" }, { status: 403 });
-  const parsed = createKeySchema.safeParse(await request.json().catch(() => null));
+  const parsed = createKeySchema.safeParse(await readJsonBody(request).catch(() => null));
+
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   const db = getDb(access.env);
   const { fullKey, prefix, hash } = generateApiKey();

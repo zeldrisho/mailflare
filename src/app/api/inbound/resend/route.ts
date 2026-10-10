@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { getEnv } from "@/lib/cloudflare";
 import { getEmailAddress, getEmailAddressList } from "@/lib/email/address";
 import { getResendApiKey } from "@/lib/email/outbound-provider";
@@ -6,10 +7,15 @@ import { intakeProviderMail } from "@/lib/email/provider-intake";
 import { getReceivedEmail } from "@/lib/email/resend-api";
 import { verifySvixSignature } from "@/lib/email/svix";
 import { getResendWebhookSecret } from "@/lib/domains/resend-receiving";
+import { readBoundedBody, readBoundedStream } from "@/lib/http/request";
+import { RequestBodyTooLargeError } from "@/lib/http/errors";
 
 export const dynamic = "force-dynamic";
 
-type ReceivedEvent = { type?: string; data?: { email_id?: string; id?: string } };
+const receivedEventSchema = z.object({
+  type: z.string().optional(),
+  data: z.object({ email_id: z.string().optional(), id: z.string().optional() }).optional(),
+});
 
 /**
  * Resend's `email.received` webhook. The event only names the message, so fetch
@@ -21,7 +27,20 @@ export async function POST(request: Request) {
   const secret = await getResendWebhookSecret(env);
   if (!secret)
     return NextResponse.json({ error: "Resend receiving is not set up" }, { status: 503 });
-  const body = await request.text();
+  let body: string;
+
+  try {
+    body = new TextDecoder().decode(await readBoundedBody(request, 64 * 1024));
+  } catch (error) {
+    return NextResponse.json(
+      {
+        error:
+          error instanceof RequestBodyTooLargeError ? "Webhook body is too large" : "Invalid body",
+      },
+      { status: error instanceof RequestBodyTooLargeError ? 413 : 400 },
+    );
+  }
+
   const valid = await verifySvixSignature(
     secret,
     {
@@ -33,9 +52,10 @@ export async function POST(request: Request) {
   );
   if (!valid) return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
 
-  let event: ReceivedEvent;
+  let event: z.infer<typeof receivedEventSchema>;
+
   try {
-    event = JSON.parse(body) as ReceivedEvent;
+    event = receivedEventSchema.parse(JSON.parse(body));
   } catch {
     return NextResponse.json({ error: "Invalid body" }, { status: 400 });
   }
@@ -48,9 +68,23 @@ export async function POST(request: Request) {
   const download = email.raw?.download_url;
   if (!download)
     return NextResponse.json({ error: "Resend did not provide the raw message" }, { status: 502 });
-  const rawResponse = await fetch(download);
+  const rawResponse = await fetch(download, { signal: AbortSignal.timeout(20_000) });
+
   if (!rawResponse.ok)
     return NextResponse.json({ error: "Could not download the raw message" }, { status: 502 });
+
+  let raw: ArrayBuffer;
+
+  try {
+    raw = await readBoundedStream(rawResponse.body, 25 * 1024 * 1024);
+  } catch (error) {
+    if (error instanceof RequestBodyTooLargeError)
+      return NextResponse.json(
+        { error: "Downloaded message exceeds the 25 MiB receiving limit" },
+        { status: 502 },
+      );
+    throw error;
+  }
 
   const recipients = [...(email.to ?? []), ...(email.cc ?? []), ...(email.bcc ?? [])].flatMap(
     (value) => getEmailAddressList(value),
@@ -58,7 +92,7 @@ export async function POST(request: Request) {
   const result = await intakeProviderMail(env, {
     from: getEmailAddress(email.from),
     recipients,
-    raw: await rawResponse.arrayBuffer(),
+    raw,
   });
   return NextResponse.json(result);
 }

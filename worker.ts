@@ -5,9 +5,15 @@ import {
   storeRawToR2,
   type InboundQueueMessage,
 } from "./src/lib/email/inbound";
-import { processOutboundQueue, type OutboundQueueMessage } from "./src/lib/email/send";
-import { isInboundQueueMessage, isWebhookRetryMessage } from "./worker-utils";
-import { processWebhookRetry, type WebhookRetryMessage } from "./src/lib/email/webhooks";
+import { processOutboundQueue } from "./src/lib/email/send";
+import {
+  isAgentDraftMessage,
+  getQueueRetryDelaySeconds,
+  isInboundQueueMessage,
+  isOutboundQueueMessage,
+  isWebhookRetryMessage,
+} from "./worker-utils";
+import { processWebhookRetry } from "./src/lib/email/webhooks";
 import { resolveIncomingMail, forwardMessage } from "./src/lib/email/incoming";
 import { getUserFromSession } from "./src/lib/auth/session";
 import { getSessionTokenFromRequest } from "./src/lib/realtime/utils";
@@ -50,7 +56,7 @@ export default {
     return vinextHandler.fetch(request, env, ctx);
   },
 
-  async email(message: ForwardableEmailMessage, rawEnv: CloudflareEnv, ctx: ExecutionContext) {
+  async email(message: ForwardableEmailMessage, rawEnv: CloudflareEnv) {
     const env = withStorage(rawEnv);
     try {
       if (message.rawSize > 25 * 1024 * 1024) {
@@ -67,8 +73,16 @@ export default {
         message.setReject(decision.rejectReason ?? "Message rejected by routing rule");
         return;
       }
-      const raw = await new Response(message.raw).arrayBuffer();
-      const attachmentLimitReason = await inboundAttachmentLimitReasonFromRaw(raw);
+
+      // Parse one tee branch as a stream while the other is persisted; this avoids
+      // retaining a second whole-message copy solely for attachment-limit checking.
+      const [mimeStream, storageStream] = message.raw.tee();
+
+      const [attachmentLimitReason, raw] = await Promise.all([
+        inboundAttachmentLimitReasonFromRaw(mimeStream),
+        new Response(storageStream).arrayBuffer(),
+      ]);
+
       if (attachmentLimitReason) {
         message.setReject(attachmentLimitReason);
         return;
@@ -96,7 +110,12 @@ export default {
       };
       await env.INBOUND_QUEUE.send(payload);
     } catch (err) {
-      console.error("Inbound enqueue failed", err);
+      console.error(
+        JSON.stringify({
+          event: "email.inbound_enqueue_failed",
+          error: err instanceof Error ? { name: err.name, message: err.message } : String(err),
+        }),
+      );
       message.setReject("Processing failed");
     }
   },
@@ -107,45 +126,64 @@ export default {
       try {
         if (isInboundQueueMessage(msg.body)) {
           await processInboundMessage(env, msg.body);
-        } else if (
-          typeof msg.body === "object" &&
-          msg.body !== null &&
-          (msg.body as { kind?: unknown }).kind === "agent.draft" &&
-          typeof (msg.body as { jobId?: unknown }).jobId === "string"
-        ) {
-          await processAgentDraftJob(env, (msg.body as { jobId: string }).jobId);
+        } else if (isAgentDraftMessage(msg.body)) {
+          await processAgentDraftJob(env, msg.body.jobId);
         } else if (isWebhookRetryMessage(msg.body)) {
-          await processWebhookRetry(env, msg.body as WebhookRetryMessage);
-        } else if (
-          typeof msg.body === "object" &&
-          msg.body !== null &&
-          (msg.body as { kind?: unknown }).kind === "email.scheduled"
-        ) {
-          await processOutboundQueue(env, msg.body as OutboundQueueMessage);
+          await processWebhookRetry(env, msg.body);
+        } else if (isOutboundQueueMessage(msg.body)) {
+          await processOutboundQueue(env, msg.body);
         } else {
           throw new Error("Unknown queue message type");
         }
         msg.ack();
       } catch (err) {
-        console.error("Queue processing failed", {
-          rawR2Key: isInboundQueueMessage(msg.body) ? msg.body.rawR2Key : undefined,
-          recipient: isInboundQueueMessage(msg.body) ? msg.body.to : undefined,
-          attempts: msg.attempts,
-          error: err,
-        });
-        msg.retry({ delaySeconds: 10 });
+        console.error(
+          JSON.stringify({
+            event: "queue.processing_failed",
+            queue: batch.queue,
+            messageId: msg.id,
+            attempts: msg.attempts,
+            error: err instanceof Error ? { name: err.name, message: err.message } : String(err),
+          }),
+        );
+        // Queues provide at-least-once delivery. Exponential retry spacing avoids
+        // repeatedly hitting a failing dependency; exhausted messages go to the configured DLQ.
+        msg.retry({ delaySeconds: getQueueRetryDelaySeconds(msg.attempts) });
       }
     }
   },
 
   async scheduled(controller: ScheduledController, rawEnv: CloudflareEnv, ctx: ExecutionContext) {
     const env = withStorage(rawEnv);
+
+    const scheduledAt = new Date(controller.scheduledTime);
+
+    const scheduleTask = (task: string, work: Promise<unknown>) => {
+      ctx.waitUntil(
+        work.catch((error) => {
+          console.error(
+            JSON.stringify({
+              event: "scheduled.task_failed",
+              task,
+              cron: controller.cron,
+              scheduledTime: controller.scheduledTime,
+              error:
+                error instanceof Error
+                  ? { name: error.name, message: error.message }
+                  : String(error),
+            }),
+          );
+        }),
+      );
+    };
+
     if (controller.cron === "0 2 * * *")
-      ctx.waitUntil(runScheduledDatabaseBackup(env, new Date(controller.scheduledTime)));
-    ctx.waitUntil(runAgentMaintenance(env));
-    ctx.waitUntil(runTrashRetention(env, new Date(controller.scheduledTime)));
+      scheduleTask("database_backup", runScheduledDatabaseBackup(env, scheduledAt));
+    scheduleTask("agent_maintenance", runAgentMaintenance(env));
+    scheduleTask("trash_retention", runTrashRetention(env, scheduledAt));
+
     // Drive trash is emptied once a day, with the 02:00 UTC cron; the 5-minute cron is for queue-like upkeep.
     if (controller.cron === "0 2 * * *")
-      ctx.waitUntil(runDriveTrashRetention(env, new Date(controller.scheduledTime)));
+      scheduleTask("drive_trash_retention", runDriveTrashRetention(env, scheduledAt));
   },
 } satisfies ExportedHandler<CloudflareEnv>;

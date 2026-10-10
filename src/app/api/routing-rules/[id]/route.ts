@@ -1,3 +1,4 @@
+import { readJsonBody } from "@/lib/http/request";
 import { and, eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { getDb } from "@/db";
@@ -12,7 +13,8 @@ export async function PATCH(request: Request, { params }: RoutingRuleRouteParams
   const { id } = await params;
   const env = getEnv();
   const user = await requireUser(env, request);
-  const parsed = routingRuleSchema.safeParse(await request.json());
+  const parsed = routingRuleSchema.safeParse(await readJsonBody(request));
+
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }

@@ -1,3 +1,4 @@
+import { readJsonBody } from "@/lib/http/request";
 import { and, eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { driveShares, users } from "@/db/schema";
@@ -48,7 +49,12 @@ export async function POST(request: Request, { params }: DriveItemParams) {
   const ctx = await loadOwnedItem(request, params, true);
   if (ctx.error) return ctx.error;
   const { db, user, item } = ctx;
-  const body = (await request.json().catch(() => ({}))) as { email?: unknown; role?: unknown };
+
+  const body = (await readJsonBody(request).catch(() => ({}))) as {
+    email?: unknown;
+    role?: unknown;
+  };
+
   const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
   const role = body.role === "edit" ? "edit" : "view";
   if (!email) return NextResponse.json({ error: "Enter an email address" }, { status: 400 });

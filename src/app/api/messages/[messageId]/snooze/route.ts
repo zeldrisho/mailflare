@@ -1,3 +1,4 @@
+import { readJsonBody } from "@/lib/http/request";
 import { and, eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { getDb } from "@/db";
@@ -17,7 +18,7 @@ export async function POST(
   const user = await getCurrentUser(env, request);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const payload = (await request.json()) as SnoozeMessagePayload;
+  const payload = (await readJsonBody(request)) as SnoozeMessagePayload;
   const snoozedUntil = getSnoozedUntil(payload.snoozedUntil);
   if (!snoozedUntil) {
     return NextResponse.json({ error: "Choose a future snooze time" }, { status: 400 });

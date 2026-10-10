@@ -1,3 +1,4 @@
+import { readJsonBody } from "@/lib/http/request";
 import { NextRequest, NextResponse } from "next/server";
 import { getEnv } from "@/lib/cloudflare";
 import { requireUser } from "@/lib/auth/cookies";
@@ -49,7 +50,8 @@ export async function POST(request: Request) {
   if (!canManageDomains(user)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   if (!hasValidSessionMutationOrigin(request))
     return NextResponse.json({ error: "Invalid origin" }, { status: 403 });
-  const parsed = addDomainSchema.safeParse(await request.json());
+  const parsed = addDomainSchema.safeParse(await readJsonBody(request));
+
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }

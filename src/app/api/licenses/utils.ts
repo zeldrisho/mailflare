@@ -1,3 +1,4 @@
+import { readJsonBody } from "@/lib/http/request";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { assertPrimaryAdmin } from "@/lib/auth/admin";
@@ -22,7 +23,7 @@ export async function requireLicenseAdmin(
 }
 
 export async function parseLicenseKeyRequest(request: Request): Promise<LicenseKeyRequest> {
-  return licenseKeySchema.parse(await request.json());
+  return licenseKeySchema.parse(await readJsonBody(request));
 }
 
 export function getLicenseInstanceUrl(request: Request): string {

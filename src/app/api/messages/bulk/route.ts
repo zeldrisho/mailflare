@@ -1,3 +1,4 @@
+import { readJsonBody } from "@/lib/http/request";
 import { eq, inArray } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { getDb } from "@/db";
@@ -23,7 +24,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const payload = (await request.json()) as BulkMessagePayload;
+  const payload = (await readJsonBody(request)) as BulkMessagePayload;
   const messageIds = payload.messageIds?.filter(Boolean) ?? [];
   if (messageIds.length === 0 || !isAllowedBulkMessageAction(payload.action)) {
     return NextResponse.json({ error: "Invalid bulk message action" }, { status: 400 });
