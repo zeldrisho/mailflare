@@ -28,7 +28,7 @@ export async function handleJmapRequest(
   if (request.method === "OPTIONS")
     return new Response(null, { status: 204, headers: corsHeaders() });
   if (path === "/.well-known/jmap") {
-    return Response.redirect(`${url.origin}/jmap/session`, 301);
+    return new Response(null, { status: 301, headers: { Location: "/jmap/session" } });
   }
   if (!path.startsWith("/jmap/")) return null;
 

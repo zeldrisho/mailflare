@@ -3,7 +3,7 @@ import { messages } from "@/db/schema";
 import { newId } from "@/lib/ids";
 import { buildSnippet, parseRawMime } from "@/lib/email/parse";
 import { getAuthorizedSenderAddress } from "@/lib/email/sender";
-import { joinEmailAddressList } from "@/lib/email/address";
+import { formatEmailAddress, joinEmailAddressList } from "@/lib/email/address";
 import { resolveThreadId } from "@/lib/email/threading";
 import { storeMessageAttachments } from "@/lib/email/attachments";
 import { deleteMessageWithObjects } from "@/lib/email/message-cleanup";
@@ -318,9 +318,7 @@ async function createDraft(
   const addressList = (list: unknown) =>
     Array.isArray(list)
       ? joinEmailAddressList(
-          (list as EmailAddressObject[]).map((item) =>
-            item.name ? `"${item.name.replace(/"/g, '\\"')}" <${item.email}>` : item.email,
-          ),
+          (list as EmailAddressObject[]).map((item) => formatEmailAddress(item.email, item.name)),
         )
       : "";
   const bodyValues = (value.bodyValues ?? {}) as Record<string, { value: string }>;

@@ -5,7 +5,11 @@ import { calendarEvents } from "@/db/schema";
 import { getEnv } from "@/lib/cloudflare";
 import { newId } from "@/lib/ids";
 import { sendEmail } from "@/lib/email/send";
-import { createCalendarInvitation } from "@/lib/calendar/utils";
+import {
+  calendarInvitationBytes,
+  createCalendarInvitation,
+  isValidCalendarAttendee,
+} from "@/lib/calendar/utils";
 import { normalizeCalendarColor } from "@/lib/calendar/colors";
 import {
   DEFAULT_REPEAT_DAYS,
@@ -60,7 +64,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Choose at least one weekday" }, { status: 400 });
   const attendees = (input.attendees ?? [])
     .map((email) => email.trim())
-    .filter((email) => /^\S+@\S+\.\S+$/.test(email));
+    .filter(isValidCalendarAttendee);
   if (attendees.length && input.mailboxId && !calendarKeyCanSendInvitations(key, input.mailboxId))
     return NextResponse.json(
       { error: "Sending invitations requires mail send permission for this mailbox" },
@@ -106,7 +110,11 @@ export async function POST(request: Request) {
           subject: `Invitation: ${event.title}`,
           text: event.description || `You are invited to ${event.title}.`,
           attachments: [
-            { filename: "invite.ics", type: "text/calendar; charset=utf-8", content: calendarFile },
+            {
+              filename: "invite.ics",
+              type: "text/calendar; charset=utf-8",
+              content: calendarInvitationBytes(calendarFile),
+            },
           ],
         }),
       ),

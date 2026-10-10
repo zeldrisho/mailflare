@@ -74,6 +74,8 @@ function resolvePointer(value: unknown, path: string): unknown {
   let current: unknown = value;
   for (let index = 0; index < segments.length; index += 1) {
     const segment = segments[index];
+    if (segment === "__proto__" || segment === "prototype" || segment === "constructor")
+      throw new JmapError("invalidResultReference", `Path ${path} not found`);
     if (segment === "*" && Array.isArray(current)) {
       const rest = `/${segments.slice(index + 1).join("/")}`;
       return current.flatMap((item) => {
@@ -93,7 +95,7 @@ function resolveReferences(
   args: Record<string, unknown>,
   responses: JmapInvocation[],
 ): Record<string, unknown> {
-  const resolved: Record<string, unknown> = {};
+  const resolved: Record<string, unknown> = Object.create(null);
   for (const [key, value] of Object.entries(args)) {
     if (!key.startsWith("#")) {
       resolved[key] = value;
@@ -134,10 +136,13 @@ export async function processRequest(
   request: JmapRequest,
 ): Promise<JmapResponse> {
   const responses: JmapInvocation[] = [];
-  Object.assign(ctx.createdIds, request.createdIds ?? {});
+  for (const [key, value] of Object.entries(request.createdIds ?? {})) {
+    if (key !== "__proto__" && key !== "prototype" && key !== "constructor")
+      ctx.createdIds[key] = value;
+  }
 
   for (const [name, rawArgs, callId] of request.methodCalls) {
-    const handler = METHODS[name];
+    const handler = Object.hasOwn(METHODS, name) ? METHODS[name] : undefined;
     if (!handler) {
       responses.push(["error", { type: "unknownMethod" }, callId]);
       continue;

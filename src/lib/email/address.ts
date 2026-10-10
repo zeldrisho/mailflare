@@ -3,7 +3,8 @@ import type { EmailAddressParts } from "@/lib/email/address-types";
 import { parseAddress } from "@/lib/utils";
 
 function quoteDisplayName(name: string): string {
-  return `"${name.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`;
+  const safeName = name.replace(/[\r\n\0-\x1f\x7f]+/g, " ");
+  return `"${safeName.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`;
 }
 
 export function formatEmailAddress(address: string, name?: string | null): string {
@@ -16,13 +17,15 @@ export function formatEmailAddress(address: string, name?: string | null): strin
 
 export function parseEmailAddressParts(value: string): EmailAddressParts {
   const trimmed = value.trim();
-  const headerMatch = trimmed.match(/^(?:"([^"]+)"|([^<"]+))\s*<([^>]+)>$/);
-
-  if (headerMatch) {
-    return {
-      name: (headerMatch[1] ?? headerMatch[2] ?? "").trim() || null,
-      address: headerMatch[3].trim(),
-    };
+  const open = trimmed.lastIndexOf("<");
+  const close = trimmed.lastIndexOf(">");
+  if (open >= 0 && close === trimmed.length - 1 && close > open + 1) {
+    let name = trimmed.slice(0, open).trim();
+    const address = trimmed.slice(open + 1, close).trim();
+    if (name.startsWith('"') && name.endsWith('"')) {
+      name = name.slice(1, -1).replace(/\\([\\"])/g, "$1");
+    }
+    if (address && !/[<>\r\n]/.test(address)) return { name: name || null, address };
   }
 
   return { name: null, address: trimmed };

@@ -32,15 +32,24 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unknown topic" }, { status: 403 });
 
   if (envelope.Type === "SubscriptionConfirmation") {
-    const url = envelope.SubscribeURL ? new URL(envelope.SubscribeURL) : null;
+    let url: URL | null = null;
+    try {
+      url = envelope.SubscribeURL ? new URL(envelope.SubscribeURL) : null;
+    } catch {
+      return NextResponse.json({ error: "Invalid subscription URL" }, { status: 400 });
+    }
     if (
       !url ||
       url.protocol !== "https:" ||
+      url.username ||
+      url.password ||
+      url.port ||
+      url.pathname !== "/" ||
       !/^sns\.[a-z0-9-]+\.amazonaws\.com$/.test(url.hostname)
     ) {
       return NextResponse.json({ error: "Invalid subscription URL" }, { status: 400 });
     }
-    const confirmed = await fetch(url);
+    const confirmed = await fetch(url, { redirect: "manual" });
     return NextResponse.json({ confirmed: confirmed.ok }, { status: confirmed.ok ? 200 : 502 });
   }
   if (envelope.Type !== "Notification") return NextResponse.json({ ignored: true });

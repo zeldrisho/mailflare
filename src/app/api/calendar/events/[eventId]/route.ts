@@ -3,7 +3,11 @@ import { NextResponse } from "next/server";
 import { getDb } from "@/db";
 import { calendarEvents } from "@/db/schema";
 import { getEnv } from "@/lib/cloudflare";
-import { createCalendarInvitation } from "@/lib/calendar/utils";
+import {
+  calendarInvitationBytes,
+  createCalendarInvitation,
+  isValidCalendarAttendee,
+} from "@/lib/calendar/utils";
 import { sendEmail } from "@/lib/email/send";
 import type { CalendarEventInput } from "../types";
 import type { CalendarEventRouteParams } from "./types";
@@ -70,7 +74,7 @@ export async function PATCH(request: Request, { params }: CalendarEventRoutePara
     return NextResponse.json({ error: "No future occurrences remain" }, { status: 404 });
   const attendees = (input.attendees ?? [])
     .map((email) => email.trim())
-    .filter((email) => /^\S+@\S+\.\S+$/.test(email));
+    .filter(isValidCalendarAttendee);
   if (
     attendees.length &&
     existing.mailboxId &&
@@ -129,7 +133,11 @@ export async function PATCH(request: Request, { params }: CalendarEventRoutePara
             subject: `Updated invitation: ${moved.title}`,
             text: moved.description || `This event has been updated: ${moved.title}.`,
             attachments: [
-              { filename: "invite.ics", type: "text/calendar; charset=utf-8", content: file },
+              {
+                filename: "invite.ics",
+                type: "text/calendar; charset=utf-8",
+                content: calendarInvitationBytes(file),
+              },
             ],
           }),
         ),
@@ -215,7 +223,11 @@ export async function PATCH(request: Request, { params }: CalendarEventRoutePara
           subject: `Updated invitation: ${event.title}`,
           text: event.description || `This event has been updated: ${event.title}.`,
           attachments: [
-            { filename: "invite.ics", type: "text/calendar; charset=utf-8", content: file },
+            {
+              filename: "invite.ics",
+              type: "text/calendar; charset=utf-8",
+              content: calendarInvitationBytes(file),
+            },
           ],
         }),
       ),

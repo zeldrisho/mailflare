@@ -21,7 +21,7 @@ export async function resolveIncomingMail(
     }
     return decision;
   } catch (error) {
-    console.error(`Routing resolution failed for ${to}`, error);
+    console.error("Inbound routing resolution failed", error);
     return null;
   }
 }
@@ -42,7 +42,7 @@ export async function forwardMessage(
     await message.forward(destination, headers);
     return true;
   } catch (error) {
-    console.error(`Forwarding failed for ${message.to} -> ${destination}`, error);
+    console.error("Inbound forwarding failed", error);
     return false;
   }
 }

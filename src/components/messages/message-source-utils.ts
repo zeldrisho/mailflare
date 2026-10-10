@@ -60,19 +60,27 @@ function authResult(
   headers: Map<string, string[]>,
   method: "spf" | "dkim" | "dmarc",
 ): AuthenticationSummary | null {
+  const patterns = {
+    spf: /(?:^|[;\\s])spf\\s*=\\s*([a-z]+)/i,
+    dkim: /(?:^|[;\\s])dkim\\s*=\\s*([a-z]+)/i,
+    dmarc: /(?:^|[;\\s])dmarc\\s*=\\s*([a-z]+)/i,
+  };
+  const sectionPatterns = {
+    spf: /(?:^|\\s)spf\\s*=/i,
+    dkim: /(?:^|\\s)dkim\\s*=/i,
+    dmarc: /(?:^|\\s)dmarc\\s*=/i,
+  };
   const resultHeader = headers
     .get("authentication-results")
-    ?.find((value) => new RegExp(`(?:^|[;\\s])${method}\\s*=`, "i").test(value));
+    ?.find((value) => patterns[method].test(value));
   const result =
-    resultHeader?.match(new RegExp(`(?:^|[;\\s])${method}\\s*=\\s*([a-z]+)`, "i"))?.[1] ??
+    resultHeader?.match(patterns[method])?.[1] ??
     (method === "spf" ? firstHeader(headers, "received-spf")?.match(/^\s*([a-z]+)/i)?.[1] : null);
   if (!result) return null;
   const status = result.toUpperCase();
   if (status !== "PASS") return { status, detail: null };
   const section =
-    resultHeader
-      ?.split(";")
-      .find((value) => new RegExp(`(?:^|\\s)${method}\\s*=`, "i").test(value)) ?? "";
+    resultHeader?.split(";").find((value) => sectionPatterns[method].test(value)) ?? "";
   if (method === "spf") {
     const ip =
       section.match(/\bclient-ip\s*=\s*([^\s;)]+)/i)?.[1] ??
