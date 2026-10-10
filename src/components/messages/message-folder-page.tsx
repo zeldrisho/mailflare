@@ -88,22 +88,30 @@ function MessageListRow({
     const previousRead = read;
     const previousThreadUnread = threadUnread;
     const unreadDelta = action === "read" ? -1 : action === "unread" ? 1 : 0;
+
     if (action === "read") setRead(true);
+
     if (action === "unread") setRead(false);
+
     // Grouped rows derive their unread styling from the thread count, so it must change with the row.
     if (message.threadMessageIds) {
       if (action === "read") setThreadUnread(0);
+
       if (action === "unread") setThreadUnread(message.threadMessageIds.length);
     }
+
     if (unreadDelta) dispatchMessageCountsDelta({ inboxUnreadDelta: unreadDelta });
+
     try {
       await onMessageAction(message.id, action);
     } catch (error) {
       if (action === "read" || action === "unread") {
         setRead(previousRead);
         setThreadUnread(previousThreadUnread);
+
         if (unreadDelta) dispatchMessageCountsDelta({ inboxUnreadDelta: -unreadDelta });
       }
+
       throw error;
     }
   }
@@ -118,15 +126,19 @@ function MessageListRow({
       rememberOpenedUnreadMessage(message.id);
       const previousThreadUnread = threadUnread;
       setRead(true);
+
       if (previousThreadUnread !== undefined)
         setThreadUnread(Math.max(0, previousThreadUnread - 1));
+
       if (message.direction === "inbound") dispatchMessageCountsDelta({ inboxUnreadDelta: -1 });
       void runBulkMessageAction([message.id], "read", false).catch(() => {
         setRead(false);
         setThreadUnread(previousThreadUnread);
+
         if (message.direction === "inbound") dispatchMessageCountsDelta({ inboxUnreadDelta: 1 });
       });
     }
+
     navigation.onNavigate(event, !read);
   }
 
@@ -194,7 +206,9 @@ function MessageListRow({
         </Link>
       </div>
     );
+
     if (!swipeable) return compactRow;
+
     return (
       <SwipeableRow
         startAction={{
@@ -218,6 +232,7 @@ function MessageListRow({
   const className = `group relative grid min-h-12 w-full grid-cols-[24px_32px_minmax(160px,80px)_1fr_auto] items-center gap-3 px-6 text-left text-sm hover:z-10 hover:bg-[#f2f6fc] hover:shadow-sm ${
     active || selected ? "bg-blue-50" : ""
   } ${draggable ? "cursor-grab active:cursor-grabbing" : ""}`;
+
   const content = (
     <>
       {config.folder === "inbox" && message.direction === "inbound" && (
@@ -331,14 +346,17 @@ export function MessageFolderPage({
   const { query } = useMailSearch();
   const isMobile = useIsMobile();
   const [offset, setOffset] = useState(0);
+
   const [internalSelectedMessages, setInternalSelectedMessages] = useState<
     Array<{ id: string; read: boolean }>
   >([]);
+
   const [pendingBulkAction, setPendingBulkAction] = useState(false);
   const [emptyingFolder, setEmptyingFolder] = useState(false);
   const [unreadOnly, setUnreadOnly] = useState(false);
   const [conversationView] = useConversationView();
   const grouped = conversationView && config.folder !== "drafts";
+
   const { messages, isLoading, total, limit, updateMessages } = useMessages(
     config.folder,
     selectedMailbox?.id,
@@ -352,13 +370,16 @@ export function MessageFolderPage({
     !mailboxesLoading,
     config.folderId,
   );
+
   const { counts } = useMessageCounts(selectedMailbox?.id, !mailboxesLoading);
   usePageLoading(mailboxesLoading || isLoading);
   const headerIcons = config.headerIcons ?? [];
   const hasActiveFilters = !!query.trim();
+
   const folderCount = config.folderId
     ? counts.customFolders[config.folderId]
     : counts.folders[config.folder];
+
   const titleTotal = folderCount?.total ?? total;
   const titleUnread = folderCount?.unread ?? 0;
   const mailboxAddress = getMailboxAddress(selectedMailbox);
@@ -366,20 +387,33 @@ export function MessageFolderPage({
   const pageRange = getPageRange(offset, messages.length, total);
   const selectedMessages = selection?.selectedMessages ?? internalSelectedMessages;
   const setSelectedMessages = selection?.setSelectedMessages ?? setInternalSelectedMessages;
+
   const selectedIds = useMemo(
     () => selectedMessages.map((message) => message.id),
     [selectedMessages],
   );
+
+  const selectedIdSet = useMemo(() => new Set(selectedIds), [selectedIds]);
+
+  const messagesById = useMemo(
+    () => new Map(messages.map((message) => [message.id, message])),
+    [messages],
+  );
+
   const hasUnreadSelection = selectedMessages.some((message) => !message.read);
+
   const allVisibleSelected =
-    messages.length > 0 && messages.every((message) => selectedIds.includes(message.id));
+    messages.length > 0 && messages.every((message) => selectedIdSet.has(message.id));
+
   // In conversation view a row stands for every message of its thread in this
   // folder, so actions and drags carry all of them.
   const rowMessageIds = (message: Message) => message.threadMessageIds ?? [message.id];
+
   const expandSelectedIds = (ids: string[]) =>
-    ids.flatMap((id) =>
-      rowMessageIds(messages.find((message) => message.id === id) ?? ({ id } as Message)),
-    );
+    ids.flatMap((id) => {
+      const message = messagesById.get(id);
+      return message ? rowMessageIds(message) : [id];
+    });
 
   useEffect(() => {
     setOffset(0);
@@ -411,11 +445,14 @@ export function MessageFolderPage({
 
   function updateSelectedMessage(messageId: string, selected: boolean) {
     const message = messages.find((item) => item.id === messageId);
+
     if (!message) return;
 
     setSelectedMessages((current) => {
       if (!selected) return current.filter((item) => item.id !== messageId);
+
       if (current.some((item) => item.id === messageId)) return current;
+
       return [...current, { id: message.id, read: message.read && !(message.threadUnread ?? 0) }];
     });
   }
@@ -428,22 +465,27 @@ export function MessageFolderPage({
       }
 
       const next = new Map(current.map((message) => [message.id, message]));
+
       for (const message of messages) {
         next.set(message.id, {
           id: message.id,
           read: message.read && !(message.threadUnread ?? 0),
         });
       }
+
       return Array.from(next.values());
     });
   }
 
   const permanentDeleteFolder =
     !config.folderId && supportsPermanentDelete(config.folder) ? config.folder : null;
+
   async function emptyFolder() {
     if (!permanentDeleteFolder || !selectedMailbox?.id) return;
+
     if (!window.confirm(getEmptyFolderConfirmText(permanentDeleteFolder, titleTotal, t))) return;
     setEmptyingFolder(true);
+
     try {
       await emptyMessageFolder(selectedMailbox.id, permanentDeleteFolder);
       setOffset(0);
@@ -459,41 +501,47 @@ export function MessageFolderPage({
 
   async function runSelectedAction(action: BulkMessageAction, folderId?: string) {
     if (selectedIds.length === 0) return;
+
     if (action === "delete") {
       const ids = expandSelectedIds(selectedIds);
+
       if (!window.confirm(getPermanentDeleteConfirmText(ids.length, t))) return;
     }
 
     setPendingBulkAction(true);
     const previousMessages = messages;
     const readValue = action === "read" ? true : action === "unread" ? false : null;
+
     const changedMessages =
       readValue === null
         ? []
-        : messages.filter(
-            (message) => selectedIds.includes(message.id) && message.read !== readValue,
-          );
+        : messages.filter((message) => selectedIdSet.has(message.id) && message.read !== readValue);
+
     if (readValue !== null) {
       updateMessages((current) =>
         current.map((message) =>
-          selectedIds.includes(message.id) ? { ...message, read: readValue } : message,
+          selectedIdSet.has(message.id) ? { ...message, read: readValue } : message,
         ),
       );
       setSelectedMessages((current) => current.map((message) => ({ ...message, read: readValue })));
+
       const inboxUnreadDelta = changedMessages
         .filter((message) => message.direction === "inbound")
         .reduce(
           (total, message) => total + (readValue ? (message.read ? 0 : -1) : message.read ? 1 : 0),
           0,
         );
+
       if (inboxUnreadDelta) dispatchMessageCountsDelta({ inboxUnreadDelta });
     }
+
     try {
       await runBulkMessageAction(expandSelectedIds(selectedIds), action, true, folderId);
       setSelectedMessages([]);
     } catch (error) {
       if (readValue !== null) {
         updateMessages(previousMessages);
+
         const inboxUnreadDelta = changedMessages
           .filter((message) => message.direction === "inbound")
           .reduce(
@@ -501,8 +549,10 @@ export function MessageFolderPage({
               total + (readValue ? (message.read ? 0 : 1) : message.read ? -1 : 0),
             0,
           );
+
         if (inboxUnreadDelta) dispatchMessageCountsDelta({ inboxUnreadDelta });
       }
+
       throw error;
     } finally {
       setPendingBulkAction(false);
@@ -618,7 +668,7 @@ export function MessageFolderPage({
             key={message.id}
             message={message}
             config={config}
-            selected={selectedIds.includes(message.id)}
+            selected={selectedIdSet.has(message.id)}
             active={message.id === selectedMessageId}
             compact={compact || isMobile}
             currentAccountName={currentAccountName}
@@ -631,7 +681,7 @@ export function MessageFolderPage({
               )
             }
             dragMessageIds={expandSelectedIds(
-              selectedIds.includes(message.id) ? selectedIds : [message.id],
+              selectedIdSet.has(message.id) ? selectedIds : [message.id],
             )}
           />
         ))}

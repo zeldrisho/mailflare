@@ -61,27 +61,36 @@ export default function PublicBookingEventPage() {
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState("");
-  const slotsByDate = useMemo(() => {
+
+  const { slotsByDate, availableDates } = useMemo(() => {
     const grouped = new Map<string, BookingSlot[]>();
+
     for (const slot of slots) {
       const date = localDateForSlot(slot, timeZone);
-      grouped.set(date, [...(grouped.get(date) ?? []), slot]);
+      const daySlots = grouped.get(date);
+
+      if (daySlots) daySlots.push(slot);
+      else grouped.set(date, [slot]);
     }
-    return grouped;
+
+    return { slotsByDate: grouped, availableDates: [...grouped.keys()].sort() };
   }, [slots, timeZone]);
-  const availableDates = [...slotsByDate.keys()].sort();
+
   const todayDate = localDateForSlot(
     { startsAt: new Date().toISOString(), endsAt: "", localDate: "", time: "" },
     timeZone,
   );
+
   const visibleMonth =
     month ||
     localDateForSlot(
       { startsAt: new Date().toISOString(), endsAt: "", localDate: "", time: "" },
       timeZone,
     ).slice(0, 7);
+
   const firstMonth = availableDates[0]?.slice(0, 7);
   const lastMonth = availableDates.at(-1)?.slice(0, 7);
+
   const timeZones = useMemo(
     () => (event ? bookingTimeZones(event.timeZone, timeZone) : []),
     [event, timeZone],
@@ -91,16 +100,19 @@ export default function PublicBookingEventPage() {
     function restoreSelection() {
       const selection = readBookingPageSelection(window.location.search);
       const zone = selection.timeZone ?? getUserTimeZone();
+
       const viewerToday = localDateForSlot(
         { startsAt: new Date().toISOString(), endsAt: "", localDate: "", time: "" },
         zone,
       );
+
       const slot = slots.find((item) => item.startsAt === selection.slotStartsAt) ?? null;
       const date = slot ? localDateForSlot(slot, zone) : (selection.date ?? viewerToday);
       setTimeZone(zone);
       setSelectedDate(date);
       setSelectedSlot(slot);
       setMonth(date.slice(0, 7));
+
       if (!loading || !selection.slotStartsAt) {
         if (
           selection.date !== date ||
@@ -110,8 +122,10 @@ export default function PublicBookingEventPage() {
           writeBookingPageSelection(date, slot?.startsAt ?? null, zone, true);
       }
     }
+
     restoreSelection();
     window.addEventListener("popstate", restoreSelection);
+
     return () => window.removeEventListener("popstate", restoreSelection);
   }, [slots, loading]);
 
@@ -120,6 +134,7 @@ export default function PublicBookingEventPage() {
     void fetch(endpoint)
       .then(async (response) => {
         if (!response.ok) throw new Error();
+
         return response.json() as Promise<{
           event: PublicBookingEvent;
           hostName: string;
@@ -128,6 +143,7 @@ export default function PublicBookingEventPage() {
       })
       .then((data) => {
         if (!active) return;
+
         if (userId && data.event.userId !== userId) throw new Error();
         setEvent(data.event);
         setHostName(data.hostName);
@@ -139,6 +155,7 @@ export default function PublicBookingEventPage() {
       .finally(() => {
         if (active) setLoading(false);
       });
+
     return () => {
       active = false;
     };
@@ -148,6 +165,7 @@ export default function PublicBookingEventPage() {
     if (!selectedSlot) return;
     setSubmitting(true);
     setError("");
+
     try {
       await submitPublicBooking(endpoint, selectedSlot.startsAt, name, email, guestEmails, notes);
       setDone(true);
@@ -451,6 +469,7 @@ export default function PublicBookingEventPage() {
                           },
                           input.target.value,
                         );
+
                         setTimeZone(input.target.value);
                         setSelectedDate(nextToday);
                         setMonth(nextToday.slice(0, 7));

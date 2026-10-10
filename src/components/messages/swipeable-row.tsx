@@ -1,4 +1,5 @@
 "use client";
+
 import { useRef, useState, type PointerEvent, type ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
 import { clsx } from "cn";
@@ -20,12 +21,15 @@ type SwipeableRowProps = {
 };
 
 const COMMIT_DISTANCE = 88;
+
 const INTENT_DISTANCE = 10;
 
 // Touch-only swipe gestures; vertical scrolling stays with the browser via touch-action: pan-y.
 export function SwipeableRow({ children, startAction, endAction, disabled }: SwipeableRowProps) {
-  const [offset, setOffset] = useState(0);
   const [dragging, setDragging] = useState(false);
+  const [direction, setDirection] = useState<"start" | "end" | null>(null);
+  const [armed, setArmed] = useState(false);
+  const rowRef = useRef<HTMLDivElement>(null);
   const gesture = useRef<{ x: number; y: number; active: boolean; id: number } | null>(null);
   const swiped = useRef(false);
 
@@ -37,40 +41,58 @@ export function SwipeableRow({ children, startAction, endAction, disabled }: Swi
 
   function onPointerMove(event: PointerEvent<HTMLDivElement>) {
     const current = gesture.current;
+
     if (!current || current.id !== event.pointerId) return;
     const dx = event.clientX - current.x;
     const dy = event.clientY - current.y;
+
     if (!current.active) {
       if (Math.abs(dy) > INTENT_DISTANCE && Math.abs(dy) > Math.abs(dx)) {
         gesture.current = null;
+
         return;
       }
+
       if (Math.abs(dx) < INTENT_DISTANCE) return;
       current.active = true;
       setDragging(true);
       event.currentTarget.setPointerCapture(event.pointerId);
     }
-    setOffset(dx);
+
+    // Pointer events can fire more often than the display refresh rate. Update the
+    // transform directly so dragging does not re-render the whole message row.
+    if (rowRef.current) rowRef.current.style.transform = `translateX(${dx}px)`;
+    const nextDirection = dx > 0 ? "start" : "end";
+
+    if (nextDirection !== direction) setDirection(nextDirection);
+    const nextArmed = Math.abs(dx) >= COMMIT_DISTANCE;
+
+    if (nextArmed !== armed) setArmed(nextArmed);
   }
 
   function finish(event: PointerEvent<HTMLDivElement>) {
     const current = gesture.current;
+
     if (!current || current.id !== event.pointerId) return;
     gesture.current = null;
+
     if (!current.active) return;
     swiped.current = true;
     setDragging(false);
+    setDirection(null);
+    setArmed(false);
+
+    if (rowRef.current) rowRef.current.style.transform = "";
     const dx = event.clientX - current.x;
-    setOffset(0);
+
     if (event.type !== "pointercancel") {
       if (dx >= COMMIT_DISTANCE) startAction.onTrigger();
       else if (dx <= -COMMIT_DISTANCE) endAction.onTrigger();
     }
   }
 
-  const action = offset > 0 ? startAction : offset < 0 ? endAction : null;
+  const action = direction === "start" ? startAction : direction === "end" ? endAction : null;
   const Icon = action?.icon;
-  const armed = Math.abs(offset) >= COMMIT_DISTANCE;
 
   return (
     <div className="relative overflow-hidden">
@@ -79,7 +101,7 @@ export function SwipeableRow({ children, startAction, endAction, disabled }: Swi
           aria-hidden="true"
           className={clsx(
             "absolute inset-0 flex items-center px-6 text-white",
-            offset > 0 ? "justify-start" : "justify-end",
+            direction === "start" ? "justify-start" : "justify-end",
             action.className,
           )}
         >
@@ -95,6 +117,7 @@ export function SwipeableRow({ children, startAction, endAction, disabled }: Swi
         </div>
       )}
       <div
+        ref={rowRef}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={finish}
@@ -109,7 +132,7 @@ export function SwipeableRow({ children, startAction, endAction, disabled }: Swi
           "relative bg-white",
           !dragging && "transition-transform duration-200 ease-out motion-reduce:transition-none",
         )}
-        style={{ transform: offset ? `translateX(${offset}px)` : undefined, touchAction: "pan-y" }}
+        style={{ touchAction: "pan-y" }}
       >
         {children}
       </div>
