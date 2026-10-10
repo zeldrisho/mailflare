@@ -1,6 +1,6 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, isNotNull } from "drizzle-orm";
 import { getDb } from "@/db";
-import { messages, users } from "@/db/schema";
+import { messages, outboundJobs, users } from "@/db/schema";
 import { newId } from "@/lib/ids";
 import { buildSnippet, parseRawMime } from "@/lib/email/parse";
 import { resolveInboundAddress, resolveInboxRuleDestination } from "@/lib/email/routing";
@@ -268,7 +268,20 @@ export async function getMessageWithBody(env: CloudflareEnv, userId: string, mes
 	const contactNames = await getMessageContactNames(env, userId, message.fromAddr, message.toAddr);
 	const attachments = await listMessageAttachments(env, messageId);
 	const unsubscribeUrl = await getUnsubscribeUrlFromRawR2Key(env, message.rawR2Key);
-	return { message: { ...message, ...contactNames }, body: message, attachments, unsubscribeUrl };
+	const [scheduledJob] = message.direction === "outbound" && message.status === "queued"
+		? await db
+			.select({ scheduledAt: outboundJobs.scheduledAt })
+			.from(outboundJobs)
+			.where(and(eq(outboundJobs.messageId, messageId), eq(outboundJobs.status, "queued"), isNotNull(outboundJobs.scheduledAt)))
+			.limit(1)
+		: [];
+	return {
+		message: { ...message, ...contactNames },
+		body: message,
+		attachments,
+		unsubscribeUrl,
+		scheduledAt: scheduledJob?.scheduledAt?.toISOString() ?? null,
+	};
 }
 
 export async function getMessageWithBodyForUser(env: CloudflareEnv, user: SessionUser, messageId: string) {

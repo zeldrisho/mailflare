@@ -1,12 +1,14 @@
-import { createReadStream } from "node:fs";
+import { randomUUID } from "node:crypto";
+import { createReadStream, createWriteStream } from "node:fs";
 import { mkdir, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { dirname, join, resolve, sep } from "node:path";
 import { Readable } from "node:stream";
+import { pipeline } from "node:stream/promises";
 
 /**
  * The R2 bucket API over a directory. Objects are files under `root`; the
  * HTTP and custom metadata R2 would keep ride in a `.meta.json` sidecar.
- * Covers what the app uses: get (with a byte range), put, delete, head.
+ * Covers what the app uses: get (with a byte range), put, delete, head, and multipart uploads.
  */
 type StoredMeta = {
 	httpMetadata?: { contentType?: string; contentDisposition?: string; cacheControl?: string };
@@ -148,6 +150,50 @@ export class FileBucket {
 		await writeFile(path, buffer);
 		await writeFile(`${path}.meta.json`, JSON.stringify(meta));
 		return new FileObject(key, path, meta);
+	}
+
+	private multipartDirectory(uploadId: string) {
+		if (!/^[\w-]+$/.test(uploadId)) throw new Error("Invalid multipart upload id");
+		return join(this.root, ".multipart", uploadId);
+	}
+
+	async createMultipartUpload(key: string, options?: { httpMetadata?: StoredMeta["httpMetadata"] }) {
+		const uploadId = randomUUID();
+		await mkdir(this.multipartDirectory(uploadId), { recursive: true });
+		await writeFile(join(this.multipartDirectory(uploadId), "meta.json"), JSON.stringify(options?.httpMetadata ?? {}));
+		return this.resumeMultipartUpload(key, uploadId);
+	}
+
+	resumeMultipartUpload(key: string, uploadId: string) {
+		const directory = this.multipartDirectory(uploadId);
+		const partPath = (partNumber: number) => join(directory, `part-${partNumber}`);
+		return {
+			key,
+			uploadId,
+			uploadPart: async (partNumber: number, value: ReadableStream | ArrayBuffer | ArrayBufferView | string | Blob) => {
+				if (!Number.isInteger(partNumber) || partNumber < 1) throw new Error("Invalid part number");
+				const source = value instanceof ReadableStream ? Readable.fromWeb(value as never) : Readable.from(Buffer.from(value instanceof Blob ? await value.arrayBuffer() : typeof value === "string" ? value : value instanceof ArrayBuffer ? value : (value as ArrayBufferView).buffer));
+				await pipeline(source, createWriteStream(partPath(partNumber)));
+				const { size } = await stat(partPath(partNumber));
+				return { partNumber, etag: `${partNumber}-${size.toString(16)}` };
+			},
+			abort: async () => { await rm(directory, { recursive: true, force: true }); },
+			complete: async (parts: { partNumber: number; etag: string }[]) => {
+				const path = this.pathFor(key);
+				await mkdir(dirname(path), { recursive: true });
+				const out = createWriteStream(path);
+				try {
+					for (const part of [...parts].sort((a, b) => a.partNumber - b.partNumber)) await pipeline(createReadStream(partPath(part.partNumber)), out, { end: false });
+				} finally { out.end(); }
+				await new Promise<void>((done) => out.once("close", () => done()));
+				const httpMetadata = JSON.parse(await readFile(join(directory, "meta.json"), "utf8")) as StoredMeta["httpMetadata"];
+				const { size } = await stat(path);
+				const meta: StoredMeta = { httpMetadata, size, uploaded: new Date().toISOString(), etag: `${Date.now().toString(16)}-${size.toString(16)}` };
+				await writeFile(`${path}.meta.json`, JSON.stringify(meta));
+				await rm(directory, { recursive: true, force: true });
+				return new FileObject(key, path, meta);
+			},
+		};
 	}
 
 	async delete(keys: string | string[]) {

@@ -17,7 +17,10 @@ import { formatUserDate, getUserTimeZone, parseUserDateTimeLocal } from "@/lib/t
 import { normalizeCalendarColor } from "@/lib/calendar/colors";
 import { DEFAULT_REPEAT_DAYS, parseCalendarRepeatDays } from "@/lib/calendar/recurrence";
 import { DEFAULT_FOLDER_COLOR, FOLDER_COLOR_OPTIONS } from "@/lib/folders/colors";
+import type { TranslationKey } from "@/lib/i18n/types";
 import type { CalendarRepeat } from "@/lib/calendar/types";
+import { useLanguage } from "@/components/language-provider";
+import { folderColorKeys } from "@/lib/folders/color-keys";
 import { useSelectedMailbox } from "@/components/mailbox-provider";
 import { useSidebar } from "@/components/sidebar-state";
 import { UpcomingSidebar } from "../upcoming-sidebar";
@@ -34,6 +37,7 @@ import clsx from "clsx";
 const eventFieldClass = "h-9 border-transparent bg-transparent px-2 shadow-none hover:bg-white/60 focus:border-blue-600 focus:bg-white focus:shadow-sm";
 
 export default function CalendarPage() {
+  const { t } = useLanguage();
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [eventsVersion, setEventsVersion] = useState(0);
@@ -125,14 +129,14 @@ export default function CalendarPage() {
     const end = new Date(Math.max(addDays(today, 90).getTime(), addDays(weekStart, 7).getTime(), addDays(visibleDate, 1).getTime()));
     void authFetch(`/api/calendar/events?start=${start.toISOString()}&end=${end.toISOString()}`)
       .then((response) => {
-        if (!response.ok) throw new Error("Could not load calendar events.");
+        if (!response.ok) throw new Error(t("calendar.loadFailed"));
         return response.json();
       })
       .then((data) => { if (active) setEvents(expandCalendarEvents(data.events ?? [], start, end)); })
-      .catch(() => { if (active) toast.error("Could not load calendar events."); })
+      .catch(() => { if (active) toast.error(t("calendar.loadFailed")); })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
-  }, [today, visibleDate, weekStart, eventsVersion]);
+  }, [today, visibleDate, weekStart, eventsVersion, t]);
 
   useEffect(() => {
     if (!eventFromUrl) { openedEventFromUrl.current = null; return; }
@@ -167,14 +171,14 @@ export default function CalendarPage() {
     try {
       const editedStart = editing && startsAt === formatLocalDateTime(new Date(editing.startsAt)) ? new Date(editing.startsAt) : parseUserDateTimeLocal(startsAt);
       const editedEnd = editing && endsAt === formatLocalDateTime(new Date(editing.endsAt)) ? new Date(editing.endsAt) : parseUserDateTimeLocal(endsAt);
-      if (!editedStart || !editedEnd || editedEnd <= editedStart) { toast.error("Enter valid event times."); return; }
+      if (!editedStart || !editedEnd || editedEnd <= editedStart) { toast.error(t("calendar.invalidTimes")); return; }
       const movingToPast = Boolean(editing && editing.repeat !== "none" && editedStart.getTime() < Date.now() && editedStart.getTime() !== new Date(editing.startsAt).getTime());
       const effectiveFrom = editing && editing.repeat !== "none" && !movingToPast ? new Date() : null;
       let savedStart = editedStart;
       let savedEnd = editedEnd;
       if (editing && effectiveFrom) {
         const next = rescheduleCalendarOccurrence(editing, editedStart, editedEnd, effectiveFrom);
-        if (!next) { toast.error("No future occurrences remain to update."); return; }
+        if (!next) { toast.error(t("calendar.noFuture")); return; }
         savedStart = next.startsAt;
         savedEnd = next.endsAt;
       }
@@ -199,10 +203,10 @@ export default function CalendarPage() {
         setClosingEventEditor(true);
       } else {
         const result = await response.json();
-        toast.error(result.error ?? "Could not save the event. Please try again.");
+        toast.error(result.error ?? t("calendar.saveFailed"));
       }
     } catch {
-      toast.error("Could not save the event. Please try again.");
+      toast.error(t("calendar.saveFailed"));
     } finally {
       setPendingAction(null);
     }
@@ -210,7 +214,7 @@ export default function CalendarPage() {
 
   async function deleteEvent(id: string) {
     const recurring = editing && editing.repeat !== "none";
-    if (!window.confirm(recurring ? "Delete future occurrences from now?" : "Delete this event?")) return;
+    if (!window.confirm(recurring ? t("calendar.deleteFuture") : t("calendar.deleteEvent"))) return;
     setPendingAction(id);
     try {
       const effectiveFrom = recurring ? new Date().toISOString() : undefined;
@@ -220,10 +224,10 @@ export default function CalendarPage() {
         setClosingEventEditor(true);
       } else {
         const result = await response.json();
-        toast.error(result.error ?? "Could not delete the event. Please try again.");
+        toast.error(result.error ?? t("calendar.deleteFailed"));
       }
     } catch {
-      toast.error("Could not delete the event. Please try again.");
+      toast.error(t("calendar.deleteFailed"));
     } finally {
       setPendingAction(null);
     }
@@ -266,7 +270,7 @@ export default function CalendarPage() {
       let savedEnd = endsAt;
       if (effectiveFrom) {
         const next = rescheduleCalendarOccurrence(event, startsAt, endsAt, effectiveFrom);
-        if (!next) { toast.error("No future occurrences remain to update."); return; }
+        if (!next) { toast.error(t("calendar.noFuture")); return; }
         savedStart = next.startsAt;
         savedEnd = next.endsAt;
       }
@@ -294,13 +298,13 @@ export default function CalendarPage() {
         }),
       });
       if (!response.ok) {
-        toast.error("Could not update the event time. Please try again.");
+        toast.error(t("calendar.updateTimeFailed"));
         return;
       }
       saved = true;
       setEventsVersion((version) => version + 1);
     } catch {
-      toast.error("Could not update the event time. Please try again.");
+      toast.error(t("calendar.updateTimeFailed"));
     } finally {
       if (previousEvents && !saved) setEvents(previousEvents);
       setDraggedEvent(null);
@@ -380,7 +384,7 @@ export default function CalendarPage() {
 
   return (
     <div className={clsx("flex h-full min-h-0 flex-col bg-[#f6f8fc] pl-3 max-md:pl-0 lg:flex-row transition-[gap] duration-200 ease-in-out motion-reduce:transition-none", minimal ? "gap-0" : "gap-3")}>
-      <Toaster position="bottom-right" />
+      <Toaster position="bottom-left" />
       {loading && <RouteLoadingBarPortal />}
       {headerTarget && createPortal(
         <div className="flex min-w-0 flex-1 items-center justify-between gap-3 ">
@@ -396,23 +400,23 @@ export default function CalendarPage() {
               <ChevronDown className="h-5 w-5 text-neutral-500" />
             </button>
             {monthPickerOpen && monthPickerPos && createPortal(
-              <div ref={monthPickerPopupRef} role="dialog" aria-label="Choose a calendar date" style={monthPickerPos} className="fixed z-50 w-[448px] max-w-[calc(100vw-24px)] rounded-2xl bg-[#f7f9fc] p-5 shadow-xl ring-1 ring-neutral-200/70">
+              <div ref={monthPickerPopupRef} role="dialog" aria-label={t("calendar.chooseDate")} style={monthPickerPos} className="fixed z-50 w-[448px] max-w-[calc(100vw-24px)] rounded-2xl bg-[#f7f9fc] p-5 shadow-xl ring-1 ring-neutral-200/70">
                 <div className="mb-4 flex items-center justify-between gap-3">
                   <h2 className="text-xl font-semibold text-neutral-900">
                     {formatUserDate(pickerMonth, { month: "long", year: "numeric" })}
                   </h2>
                   <div className="flex items-center gap-2">
-                    <button type="button" aria-label="Previous month" onClick={() => setPickerMonth(addMonths(pickerMonth, -1))} className="flex h-9 w-9 items-center justify-center rounded-full text-neutral-600 hover:bg-neutral-200/70">
+                    <button type="button" aria-label={t("calendar.previousMonth")} onClick={() => setPickerMonth(addMonths(pickerMonth, -1))} className="flex h-9 w-9 items-center justify-center rounded-full text-neutral-600 hover:bg-neutral-200/70">
                       <ChevronLeft className="h-6 w-6" />
                     </button>
-                    <button type="button" aria-label="Next month" onClick={() => setPickerMonth(addMonths(pickerMonth, 1))} className="flex h-9 w-9 items-center justify-center rounded-full text-neutral-600 hover:bg-neutral-200/70">
+                    <button type="button" aria-label={t("calendar.nextMonth")} onClick={() => setPickerMonth(addMonths(pickerMonth, 1))} className="flex h-9 w-9 items-center justify-center rounded-full text-neutral-600 hover:bg-neutral-200/70">
                       <ChevronRight className="h-6 w-6" />
                     </button>
                   </div>
                 </div>
                 <div className="grid grid-cols-7">
-                  {["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"].map((weekday) => (
-                    <span key={weekday} aria-label={weekday} className="flex h-10 items-center justify-center text-sm font-medium text-neutral-500">{weekday[0]}</span>
+                  {([0, 1, 2, 3, 4, 5, 6] as const).map((weekday) => (
+                    <span key={weekday} aria-label={t(`weekday.${weekday}`)} className="flex h-10 items-center justify-center text-sm font-medium text-neutral-500">{t(`weekday.${weekday}`).charAt(0).toUpperCase()}</span>
                   ))}
                   {pickerDates.map((day) => {
                     const selected = dateKey(day) === dateKey(visibleDate);
@@ -434,29 +438,29 @@ export default function CalendarPage() {
           </div>
           </div>
           <div className="flex shrink-0 items-center gap-1.5">
-            <button type="button" aria-label={`Previous ${view}`} onClick={() => setVisibleDate(addDays(visibleDate, view === "week" ? -7 : -1))} className="flex h-10 w-10 items-center justify-center rounded-full text-neutral-600 hover:bg-white"><ChevronLeft className="h-6 w-6" /></button>
-            <button type="button" aria-label={`Next ${view}`} onClick={() => setVisibleDate(addDays(visibleDate, view === "week" ? 7 : 1))} className="flex h-10 w-10 items-center justify-center rounded-full text-neutral-600 hover:bg-white"><ChevronRight className="h-6 w-6" /></button>
-            <button type="button" onClick={() => setVisibleDate(new Date())} className="h-10 rounded-full max-md:hidden bg-white px-4 text-sm font-medium text-neutral-700 hover:bg-neutral-50">Today</button>
+            <button type="button" aria-label={t(view === "week" ? "calendar.previousView.week" : "calendar.previousView.day")} onClick={() => setVisibleDate(addDays(visibleDate, view === "week" ? -7 : -1))} className="flex h-10 w-10 items-center justify-center rounded-full text-neutral-600 hover:bg-white"><ChevronLeft className="h-6 w-6" /></button>
+            <button type="button" aria-label={t(view === "week" ? "calendar.nextView.week" : "calendar.nextView.day")} onClick={() => setVisibleDate(addDays(visibleDate, view === "week" ? 7 : 1))} className="flex h-10 w-10 items-center justify-center rounded-full text-neutral-600 hover:bg-white"><ChevronRight className="h-6 w-6" /></button>
+            <button type="button" onClick={() => setVisibleDate(new Date())} className="h-10 rounded-full max-md:hidden bg-white px-4 text-sm font-medium text-neutral-700 hover:bg-neutral-50">{t("calendar.today")}</button>
             <DropdownMenu.Root>
               <DropdownMenu.Trigger asChild>
-                <button type="button" aria-label="Calendar options" className="flex h-10 w-10 items-center justify-center rounded-full text-neutral-600 hover:bg-white md:hidden"><MoreVertical className="h-5 w-5" /></button>
+                <button type="button" aria-label={t("calendar.options")} className="flex h-10 w-10 items-center justify-center rounded-full text-neutral-600 hover:bg-white md:hidden"><MoreVertical className="h-5 w-5" /></button>
               </DropdownMenu.Trigger>
               <DropdownMenu.Portal>
                 <DropdownMenu.Content align="end" sideOffset={4} className="z-[130] min-w-40 rounded-xl border border-neutral-200 bg-white p-1 text-sm shadow-xl md:hidden">
-                  <DropdownMenu.Item onSelect={() => setVisibleDate(new Date())} className="cursor-pointer rounded-lg px-3 py-2 text-neutral-700 outline-none data-[highlighted]:bg-neutral-100">Today</DropdownMenu.Item>
+                  <DropdownMenu.Item onSelect={() => setVisibleDate(new Date())} className="cursor-pointer rounded-lg px-3 py-2 text-neutral-700 outline-none data-[highlighted]:bg-neutral-100">{t("calendar.today")}</DropdownMenu.Item>
                   <DropdownMenu.Separator className="my-1 h-px bg-neutral-100" />
-                  {(["week", "day"] as const).map((option) => <DropdownMenu.Item key={option} onSelect={() => setView(option)} className="flex cursor-pointer items-center justify-between gap-3 rounded-lg px-3 py-2 text-neutral-700 outline-none data-[highlighted]:bg-neutral-100">{option === "week" ? "Week" : "Day"}{view === option && <Check className="h-4 w-4 text-blue-600" />}</DropdownMenu.Item>)}
+                  {(["week", "day"] as const).map((option) => <DropdownMenu.Item key={option} onSelect={() => setView(option)} className="flex cursor-pointer items-center justify-between gap-3 rounded-lg px-3 py-2 text-neutral-700 outline-none data-[highlighted]:bg-neutral-100">{option === "week" ? t("calendar.week") : t("calendar.day")}{view === option && <Check className="h-4 w-4 text-blue-600" />}</DropdownMenu.Item>)}
                 </DropdownMenu.Content>
               </DropdownMenu.Portal>
             </DropdownMenu.Root>
             <div className="relative max-md:hidden">
-              <select value={view} onChange={(event) => setView(event.target.value as CalendarView)} aria-label="Calendar view" className="h-10 appearance-none rounded-full border-0 bg-white pl-4 pr-10 text-sm font-medium text-neutral-700 hover:bg-neutral-50">
-                <option value="week">Week</option>
-                <option value="day">Day</option>
+              <select value={view} onChange={(event) => setView(event.target.value as CalendarView)} aria-label={t("calendar.view")} className="h-10 appearance-none rounded-full border-0 bg-white pl-4 pr-10 text-sm font-medium text-neutral-700 hover:bg-neutral-50">
+                <option value="week">{t("calendar.week")}</option>
+                <option value="day">{t("calendar.day")}</option>
               </select>
               <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-neutral-600" />
             </div>
-            <Button disabled={pendingAction !== null} onClick={() => openNewEvent()} className={clsx("ml-1 max-md:ml-0 h-10 rounded-full bg-blue-600 px-4 text-white hover:bg-blue-500", mobilePrimaryActionClass)}><Plus className="h-5 w-5" />New event</Button>
+            <Button disabled={pendingAction !== null} onClick={() => openNewEvent()} className={clsx("ml-1 max-md:ml-0 h-10 rounded-full bg-blue-600 px-4 text-white hover:bg-blue-500", mobilePrimaryActionClass)}><Plus className="h-5 w-5" />{t("calendar.newEvent")}</Button>
           </div>
         </div>,
         headerTarget,
@@ -499,7 +503,7 @@ export default function CalendarPage() {
                   if (draggedEvent) void moveEvent(draggedEvent, day, event.clientY - event.currentTarget.getBoundingClientRect().top - dragOffsetPixels.current);
                 }}
                 style={{ backgroundImage: "linear-gradient(to bottom, transparent calc(100% - 1px), var(--color-neutral-100) calc(100% - 1px))", backgroundSize: `100% ${CALENDAR_HOUR_HEIGHT}px` }}>
-                <button type="button" aria-label={`Add event on ${formatUserDate(day, { dateStyle: "short" })}`} onClick={(event) => openNewEvent(day, dropStartForPosition(day, event.nativeEvent.offsetY))} className="absolute inset-0 z-0 cursor-crosshair" />
+                <button type="button" aria-label={t("calendar.addEventOn", { date: formatUserDate(day, { dateStyle: "short" }) })} onClick={(event) => openNewEvent(day, dropStartForPosition(day, event.nativeEvent.offsetY))} className="absolute inset-0 z-0 cursor-crosshair" />
                 <DayEvents day={day} events={events} currentTime={currentTime} busy={busy} activeEventId={activeEventId}
                   onEdit={onEditEvent} onDragStart={onEventDragStart} onDragEnd={onEventDragEnd}
                   onResizeStart={onResizeStart} onResizeMove={onResizeMove} onResizeEnd={onResizeEnd} onResizeCancel={onResizeCancel} />
@@ -527,7 +531,7 @@ export default function CalendarPage() {
 
       {adding && (
         <div className={clsx("dialog-overlay fixed inset-0 z-50 flex items-center justify-center bg-neutral-950/35 p-4", closingEventEditor && "pointer-events-none")} data-state={closingEventEditor ? "closed" : "open"}>
-          <div role="dialog" aria-modal="true" aria-label={editing ? "Edit event" : "Create event"} className="dialog-content max-h-[calc(100dvh-2rem)] w-full max-w-xl overflow-y-auto rounded-2xl bg-white p-5 shadow-2xl sm:p-6" data-state={closingEventEditor ? "closed" : "open"}
+          <div role="dialog" aria-modal="true" aria-label={editing ? t("calendar.editEvent") : t("calendar.createEvent")} className="dialog-content max-h-[calc(100dvh-2rem)] w-full max-w-xl overflow-y-auto rounded-2xl bg-white p-5 shadow-2xl sm:p-6" data-state={closingEventEditor ? "closed" : "open"}
             onAnimationEnd={(event) => {
               if (!closingEventEditor || event.target !== event.currentTarget) return;
               setAdding(false);
@@ -535,9 +539,9 @@ export default function CalendarPage() {
               setClosingEventEditor(false);
             }}>
             <div className="flex items-start gap-3">
-              <input value={title} onChange={(event) => setTitle(event.target.value)} placeholder="Add title" aria-label="Event name"
+              <input value={title} onChange={(event) => setTitle(event.target.value)} placeholder={t("calendar.addTitle")} aria-label={t("calendar.eventName")}
                 className="min-w-0 flex-1 rounded-md border border-transparent bg-transparent px-2 py-1 text-2xl font-medium text-neutral-900 outline-none placeholder:text-neutral-500 hover:bg-white/60 focus:border-blue-600 focus:bg-white" />
-              <button type="button" aria-label="Close event editor" disabled={pendingAction === "save"} onClick={() => setClosingEventEditor(true)} className="shrink-0 rounded-full p-1 text-neutral-600 hover:bg-neutral-200 disabled:opacity-50"><X className="h-5 w-5" /></button>
+              <button type="button" aria-label={t("calendar.closeEditor")} disabled={pendingAction === "save"} onClick={() => setClosingEventEditor(true)} className="shrink-0 rounded-full p-1 text-neutral-600 hover:bg-neutral-200 disabled:opacity-50"><X className="h-5 w-5" /></button>
             </div>
             <div className="mt-4 space-y-2">
               <div className="grid grid-cols-[24px_minmax(0,1fr)] items-start gap-3">
@@ -547,17 +551,17 @@ export default function CalendarPage() {
                 }}>
                   <div className="grid gap-1 sm:grid-cols-[minmax(0,1fr)_1px_minmax(0,1fr)] sm:gap-2">
                     <label className="relative block min-w-0 text-sm">
-                      <span className="pointer-events-none absolute left-2 top-1/2 z-10 -translate-y-1/2 font-medium text-neutral-500">From</span>
-                      <Input type="datetime-local" value={startsAt} onFocus={() => setDurationOptionsOpen(true)} onChange={(event) => setStartsAt(event.target.value)} aria-label="From date and time" className={`${eventFieldClass} pl-14`} />
+                      <span className="pointer-events-none absolute left-2 top-1/2 z-10 -translate-y-1/2 font-medium text-neutral-500">{t("calendar.from")}</span>
+                      <Input type="datetime-local" value={startsAt} onFocus={() => setDurationOptionsOpen(true)} onChange={(event) => setStartsAt(event.target.value)} aria-label={t("calendar.fromLabel")} className={`${eventFieldClass} pl-14`} />
                     </label>
                     <div aria-hidden="true" className="h-px w-full self-center bg-neutral-200 sm:h-6 sm:w-px" />
                     <label className="relative block min-w-0 text-sm">
-                      <span className="pointer-events-none absolute left-2 top-1/2 z-10 -translate-y-1/2 font-medium text-neutral-500">To</span>
-                      <Input type="datetime-local" value={endsAt} onFocus={() => setDurationOptionsOpen(true)} onChange={(event) => setEndsAt(event.target.value)} aria-label="To date and time" className={`${eventFieldClass} pl-14`} />
+                      <span className="pointer-events-none absolute left-2 top-1/2 z-10 -translate-y-1/2 font-medium text-neutral-500">{t("calendar.to")}</span>
+                      <Input type="datetime-local" value={endsAt} onFocus={() => setDurationOptionsOpen(true)} onChange={(event) => setEndsAt(event.target.value)} aria-label={t("calendar.toLabel")} className={`${eventFieldClass} pl-14`} />
                     </label>
                   </div>
-                  {durationOptionsOpen && <div className="flex flex-wrap gap-1 pt-1" aria-label="Set event duration">
-                    {([{ label: "15 mins", minutes: 15 }, { label: "30 mins", minutes: 30 }, { label: "1 hour", minutes: 60 }, { label: "1 day", minutes: 1440 }] as const).map((preset) => (
+                  {durationOptionsOpen && <div className="flex flex-wrap gap-1 pt-1" aria-label={t("calendar.setDuration")}>
+                    {([15, 30, 60, 1440] as const).map((minutes) => ({ minutes, label: t(`calendar.dur.${minutes}`) })).map((preset) => (
                       <Button key={preset.minutes} type="button" variant="ghost" disabled={!parseUserDateTimeLocal(startsAt)} onClick={() => { setEndsAt(eventEndAfterMinutes(startsAt, preset.minutes)); setDurationOptionsOpen(false); }} className="h-7 rounded-full px-2 text-xs text-neutral-600 hover:bg-neutral-100">
                         {preset.label}
                       </Button>
@@ -569,23 +573,23 @@ export default function CalendarPage() {
                 <Repeat2 aria-hidden="true" className="mt-2 h-5 w-5 text-neutral-600" />
                 <div className="min-w-0">
                   <div className="relative">
-                    <select value={repeat} onChange={(event) => setRepeat(event.target.value as CalendarRepeat)} aria-label="Repeat"
+                    <select value={repeat} onChange={(event) => setRepeat(event.target.value as CalendarRepeat)} aria-label={t("calendar.repeat")}
                     className="h-9 w-full appearance-none rounded-md border border-transparent bg-transparent pl-2 pr-8 text-sm text-neutral-700 outline-none hover:bg-neutral-50 focus:border-blue-600 focus:bg-white">
-                    <option value="none">Does not repeat</option>
-                    <option value="daily">Daily</option>
-                    <option value="weekly">Weekly</option>
-                    <option value="monthly">Monthly</option>
-                    <option value="weekdays">Weekdays</option>
+                    <option value="none">{t("calendar.repeat.none")}</option>
+                    <option value="daily">{t("calendar.repeat.daily")}</option>
+                    <option value="weekly">{t("calendar.repeat.weekly")}</option>
+                    <option value="monthly">{t("calendar.repeat.monthly")}</option>
+                    <option value="weekdays">{t("calendar.repeat.weekdays")}</option>
                     </select>
                     <ChevronDown aria-hidden="true" className="pointer-events-none absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-500" />
                   </div>
                   {repeat === "weekdays" && (
-                    <div role="group" aria-label="Repeat on weekdays" className="flex flex-wrap gap-1.5 px-2 pt-1">
+                    <div role="group" aria-label={t("calendar.repeatOnWeekdays")} className="flex flex-wrap gap-1.5 px-2 pt-1">
                       {WEEKDAY_OPTIONS.map((day) => (
-                        <button key={day.value} type="button" aria-label={`Repeat on ${day.label}`} aria-pressed={repeatDays.includes(day.value)}
+                        <button key={day.value} type="button" aria-label={t("calendar.repeatOn", { day: t(`weekday.${day.value}` as TranslationKey) })} aria-pressed={repeatDays.includes(day.value)}
                           onClick={() => setRepeatDays((selected) => selected.includes(day.value) ? selected.filter((value) => value !== day.value) : [...selected, day.value].sort((a, b) => a - b))}
                           className={clsx("rounded-full px-2.5 py-1 text-xs font-medium", repeatDays.includes(day.value) ? "bg-blue-600 text-white" : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200")}>
-                          {day.label}
+                          {t(`calendar.weekdayShort.${day.value}` as TranslationKey)}
                         </button>
                       ))}
                     </div>
@@ -594,21 +598,21 @@ export default function CalendarPage() {
               </div>
               <div className="grid grid-cols-[24px_minmax(0,1fr)] items-center gap-3">
                 <UsersRound aria-hidden="true" className="h-5 w-5 text-neutral-600" />
-                <Input value={guests} onChange={(event) => setGuests(event.target.value)} placeholder="Add guests" aria-label="Guests (comma-separated emails)" className={eventFieldClass} />
+                <Input value={guests} onChange={(event) => setGuests(event.target.value)} placeholder={t("calendar.addGuests")} aria-label={t("calendar.guestsLabel")} className={eventFieldClass} />
               </div>
               <div className="grid grid-cols-[24px_minmax(0,1fr)] items-center gap-3">
                 <MapPin aria-hidden="true" className="h-5 w-5 text-neutral-600" />
-                <Input value={location} onChange={(event) => setLocation(event.target.value)} placeholder="Add location" aria-label="Location" className={eventFieldClass} />
+                <Input value={location} onChange={(event) => setLocation(event.target.value)} placeholder={t("calendar.addLocation")} aria-label={t("calendar.location")} className={eventFieldClass} />
               </div>
               <div className="grid grid-cols-[24px_minmax(0,1fr)] items-start gap-3">
                 <AlignLeft aria-hidden="true" className="mt-2 h-5 w-5 text-neutral-600" />
-                <Textarea value={description} onChange={(event) => setDescription(event.target.value)} placeholder="Add description" aria-label="Description" rows={Math.max(1, description.split("\n").length)} className={clsx("min-h-9 border-transparent bg-transparent px-2 py-2 shadow-none hover:bg-white/60 focus:min-h-24 focus:resize-y focus:border-blue-600 focus:bg-white focus-visible:ring-0", description ? "min-h-24 resize-y" : "resize-none")} />
+                <Textarea value={description} onChange={(event) => setDescription(event.target.value)} placeholder={t("calendar.addDescription")} aria-label={t("calendar.description")} rows={Math.max(1, description.split("\n").length)} className={clsx("min-h-9 border-transparent bg-transparent px-2 py-2 shadow-none hover:bg-white/60 focus:min-h-24 focus:resize-y focus:border-blue-600 focus:bg-white focus-visible:ring-0", description ? "min-h-24 resize-y" : "resize-none")} />
               </div>
               <div className="grid grid-cols-[24px_minmax(0,1fr)] items-center gap-3">
                 <Palette aria-hidden="true" className="h-5 w-5 text-neutral-600" />
-                <div role="radiogroup" aria-label="Event color" className="flex flex-wrap items-center gap-1.5 px-2">
+                <div role="radiogroup" aria-label={t("calendar.eventColor")} className="flex flex-wrap items-center gap-1.5 px-2">
                   {FOLDER_COLOR_OPTIONS.map((option) => (
-                    <button key={option.value} type="button" role="radio" aria-label={option.label} title={option.label} aria-checked={color === option.value} onClick={() => setColor(option.value)}
+                    <button key={option.value} type="button" role="radio" aria-label={t(folderColorKeys[option.value])} title={t(folderColorKeys[option.value])} aria-checked={color === option.value} onClick={() => setColor(option.value)}
                       className={`h-7 w-7 rounded-full border-2 transition-transform hover:scale-110 ${color === option.value ? "border-neutral-900 ring-2 ring-neutral-300 ring-offset-2" : "border-transparent"}`}
                       style={{ backgroundColor: option.value }} />
                   ))}
@@ -617,9 +621,9 @@ export default function CalendarPage() {
               <div className="grid grid-cols-[24px_minmax(0,1fr)] gap-3 pt-6">
                 <div />
                 <div className="flex justify-between gap-2">
-                  <div>{editing && <Button variant="ghost" disabled={pendingAction !== null} onClick={() => void deleteEvent(editing.id)} className="px-2 text-red-600 hover:bg-red-50"><Trash2 className="h-4 w-4" />Delete</Button>}</div>
+                  <div>{editing && <Button variant="ghost" disabled={pendingAction !== null} onClick={() => void deleteEvent(editing.id)} className="px-2 text-red-600 hover:bg-red-50"><Trash2 className="h-4 w-4" />{t("common.delete")}</Button>}</div>
                   <Button onClick={() => void addEvent()} disabled={!title.trim() || !parseUserDateTimeLocal(startsAt) || !parseUserDateTimeLocal(endsAt) || parseUserDateTimeLocal(endsAt)! <= parseUserDateTimeLocal(startsAt)! || (repeat === "weekdays" && repeatDays.length === 0) || pendingAction === "save"} className="rounded-full bg-blue-600 px-6 text-white hover:bg-blue-700">
-                    {pendingAction === "save" ? "Saving..." : "Save"}
+                    {pendingAction === "save" ? t("common.saving") : t("settings.autoReply.save")}
                   </Button>
                 </div>
               </div>

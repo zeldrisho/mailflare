@@ -4,8 +4,10 @@ import packageJson from "../../package.json";
 import { useSidebar } from "./sidebar-state";
 import { useShortcuts } from "./shortcuts";
 import { Keyboard } from "lucide-react";
+import { useLanguage } from "./language-provider";
 
 export function SidebarFooter() {
+	const { t } = useLanguage();
 	const { minimal } = useSidebar();
 	const { openHelpModal, shortcutsEnabled, shortcutsPreferenceLoading } = useShortcuts();
 	if (minimal) return null;
@@ -20,15 +22,24 @@ export function SidebarFooter() {
         >
           <span className="flex items-center gap-1.5">
             <Keyboard className="w-3.5 h-3.5 text-neutral-400" />
-            Shortcuts
+            {t("navigation.shortcuts")}
           </span>
           <kbd className="px-1.5 py-0.5 font-mono text-[10px] bg-white border border-neutral-200 rounded text-neutral-500 shadow-2xs">
             ?
           </kbd>
         </button>
       )}
-      <p className="px-1 text-[11px] text-neutral-400">
-        Powered by{" "}
+      <PoweredBy />
+    </div>
+  );
+}
+
+/** The "Powered by Mailflare vX" credit, shared by the mail and Drive sidebars. */
+export function PoweredBy({ className = "px-1" }: { className?: string }) {
+	const { t } = useLanguage();
+	return (
+      <p className={`${className} text-[11px] text-neutral-400`}>
+        {t("navigation.poweredBy")}{" "}
         <a
           href={`https://mailflare.co/?ref=${typeof window !== "undefined" ? location.hostname : ""}&v=${packageJson.version}`}
           target="_blank"
@@ -38,6 +49,5 @@ export function SidebarFooter() {
           Mailflare v{packageJson.version}
         </a>
       </p>
-    </div>
-  );
+	);
 }

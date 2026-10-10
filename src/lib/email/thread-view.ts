@@ -1,4 +1,4 @@
-import { and, asc, eq, inArray, notInArray } from "drizzle-orm";
+import { and, asc, eq, inArray, isNull, notInArray } from "drizzle-orm";
 import { getDb } from "@/db";
 import { messageAttachments, messages } from "@/db/schema";
 import { getContactAvatarMap, getContactDisplayNameMap } from "@/lib/contacts/service";
@@ -58,7 +58,7 @@ export async function getMessageThreadForUser(env: CloudflareEnv, user: SessionU
 					contentId: messageAttachments.contentId,
 				})
 				.from(messageAttachments)
-				.where(inArray(messageAttachments.messageId, ids))
+				.where(and(inArray(messageAttachments.messageId, ids), isNull(messageAttachments.trashedAt)))
 		: [];
 	const attachmentsByMessage = new Map<string, typeof attachmentRows>();
 	for (const attachment of attachmentRows) {

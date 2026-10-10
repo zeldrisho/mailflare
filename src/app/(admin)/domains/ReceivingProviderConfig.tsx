@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useLanguage } from "@/components/language-provider";
 import { Button } from "@/components/ui/button";
 import type { ReceivingStep } from "@/lib/aws/ses-receiving-types";
 import AwsCredentialsPanel from "./AwsCredentialsPanel";
@@ -22,12 +23,13 @@ type Props = {
 };
 
 const COPY = {
-	resend: { setup: "Setup receiving", hint: "Enables receiving on the domain, points MX at Resend and registers the webhook." },
-	ses: { setup: "Setup receiving", hint: "Creates the S3 bucket, SNS topic and receipt rule, then points MX at SES." },
+	resend: { hint: "domains.resendReceivingHint" },
+	ses: { hint: "domains.sesReceivingHint" },
 } as const;
 
 /** Checklist and setup button for receiving through Resend or Amazon SES. */
 export default function ReceivingProviderConfig({ domainId, provider, onReady }: Props) {
+	const { t } = useLanguage();
 	const [credentials, setCredentials] = useState<boolean | null>(null);
 	const [view, setView] = useState<ViewResponse["view"]>(null);
 	const [loading, setLoading] = useState(true);
@@ -47,7 +49,7 @@ export default function ReceivingProviderConfig({ domainId, provider, onReady }:
 				setView(data.view ?? null);
 				setError(data.error ?? "");
 			})
-			.catch((err) => { if (active) setError(err instanceof Error ? err.message : "Could not reach the provider"); })
+			.catch((err) => { if (active) setError(err instanceof Error ? err.message : t("domains.providerUnreachable")); })
 			.finally(() => { if (active) setLoading(false); });
 		return () => { active = false; };
 	}, [domainId, provider, reload]);
@@ -62,10 +64,10 @@ export default function ReceivingProviderConfig({ domainId, provider, onReady }:
 		setNotice("");
 		try {
 			const done = await runReceivingSetup(domainId, provider);
-			if (done) setNotice("Setup finished. It can take a few minutes for DNS to propagate; use Check again to refresh.");
+			if (done) setNotice(t("domains.setupFinished"));
 			refresh();
 		} catch (err) {
-			setError(err instanceof Error ? err.message : "Setup failed");
+			setError(err instanceof Error ? err.message : t("domains.setupFailed"));
 		} finally { setBusy(false); }
 	}
 
@@ -81,19 +83,19 @@ export default function ReceivingProviderConfig({ domainId, provider, onReady }:
 				)}
 			{credentials && (
 				<ul className="space-y-2">
-					{loading && !view && <li className="list-none text-sm text-neutral-500">Checking…</li>}
+					{loading && !view && <li className="list-none text-sm text-neutral-500">{t("domains.checking")}</li>}
 					{view?.steps.filter((step) => provider !== "resend" || step.key !== "key").map((step) => (
-						<StatusRow key={step.key} ok={step.ok} title={step.label} hint="">{step.detail ?? (step.ok ? "OK" : "Not set up")}</StatusRow>
+						<StatusRow key={step.key} ok={step.ok} title={step.label} hint="">{step.detail ?? (step.ok ? t("domains.ok") : t("domains.notSetUp"))}</StatusRow>
 					))}
 				</ul>
 			)}
-			{credentials && view?.restrictedKey && <p className="text-xs text-neutral-500">This Resend key can only send mail, so Mailflare can&apos;t set up receiving. Use a full-access key, or enable receiving, add the MX record and create the <code>email.received</code> webhook in the Resend dashboard.</p>}
+			{credentials && view?.restrictedKey && <p className="text-xs text-neutral-500">{t("domains.restrictedKey", { webhook: "\u0001" }).split("\u0001").flatMap((part, index) => index === 0 ? [part] : [<code key={index}>email.received</code>, part])}</p>}
 			{credentials && !view?.restrictedKey && (
 				<div className="flex flex-wrap items-center justify-between gap-2">
-					<p className="text-xs text-neutral-500">{COPY[provider].hint}</p>
+					<p className="text-xs text-neutral-500">{t(COPY[provider].hint)}</p>
 					<span className="flex gap-2">
-						<Button size="sm" variant="outline" className="bg-white" disabled={busy || loading} onClick={refresh}>{loading ? "Checking…" : "Check again"}</Button>
-						{needsSetup && <Button size="sm" disabled={busy || loading} onClick={() => void setup()}>{busy ? "Working…" : COPY[provider].setup}</Button>}
+						<Button size="sm" variant="outline" className="bg-white" disabled={busy || loading} onClick={refresh}>{loading ? t("domains.checking") : t("domains.checkAgain")}</Button>
+						{needsSetup && <Button size="sm" disabled={busy || loading} onClick={() => void setup()}>{busy ? t("domains.working") : t("domains.setupReceivingButton")}</Button>}
 					</span>
 				</div>
 			)}

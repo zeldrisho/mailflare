@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState, type ReactNode } from "react";
+import { useLanguage } from "@/components/language-provider";
+import type { TranslationKey } from "@/lib/i18n/types";
 import { requestJson } from "./api";
 import ProviderCard from "./ProviderCard";
 import ResendDomainSection from "./ResendDomainSection";
@@ -10,10 +12,10 @@ import type { Domain, SendingProvider } from "./types";
 type Option = Exclude<SendingProvider, "none">;
 type Present = Record<Option, boolean | null>;
 
-const OPTIONS: { id: Option; title: string; description: string }[] = [
-	{ id: "cloudflare", title: "Cloudflare Email", description: "Cloudflare Email Sending. Configured on this domain's zone." },
-	{ id: "resend", title: "Resend", description: "Send through your Resend account." },
-	{ id: "ses", title: "Amazon SES", description: "Send through your AWS account with SES." },
+const OPTIONS: { id: Option; titleKey: TranslationKey; descriptionKey: TranslationKey }[] = [
+	{ id: "cloudflare", titleKey: "domains.opt.cfEmail", descriptionKey: "domains.opt.cfSendDesc" },
+	{ id: "resend", titleKey: "domains.providerResend", descriptionKey: "domains.opt.resendSendDesc" },
+	{ id: "ses", titleKey: "domains.providerSes", descriptionKey: "domains.opt.sesSendDesc" },
 ];
 
 type Props = {
@@ -30,6 +32,7 @@ type Props = {
 type PresenceResponse = Partial<Present> & { resendStatus?: string | null; sesVerified?: boolean | null };
 
 export default function SendingSetupSection({ domain, onChange, busy, message, cloudflareConfig, cloudflareOk }: Props) {
+	const { t } = useLanguage();
 	const [present, setPresent] = useState<Present>({ cloudflare: null, resend: null, ses: null });
 	const [resendStatus, setResendStatus] = useState<string | null>(null);
 	const [sesStatus, setSesStatus] = useState<string | null>(null);
@@ -51,14 +54,14 @@ export default function SendingSetupSection({ domain, onChange, busy, message, c
 	}, [domain.id, domain.sendingProvider, reload]);
 
 	async function cleanUp(option: Option, title: string) {
-		if (!window.confirm(`Remove the ${title} setup for ${domain.hostname}? This deletes its DNS records.`)) return;
+		if (!window.confirm(t("domains.removeSendingConfirm", { title, host: domain.hostname }))) return;
 		setRemoving(option);
 		setError("");
 		try {
 			await requestJson(`/api/domains/${domain.id}/sending`, "DELETE", { target: option });
 			setReload((value) => value + 1);
 		} catch (err) {
-			setError(err instanceof Error ? err.message : "Could not remove configuration");
+			setError(err instanceof Error ? err.message : t("domains.removeConfigFailed"));
 		} finally { setRemoving(null); }
 	}
 
@@ -70,9 +73,9 @@ export default function SendingSetupSection({ domain, onChange, busy, message, c
 
 	return (
 		<section className="mt-6">
-			<h2 className="text-base font-semibold text-neutral-900">Setup sending email</h2>
+			<h2 className="text-base font-semibold text-neutral-900">{t("domains.setupSending")}</h2>
 			<p className="mt-0.5 text-sm text-neutral-500">
-				{domain.sendingProvider === "none" ? "This domain only receives mail. Turn on one option to send from it." : "Choose what sends outgoing mail from this domain. Receiving is not affected."}
+				{domain.sendingProvider === "none" ? t("domains.sendingNone") : t("domains.sendingChoose")}
 			</p>
 			<ul className="mt-3 space-y-2">
 				{OPTIONS.map((option) => {
@@ -80,13 +83,13 @@ export default function SendingSetupSection({ domain, onChange, busy, message, c
 					return (
 						<ProviderCard
 							key={option.id}
-							title={option.title}
-							description={option.description}
+							title={t(option.titleKey)}
+							description={t(option.descriptionKey)}
 							ok={selected || present[option.id] ? okFor(option.id) : null}
 							selected={selected}
 							disabled={busy}
 							onToggle={(on) => onChange?.(on ? option.id : "none")}
-							cleanup={{ present: !!present[option.id], busy: removing === option.id, disabled: removing !== null, onClick: () => void cleanUp(option.id, option.title) }}
+							cleanup={{ present: !!present[option.id], busy: removing === option.id, disabled: removing !== null, onClick: () => void cleanUp(option.id, t(option.titleKey)) }}
 						>
 							{option.id === "cloudflare" ? cloudflareConfig
 								: option.id === "resend" ? <ResendDomainSection domainId={domain.id} onStatus={setResendStatus} />

@@ -21,7 +21,8 @@ async function bundle(entry, outfile) {
 		format: "esm",
 		target: "node22",
 		logLevel: "silent",
-		alias: { "@": join(root, "src") },
+		// The DOM-only HTML pipeline is not needed here and its parser deps do not bundle for node.
+		alias: { "@/lib/email/html": join(root, "tests/stubs/email-html.mjs"), "@": join(root, "src") },
 		external: ["react", "react-dom", "next", "next/*"],
 	});
 	return import(pathToFileURL(join(outDir, outfile)).href);

@@ -8,11 +8,11 @@ export async function loadGeneralSettings(): Promise<GeneralSettings> {
 	return data as GeneralSettings;
 }
 
-export async function saveGeneralSettings(outboundAttachmentMaxMb: number): Promise<GeneralSettings> {
+export async function saveGeneralSettings(changes: Partial<GeneralSettings>): Promise<GeneralSettings> {
 	const response = await authFetch("/api/admin/general", {
 		method: "PUT",
 		headers: { "Content-Type": "application/json" },
-		body: JSON.stringify({ outboundAttachmentMaxMb }),
+		body: JSON.stringify(changes),
 	});
 	const data = await response.json();
 	if (!response.ok) throw new Error(data.error ?? "Could not save general settings");

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { HelpCircle, Search } from "lucide-react";
+import { useLanguage } from "@/components/language-provider";
 import { AuthGuard } from "@/components/auth/auth-guard";
 import { ComposeProvider } from "@/components/compose/compose-context";
 import { FloatingComposer } from "@/components/compose/floating-composer";
@@ -35,12 +36,14 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const { t } = useLanguage();
   const pathname = usePathname();
   const requirePrimary = primaryOnlyPrefixes.some(
     (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
   );
 
-  const mobileTitle = adminPageTitles[pathname];
+  const mobileTitleKey = adminPageTitles[pathname];
+  const mobileTitle = mobileTitleKey ? t(mobileTitleKey) : undefined;
 
   return (
     <AuthGuard requireMailbox requireRole="admin" requirePrimary={requirePrimary}>

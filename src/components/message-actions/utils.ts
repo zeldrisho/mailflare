@@ -108,14 +108,14 @@ export function getMoveMessageActions(
 ): MoveMessageActionItem[] {
   const actions: MoveMessageActionItem[] = [];
   if ((status === "archived" || status === "spam") && direction === "inbound") {
-    actions.push({ action: "inbox", label: status === "spam" ? "Not spam" : "Inbox", icon: InboxIcon });
+    actions.push({ action: "inbox", labelKey: status === "spam" ? "common.notSpam" : "navigation.inbox", icon: InboxIcon });
   }
   if (status !== "archived")
-    actions.push({ action: "archive", label: "Archived", icon: ArchiveIcon });
+    actions.push({ action: "archive", labelKey: "navigation.archived", icon: ArchiveIcon });
   if (status !== "spam")
-    actions.push({ action: "spam", label: "Spam", icon: ShieldAlertIcon });
+    actions.push({ action: "spam", labelKey: "navigation.spam", icon: ShieldAlertIcon });
   if (status !== "trash")
-    actions.push({ action: "trash", label: "Trash", icon: Trash2Icon });
+    actions.push({ action: "trash", labelKey: "navigation.trash", icon: Trash2Icon });
   return actions;
 }
 
@@ -161,7 +161,7 @@ export function buildReplyQuoteHtml(
   bodyText: string | null | undefined,
   bodyHtml: string | null | undefined,
 ) {
-  const original = bodyHtml ? sanitizeEmailHtml(bodyHtml) : textToHtml(bodyText);
+  const original = bodyHtml ? sanitizeEmailHtml(bodyHtml, { forOutgoing: true }) : textToHtml(bodyText);
   if (!original) return null;
   const when = sentAt ? formatUserDate(sentAt, { weekday: "short", month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" }) : "an earlier date";
   return wrapQuotedHtml(
@@ -244,7 +244,7 @@ export function buildForwardHtml(
   ];
   if (message.ccAddr) lines.push(`Cc: ${message.ccAddr}`);
   const header = `<div>---------- Forwarded message ---------<br>${lines.map(escapeHtml).join("<br>")}</div><br>`;
-  const original = bodyHtml ? sanitizeEmailHtml(bodyHtml) : textToHtml(bodyText);
+  const original = bodyHtml ? sanitizeEmailHtml(bodyHtml, { forOutgoing: true }) : textToHtml(bodyText);
   return wrapQuotedHtml(`${header}${original ?? ""}`);
 }
 

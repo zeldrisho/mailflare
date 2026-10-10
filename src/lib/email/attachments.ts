@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import { getDb } from "@/db";
 import { messageAttachments, messages } from "@/db/schema";
 import { newId } from "@/lib/ids";
@@ -120,7 +120,7 @@ export async function copyMessageAttachments(
 	toMessageId: string,
 ): Promise<AttachmentMetadata[]> {
 	const db = getDb(env);
-	const rows = await db.select().from(messageAttachments).where(eq(messageAttachments.messageId, fromMessageId));
+	const rows = await db.select().from(messageAttachments).where(and(eq(messageAttachments.messageId, fromMessageId), isNull(messageAttachments.trashedAt)));
 	const copied: AttachmentMetadata[] = [];
 	for (const row of rows) {
 		const object = await env.BUCKET.get(row.r2Key);
@@ -160,7 +160,7 @@ export async function loadMessageAttachmentContents(
 	messageId: string,
 ): Promise<AttachmentContent[]> {
 	const db = getDb(env);
-	const rows = await db.select().from(messageAttachments).where(eq(messageAttachments.messageId, messageId));
+	const rows = await db.select().from(messageAttachments).where(and(eq(messageAttachments.messageId, messageId), isNull(messageAttachments.trashedAt)));
 	const result: AttachmentContent[] = [];
 	for (const row of rows) {
 		const object = await env.BUCKET.get(row.r2Key);
@@ -213,7 +213,7 @@ export async function listMessageAttachments(
 	const rows = await db
 		.select()
 		.from(messageAttachments)
-		.where(eq(messageAttachments.messageId, messageId));
+		.where(and(eq(messageAttachments.messageId, messageId), isNull(messageAttachments.trashedAt)));
 
 	return rows.map((attachment) => ({
 		id: attachment.id,
@@ -250,6 +250,7 @@ export async function getAttachmentForUser(
 			and(
 				eq(messageAttachments.id, attachmentId),
 				eq(messageAttachments.messageId, messageId),
+				isNull(messageAttachments.trashedAt),
 			),
 		)
 		.limit(1);

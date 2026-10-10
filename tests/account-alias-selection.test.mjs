@@ -242,6 +242,20 @@ test("account creation still enforces admin authorization and the Team license",
 	assert.equal(f.calls.length, 0);
 });
 
+test("a Pro license creates accounts only while seats remain; Team and unlimited Pro have no limit", async (t) => {
+	const f = await fixture(t);
+	const users = () => f.database.db.prepare("SELECT count(*) AS count FROM users WHERE disabled = 0").get().count;
+	f.database.db.exec(`UPDATE license_settings SET plan = 'pro', seat_limit = ${users()}`);
+	assert.equal((await f.post("api")).status, 403, "no seat left");
+	f.database.db.exec(`UPDATE license_settings SET seat_limit = ${users() + 1}`);
+	assert.equal((await f.post("api", { username: "seat-one" })).status, 201);
+	assert.equal((await f.post("api", { username: "seat-two" })).status, 403, "seat just used");
+	f.database.db.exec("UPDATE license_settings SET seat_limit = NULL");
+	assert.equal((await f.post("api", { username: "seat-three" })).status, 201);
+	f.database.db.exec("UPDATE license_settings SET plan = 'team', seat_limit = 1");
+	assert.equal((await f.post("api", { username: "seat-four" })).status, 201);
+});
+
 for (const separateDomains of [false, true]) {
 	test(`more than 50 aliases on ${separateDomains ? "separate domains" : "one domain"} stay within database parameter limits`, async (t) => {
 		const f = await fixture(t);

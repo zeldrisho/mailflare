@@ -3,6 +3,7 @@
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Cloud, ExternalLink } from "lucide-react";
+import { useLanguage } from "@/components/language-provider";
 import { formatUserDate } from "@/lib/time/utils";
 import { MarkAsRead } from "@/components/mark-read";
 import { useSelectedMailbox } from "@/components/mailbox-provider";
@@ -17,6 +18,8 @@ import { PreviousMessage } from "@/components/previous-message";
 import { ConversationThread } from "@/components/messages/conversation-thread";
 import { MessageDetailNavigation } from "@/components/messages/message-detail-navigation";
 import { MessageReadingHeaderButton } from "@/components/messages/message-reading-header-button";
+import { ScheduledSendBanner } from "@/components/messages/scheduled-send-banner";
+import { formatScheduledSendTime } from "@/components/messages/scheduled-send-utils";
 import { QuotedEmailToggle } from "@/components/messages/quoted-email-toggle";
 import { ThreadMessageActions } from "@/components/messages/thread-message-actions";
 import { useMessageThread } from "@/components/messages/use-message-thread";
@@ -36,13 +39,13 @@ import {
   resolveInlineAttachmentUrls,
 } from "./utils";
 import { extractCloudAttachments } from "./cloud-attachment-utils";
-import { sanitizeEmailHtml } from "./email-html-sanitizer";
-import { collapseQuotedEmailHtml } from "./quote-collapse-utils";
+import { EmailHtmlRenderer } from "@/components/messages/email-html-renderer";
 import clsx from "clsx";
 import { useAssistantOpen } from "@/components/agent/assistant-open-state";
 import { useMessageContentScroll } from "./use-message-content-scroll";
 
 export default function MessageDetailPage() {
+  const { t } = useLanguage();
   const params = useParams<{ messageId: string }>();
   const { selectedMailbox, mailboxes } = useSelectedMailbox();
   const messageId = params.messageId;
@@ -102,12 +105,12 @@ export default function MessageDetailPage() {
   if (!data?.message) {
     return (
       <p className="px-6 py-4 text-sm text-neutral-500">
-        {data?.error ?? "Message not found"}
+        {data?.error ?? t("message.notFound")}
       </p>
     );
   }
 
-  const { message, body, attachments = [] } = data;
+  const { message, body, attachments = [], scheduledAt } = data;
   const currentThreadMessage = {
     ...message,
     textBody: body?.textBody ?? null,
@@ -137,12 +140,12 @@ export default function MessageDetailPage() {
     message.snippet,
     ownAddress,
   );
-  const htmlBody = collapseQuotedEmailHtml(sanitizeEmailHtml(
-    resolveInlineAttachmentUrls(bodyDisplay.htmlBody, message.id, attachments),
-  ));
-  const quotedHtml = collapseQuotedEmailHtml(sanitizeEmailHtml(
-    resolveInlineAttachmentUrls(bodyDisplay.quotedHtml, message.id, attachments),
-  ), true);
+  const htmlBody = (
+    resolveInlineAttachmentUrls(bodyDisplay.htmlBody, message.id, attachments)
+  );
+  const quotedHtml = (
+    resolveInlineAttachmentUrls(bodyDisplay.quotedHtml, message.id, attachments)
+  );
   const cloudAttachmentResult = extractCloudAttachments(
     bodyDisplay.latestContent,
   );
@@ -181,8 +184,8 @@ export default function MessageDetailPage() {
     <div ref={scrollRef} onScroll={handleScroll} className="h-full overflow-y-auto overscroll-contain scrollbar-gutter-stable flex-1 min-h-0">
       {!message.read && <MarkAsRead messageId={message.id} />}
 
-      <h1 className={clsx(!isAnyPanelVisible ? "pl-16" : "pl-10", "pr-6 pb-2 pt-2 text-2xl text-neutral-900")} title={message.subject ?? "(no subject)"}>
-        {message.subject ?? "(no subject)"}
+      <h1 className={clsx(!isAnyPanelVisible ? "pl-16" : "pl-10", "pr-6 pb-2 pt-2 text-2xl text-neutral-900")} title={message.subject ?? t("list.noSubject")}>
+        {message.subject ?? t("list.noSubject")}
       </h1>
       {/* <div className="px-6">
         <div className="mx-auto w-full max-w-[640px]">
@@ -237,7 +240,7 @@ export default function MessageDetailPage() {
                   <span className="text-neutral-500 text-xs flex-1 overflow-hidden text-ellipsis min-w-0">&lt;{fromAddress}&gt;</span>
                 </p>
                 <p className="text-xs text-neutral-500">
-                  to{" "}
+                  {t("source.to").toLowerCase()}{" "}
                   <RecipientList
                     entries={toEntries}
                     mailboxId={message.mailboxId}
@@ -246,19 +249,21 @@ export default function MessageDetailPage() {
                 </p>
                 {ccEntries.length > 0 && (
                   <p className="text-xs text-neutral-500">
-                    cc <RecipientList entries={ccEntries} mailboxId={message.mailboxId} style={showFullRecipientAddresses ? "full" : "address"} />
+                    {t("message.cc")} <RecipientList entries={ccEntries} mailboxId={message.mailboxId} style={showFullRecipientAddresses ? "full" : "address"} />
                   </p>
                 )}
                 {bccEntries.length > 0 && (
                   <p className="text-xs text-neutral-500">
-                    bcc <RecipientList entries={bccEntries} mailboxId={message.mailboxId} style={showFullRecipientAddresses ? "full" : "address"} />
+                    {t("message.bcc")} <RecipientList entries={bccEntries} mailboxId={message.mailboxId} style={showFullRecipientAddresses ? "full" : "address"} />
                   </p>
                 )}
               </div>
             </div>
             <div className="flex shrink-0 items-center gap-2">
               <p className="text-xs">
-                {formatUserDate(message.createdAt, { month: "short", day: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                {scheduledAt
+                  ? formatScheduledSendTime(scheduledAt, t)
+                  : formatUserDate(message.createdAt, { month: "short", day: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })}
               </p>
               <ThreadMessageActions
                 message={currentThreadMessage}
@@ -269,9 +274,10 @@ export default function MessageDetailPage() {
               />
             </div>
           </div>
+          {scheduledAt && <div className="pl-10"><ScheduledSendBanner messageId={message.id} scheduledAt={scheduledAt} /></div>}
           <div className="prose max-w-none pl-16 text-neutral-900">
             {htmlBody ? (
-              <div className="email-body mx-auto" dangerouslySetInnerHTML={{ __html: htmlBody }} />
+              <EmailHtmlRenderer key={message.id} className="mx-auto" html={htmlBody} />
             ) : (
               <pre className="whitespace-pre-wrap text-sm text mx-auto">
                 {cloudAttachmentResult.content}
@@ -288,7 +294,7 @@ export default function MessageDetailPage() {
           {cloudAttachmentResult.attachments.length > 0 && (
             <section className="mt-8 border-t border-neutral-100 py-6 pl-16">
               <h2 className="mb-3 text-sm font-semibold text-neutral-900">
-                Cloud files ({cloudAttachmentResult.attachments.length})
+                {t("message.cloudFiles", { count: cloudAttachmentResult.attachments.length })}
               </h2>
               <div className="grid gap-2 sm:grid-cols-2">
                 {cloudAttachmentResult.attachments.map((attachment) => (
@@ -305,7 +311,7 @@ export default function MessageDetailPage() {
                         {attachment.filename}
                       </span>
                       <span className="block text-xs text-neutral-500">
-                        Open from {attachment.provider}
+                        {t("message.openFrom", { provider: attachment.provider })}
                       </span>
                     </span>
                     <ExternalLink className="h-4 w-4 shrink-0 text-neutral-400" />
@@ -317,7 +323,7 @@ export default function MessageDetailPage() {
           {attachments.length > 0 && (
             <section className="mt-8 border-t border-neutral-100 py-6 pl-16">
               <h2 className="mb-3 text-sm font-semibold text-neutral-900">
-                Attachments ({attachments.length})
+                {t("message.attachments", { count: attachments.length })}
               </h2>
               <div className="grid gap-2 sm:grid-cols-2">
                 {attachments.map((attachment) => (

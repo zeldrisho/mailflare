@@ -1,4 +1,4 @@
-import { inArray } from "drizzle-orm";
+import { and, inArray, isNull } from "drizzle-orm";
 import { messageAttachments, messages } from "@/db/schema";
 import { parseEmailAddressParts, splitEmailAddressList } from "@/lib/email/address";
 import { htmlToReadableText } from "@/lib/email/reply-content-utils";
@@ -139,7 +139,7 @@ export function buildEmailObject(row: MessageRow, attachments: AttachmentRow[], 
 export async function loadAttachmentsByMessage(ctx: JmapContext, messageIds: string[]): Promise<Map<string, AttachmentRow[]>> {
 	const result = new Map<string, AttachmentRow[]>();
 	if (messageIds.length === 0) return result;
-	const rows = await ctx.db.select().from(messageAttachments).where(inArray(messageAttachments.messageId, messageIds));
+	const rows = await ctx.db.select().from(messageAttachments).where(and(inArray(messageAttachments.messageId, messageIds), isNull(messageAttachments.trashedAt)));
 	for (const row of rows) {
 		const list = result.get(row.messageId) ?? [];
 		list.push(row);

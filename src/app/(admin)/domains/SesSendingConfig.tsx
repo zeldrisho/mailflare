@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useLanguage } from "@/components/language-provider";
 import { Button } from "@/components/ui/button";
 import type { SesSendingView } from "@/lib/aws/ses-sending-types";
 import AwsCredentialsPanel from "./AwsCredentialsPanel";
@@ -10,6 +11,7 @@ import { StatusRow } from "./status-row";
 type SesResponse = { credentials?: boolean; ses?: SesSendingView | null; error?: string };
 
 export default function SesSendingConfig({ domainId, onStatus }: { domainId: string; onStatus?: (status: string | null) => void }) {
+	const { t } = useLanguage();
 	const [credentials, setCredentials] = useState<boolean | null>(null);
 	const [view, setView] = useState<SesSendingView | null>(null);
 	const [loading, setLoading] = useState(true);
@@ -22,10 +24,10 @@ export default function SesSendingConfig({ domainId, onStatus }: { domainId: str
 		let active = true;
 		requestJson<SesResponse>(`/api/domains/${domainId}/ses`, "GET")
 			.then((data) => { if (active) { setCredentials(data.credentials ?? true); setView(data.ses ?? null); setError(data.error ?? ""); } })
-			.catch((err) => { if (active) setError(err instanceof Error ? err.message : "Could not reach AWS"); })
+			.catch((err) => { if (active) setError(err instanceof Error ? err.message : t("ses.unreachable")); })
 			.finally(() => { if (active) setLoading(false); });
 		return () => { active = false; };
-	}, [domainId, reload]);
+	}, [domainId, reload, t]);
 
 	useEffect(() => {
 		if (loading) return;
@@ -36,7 +38,7 @@ export default function SesSendingConfig({ domainId, onStatus }: { domainId: str
 		setBusy(kind);
 		setError("");
 		setNotice("");
-		try { await action(); } catch (err) { setError(err instanceof Error ? err.message : "Request failed"); } finally { setBusy(null); }
+		try { await action(); } catch (err) { setError(err instanceof Error ? err.message : t("domains.requestFailed")); } finally { setBusy(null); }
 	}, []);
 
 	const domainAction = (action: "setup" | "verify") => run(action, async () => {
@@ -45,7 +47,7 @@ export default function SesSendingConfig({ domainId, onStatus }: { domainId: str
 	});
 	const sendTest = () => run("test", async () => {
 		const data = await requestJson<{ to: string }>(`/api/domains/${domainId}/ses`, "POST", { action: "test" });
-		setNotice(`Test email sent to ${data.to}`);
+		setNotice(t("resend.testSent", { to: data.to }));
 	});
 
 	const onCredentials = useCallback((configured: boolean) => {
@@ -54,17 +56,17 @@ export default function SesSendingConfig({ domainId, onStatus }: { domainId: str
 		setReload((value) => value + 1);
 	}, []);
 
-	const label = loading ? "Checking Amazon SES…"
-		: !view ? "Could not read the domain from SES"
-		: view.verified ? "Domain verified in SES"
-		: !view.registered ? "Domain is not added to SES yet"
-		: view.missingDns === 0 ? `DNS records added, waiting for SES to verify (DKIM ${view.dkimStatus.toLowerCase()})`
-		: view.missingDns ? `${view.missingDns} DKIM record${view.missingDns === 1 ? "" : "s"} missing in Cloudflare`
-		: `DKIM ${view.dkimStatus.toLowerCase()}`;
+	const label = loading ? t("ses.checking")
+		: !view ? t("ses.cannotRead")
+		: view.verified ? t("ses.verified")
+		: !view.registered ? t("ses.notAdded")
+		: view.missingDns === 0 ? t("ses.waiting", { status: view.dkimStatus.toLowerCase() })
+		: view.missingDns ? t("ses.missingDkim", { count: view.missingDns })
+		: t("ses.dkim", { status: view.dkimStatus.toLowerCase() });
 	const buttonLabel = !view ? null
-		: !view.registered ? (view.dnsManaged ? "Setup domain and DNS" : "Setup domain")
-		: view.dnsManaged && view.missingDns !== 0 ? "Create missing DNS and verify"
-		: "Check status";
+		: !view.registered ? (view.dnsManaged ? t("resend.btn.setupDomainDns") : t("resend.btn.setupDomain"))
+		: view.dnsManaged && view.missingDns !== 0 ? t("resend.btn.createMissing")
+		: t("resend.btn.checkStatus");
 
 	return (
 		<div className="space-y-2">
@@ -73,27 +75,27 @@ export default function SesSendingConfig({ domainId, onStatus }: { domainId: str
 				<ul className="space-y-2">
 					<StatusRow
 						ok={!!view?.verified}
-						title="Domain"
-						hint="Verified sender identity in SES"
+						title={t("resend.domain")}
+						hint={t("ses.domainHint")}
 						action={view?.verified ? (
-							<Button size="sm" variant="outline" className="bg-white" disabled={busy !== null} onClick={() => void sendTest()}>{busy === "test" ? "Sending…" : "Send test email"}</Button>
+							<Button size="sm" variant="outline" className="bg-white" disabled={busy !== null} onClick={() => void sendTest()}>{busy === "test" ? t("resend.sending") : t("resend.sendTest")}</Button>
 						) : buttonLabel && !loading ? (
 							<Button size="sm" variant="outline" className="bg-white" disabled={busy !== null} onClick={() => void domainAction(view?.registered && (!view.dnsManaged || view.missingDns === 0) ? "verify" : "setup")}>
-								{busy === "verify" ? "Checking…" : busy === "setup" ? "Working…" : buttonLabel}
+								{busy === "verify" ? t("domains.checking") : busy === "setup" ? t("domains.working") : buttonLabel}
 							</Button>
 						) : undefined}
 					>
 						{label}
 					</StatusRow>
 					{view?.productionAccess === false && (
-						<StatusRow ok={false} title="SES sandbox" hint="Account-wide restriction">
-							In the sandbox SES delivers only to verified addresses. Request production access in the SES console before sending to anyone else.
+						<StatusRow ok={false} title={t("aws.sandbox")} hint={t("ses.sandboxHint")}>
+							{t("ses.sandboxDetail")}
 						</StatusRow>
 					)}
 				</ul>
 			)}
-			{view && view.registered && !view.verified && !view.dnsManaged && <p className="text-xs text-neutral-500">Add these CNAME records where this domain&apos;s DNS is hosted, then check status.</p>}
-			{view && view.registered && !view.verified && view.dnsManaged && view.missingDns === 0 && <p className="text-xs text-neutral-500">DNS changes can take a few minutes to propagate. Check again shortly.</p>}
+			{view && view.registered && !view.verified && !view.dnsManaged && <p className="text-xs text-neutral-500">{t("ses.addCnames")}</p>}
+			{view && view.registered && !view.verified && view.dnsManaged && view.missingDns === 0 && <p className="text-xs text-neutral-500">{t("resend.propagate")}</p>}
 			{view && view.registered && !view.verified && view.records.length > 0 && (
 				<ul className="space-y-1 text-xs text-neutral-600">
 					{view.records.map((record) => (

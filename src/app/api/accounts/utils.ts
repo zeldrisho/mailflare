@@ -77,6 +77,16 @@ export function accountListItemFromUser(user: {
 	};
 }
 
+/** Admin session on an installation licensed for Team-only mailbox sharing. */
+export async function requireTeamSharingAdmin(request: Request) {
+	const access = await requireTeamAdmin(request);
+	if (access.error) return access;
+	if (!(await getLicenseEntitlements(access.env)).canShareMailboxes) {
+		return { ...access, error: NextResponse.json({ error: "A Team license is required to share inboxes" }, { status: 403 }) };
+	}
+	return access;
+}
+
 export async function requireTeamAdmin(request: Request) {
 	const env = getEnv();
 	try {
@@ -86,7 +96,7 @@ export async function requireTeamAdmin(request: Request) {
 			return {
 				env,
 				user,
-				error: NextResponse.json({ error: "A Team license is required to manage accounts" }, { status: 403 }),
+				error: NextResponse.json({ error: "A Pro or Team license is required to manage accounts" }, { status: 403 }),
 			};
 		}
 		return { env, user, error: null };

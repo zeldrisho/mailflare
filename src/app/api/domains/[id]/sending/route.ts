@@ -15,12 +15,17 @@ import { getSesIdentity } from "@/lib/aws/ses";
 import { removeSesSending } from "@/lib/aws/ses-sending";
 import { getResendDomainStatus, removeResendConfig } from "@/lib/domains/resend-domain";
 import { setupDomainDnsRecord } from "@/lib/domains/dns-setup";
+import { MxConflictError } from "@/lib/domains/receiving-dns";
 
 type Params = { params: Promise<{ id: string }> };
 
-const schema = z.object({ provider: z.enum(["none", "cloudflare", "resend", "ses"]) });
+const schema = z.object({ provider: z.enum(["none", "cloudflare", "resend", "ses"]), replaceMx: z.boolean().optional() });
 
-/** Chooses what sends mail for this domain. Receiving is unaffected. */
+/**
+ * Chooses what sends mail for this domain. Receiving is unaffected, except that
+ * Cloudflare sending refuses while another service's MX records exist: that is a
+ * 409 MX_CONFLICT (the choice is still saved) until the caller retries with replaceMx.
+ */
 export async function PUT(request: Request, { params }: Params) {
 	const { id } = await params;
 	const env = getEnv();
@@ -31,7 +36,7 @@ export async function PUT(request: Request, { params }: Params) {
 	if (!domain) return NextResponse.json({ error: "Not found" }, { status: 404 });
 	const parsed = schema.safeParse(await request.json().catch(() => null));
 	if (!parsed.success) return NextResponse.json({ error: "Unknown sending provider" }, { status: 400 });
-	const { provider } = parsed.data;
+	const { provider, replaceMx } = parsed.data;
 
 	await getDb(env)
 		.update(domains)
@@ -42,8 +47,11 @@ export async function PUT(request: Request, { params }: Params) {
 	if (provider === "cloudflare" && !isManualZone(domain.zoneId)) {
 		// Enable the zone's sending subdomain right away; failure is reported but the
 		// choice is kept so the setup buttons on the domain page can finish the job.
-		try { await setupDomainDnsRecord(env, { ...domain, sendingProvider: provider }, "dkim"); }
-		catch (error) { warning = error instanceof Error ? error.message : "Could not enable Cloudflare sending"; }
+		try { await setupDomainDnsRecord(env, { ...domain, sendingProvider: provider }, "dkim", { replaceMx }); }
+		catch (error) {
+			if (error instanceof MxConflictError) return NextResponse.json({ error: error.message, code: error.code, records: error.records }, { status: 409 });
+			warning = error instanceof Error ? error.message : "Could not enable Cloudflare sending";
+		}
 	}
 	const updated = await getDomainForUser(env, user.id, id);
 	return NextResponse.json({ domain: updated, warning }, { headers: { "Cache-Control": "no-store" } });

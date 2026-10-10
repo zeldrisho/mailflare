@@ -1,3 +1,4 @@
+import type { TranslationKey } from "@/lib/i18n/types";
 import type { LucideIcon } from "lucide-react";
 import type { Dispatch, ReactNode, SetStateAction } from "react";
 import type { Message, MessageFolder } from "@/hooks/types";
@@ -6,7 +7,10 @@ import type { BulkMessageAction } from "@/app/api/messages/bulk/types";
 export type MessageFolderConfig = {
 	folder: MessageFolder;
 	title: string;
+	/** Translation keys for built-in folders; custom folders show `title` as typed by the user. */
+	titleKey?: TranslationKey;
 	emptyText: string;
+	emptyTextKey?: TranslationKey;
 	hrefPrefix: string;
 	folderId?: string;
 	icon: LucideIcon;
@@ -89,4 +93,6 @@ export type EmailPageTitleInput = {
 	total: number;
 	unread: number;
 	emailAddress: string | null;
+	/** Set for the Inbox, which shows only the unread count. */
+	inbox?: boolean;
 };

@@ -21,6 +21,21 @@ Behind a reverse proxy, set `APP_URL=https://mail.example.com` so links in
 password-reset mail and the JMAP session point at the public address, and
 forward WebSocket upgrades for `/api/realtime`.
 
+### PWA and push notifications
+
+Mailflare can be installed as a PWA and can deliver new-mail notifications
+after the browser is closed. Generate one VAPID key pair for the installation:
+
+```bash
+npm run push:keys
+```
+
+Set the printed `VAPID_PUBLIC_KEY` and `VAPID_PRIVATE_KEY` values in the
+runtime environment, plus `VAPID_SUBJECT` as either a `mailto:` contact or the
+public HTTPS URL of the installation. Keep the private key secret. Browsers
+require HTTPS for service workers and Web Push (localhost is the development
+exception). Users can then enable push under **Settings → Inbox → Notifications**.
+
 ## Receiving mail
 
 Pick one; both can be on at once.
@@ -86,10 +101,15 @@ and the DNS page shows what to set by hand.
 | `SMTP_URL` | unset | Outbound relay |
 | `SMTP_TLS_REJECT_UNAUTHORIZED` | `true` | Trust self-signed relay certificates when `false` |
 | `CF_ACCOUNT_ID`, `CF_TOKEN` | unset | Cloudflare Email Sending, and zone management if the token allows |
+| `B2_KEY_ID`, `B2_APPLICATION_KEY`, `B2_BUCKET`, `B2_ENDPOINT` | unset | Store blobs in Backblaze B2 (all four required) instead of files under `/data/blobs`; see [Deployment](deployment.md#object-storage-r2-or-backblaze-b2) |
+| `S3_BUCKET`, `S3_REGION`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` | unset | Store blobs in AWS S3; the keys fall back to `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`. Backblaze wins if both are set |
 | `RESEND_API_KEY` | unset | Resend key, used when none is saved in the app |
 | `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION` | unset | Amazon SES credentials, used when none are saved in the app |
 | `INBOUND_WEBHOOK_SECRET` | unset | Enables `/api/inbound` for the relay Worker |
 | `TURNSTILE_SECRET_KEY` | unset | Bot protection on login and reset forms (`NEXT_PUBLIC_TURNSTILE_SITE_KEY` at build time) |
+| `VAPID_PUBLIC_KEY` | unset | Public Web Push application-server key |
+| `VAPID_PRIVATE_KEY` | unset | Secret Web Push application-server key |
+| `VAPID_SUBJECT` | unset | Web Push contact URI (`mailto:` or HTTPS) |
 | `AI_BASE_URL` | unset | OpenAI-compatible model API base URL for the assistant |
 | `AI_API_KEY` | unset | Server-only key for that model API |
 | `AI_MODEL` | `gpt-4o-mini` | Model ID supported by the configured API |

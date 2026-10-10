@@ -2,21 +2,24 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useLanguage } from "@/components/language-provider";
 import { cn } from "@/lib/utils";
 import { SectionNavSheet } from "../section-nav-sheet";
 import { isActiveSettingsPath, settingsNavSections } from "./settings-nav-utils";
 
 export function SettingsNav() {
+	const { t } = useLanguage();
 	const pathname = usePathname();
-	const currentLabel = settingsNavSections.flatMap((section) => section.items).find((item) => isActiveSettingsPath(pathname, item.href))?.label ?? "Settings";
+	const currentItem = settingsNavSections.flatMap((section) => section.items).find((item) => isActiveSettingsPath(pathname, item.href));
+	const currentLabel = t(currentItem?.labelKey ?? "settings.nav.settings");
 
 	return (
-		<SectionNavSheet title="Settings menu" label={currentLabel} className="w-full px-4 py-4 md:min-h-full md:w-64 md:border-r md:border-blue-100/70 md:py-10">
+		<SectionNavSheet title={t("settings.nav.menu")} label={currentLabel} className="w-full px-4 py-4 md:min-h-full md:w-64 md:border-r md:border-blue-100/70 md:py-10">
 			<div className="sticky top-6 space-y-7">
 				{settingsNavSections.map((section) => (
-					<div key={section.label} className="space-y-3">
+					<div key={section.labelKey} className="space-y-3">
 						<h2 className="px-4 text-xs font-semibold uppercase tracking-wide text-neutral-500">
-							{section.label}
+							{t(section.labelKey)}
 						</h2>
 						<nav className="space-y-px">
 							{section.items.map((item) => {
@@ -32,7 +35,7 @@ export function SettingsNav() {
 												: "text-neutral-600 hover:bg-white/70 hover:text-neutral-900",
 										)}
 									>
-										{item.label}
+										{t(item.labelKey)}
 									</Link>
 								);
 							})}

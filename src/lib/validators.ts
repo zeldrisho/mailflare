@@ -235,6 +235,10 @@ export const updateSpamSettingsSchema = z.object({
 	enabled: z.boolean(),
 });
 
+export const updateTrashRetentionSettingsSchema = z.object({
+	days: z.number().int().min(1).max(365).nullable(),
+});
+
 export const updateRecipientAddressSettingsSchema = z.object({
 	enabled: z.boolean(),
 });

@@ -3,6 +3,7 @@
 import { Fragment, memo, useMemo } from "react";
 import type { DragEvent, PointerEvent as ReactPointerEvent } from "react";
 import clsx from "clsx";
+import { useLanguage } from "@/components/language-provider";
 import { normalizeCalendarColor } from "@/lib/calendar/colors";
 import { addDays, dateKey, EVENT_COLOR_CLASSES, eventPosition, formatEventRange, PAST_EVENT_COLOR_CLASSES } from "./utils";
 import type { CalendarEvent, EventResizeEdge } from "./types";
@@ -11,6 +12,7 @@ import type { DayEventsProps } from "./day-events-types";
 // Memoized so pointer-move / drag-over preview updates in the page do not
 // recompute positions (timezone math) and re-render every event block.
 function DayEventsImpl({ day, events, currentTime, busy, activeEventId, onEdit, onDragStart, onDragEnd, onResizeStart, onResizeMove, onResizeEnd, onResizeCancel }: DayEventsProps) {
+	const { t } = useLanguage();
 	const nextDay = useMemo(() => addDays(day, 1), [day]);
 	const items = useMemo(() => events.flatMap((event) => {
 		if (!(new Date(event.startsAt) < nextDay && new Date(event.endsAt) > day)) return [];
@@ -47,7 +49,7 @@ function DayEventsImpl({ day, events, currentTime, busy, activeEventId, onEdit, 
 						</button>
 						{edges.map((edge: EventResizeEdge) => (
 							<button key={edge} type="button" draggable={false}
-								aria-label={`Resize ${edge} of ${event.title}`}
+								aria-label={t(edge === "start" ? "calendar.resizeEdge.start" : "calendar.resizeEdge.end", { title: event.title })}
 								onPointerDown={(pointerEvent: ReactPointerEvent<HTMLButtonElement>) => onResizeStart(pointerEvent, event, day, edge)}
 								onPointerMove={onResizeMove}
 								onPointerUp={onResizeEnd}

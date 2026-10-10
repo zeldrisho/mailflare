@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState, type ReactNode } from "react";
+import { useLanguage } from "@/components/language-provider";
+import type { TranslationKey } from "@/lib/i18n/types";
 import { requestJson } from "./api";
 import ProviderCard from "./ProviderCard";
 import ReceivingProviderConfig from "./ReceivingProviderConfig";
@@ -9,10 +11,10 @@ import type { Domain, ReceivingProvider } from "./types";
 type Option = Exclude<ReceivingProvider, "none">;
 type Present = Record<Option, boolean | null>;
 
-const OPTIONS: { id: Option; title: string; description: string }[] = [
-	{ id: "cloudflare", title: "Cloudflare Email Routing", description: "Mail arrives through this domain's Cloudflare zone. The default." },
-	{ id: "resend", title: "Resend", description: "Resend receives mail and delivers it to Mailflare by webhook." },
-	{ id: "ses", title: "Amazon SES", description: "SES receives mail into S3 and notifies Mailflare." },
+const OPTIONS: { id: Option; titleKey: TranslationKey; descriptionKey: TranslationKey }[] = [
+	{ id: "cloudflare", titleKey: "domains.opt.cfRouting", descriptionKey: "domains.opt.cfRoutingDesc" },
+	{ id: "resend", titleKey: "domains.providerResend", descriptionKey: "domains.opt.resendReceiveDesc" },
+	{ id: "ses", titleKey: "domains.providerSes", descriptionKey: "domains.opt.sesReceiveDesc" },
 ];
 
 type Props = {
@@ -26,6 +28,7 @@ type Props = {
 };
 
 export default function ReceivingSetupSection({ domain, onChange, busy, message, cloudflareConfig, cloudflareOk }: Props) {
+	const { t } = useLanguage();
 	const [present, setPresent] = useState<Present>({ cloudflare: null, resend: null, ses: null });
 	const [ready, setReady] = useState<Record<"resend" | "ses", boolean | null>>({ resend: null, ses: null });
 	const [reload, setReload] = useState(0);
@@ -41,22 +44,22 @@ export default function ReceivingSetupSection({ domain, onChange, busy, message,
 	}, [domain.id, domain.receivingProvider, reload]);
 
 	async function cleanUp(option: Option, title: string) {
-		if (!window.confirm(`Remove the ${title} receiving setup for ${domain.hostname}? This deletes its MX record and routing, so mail will not arrive through it.`)) return;
+		if (!window.confirm(t("domains.removeReceivingConfirm", { title, host: domain.hostname }))) return;
 		setRemoving(option);
 		setError("");
 		try {
 			await requestJson(`/api/domains/${domain.id}/receiving`, "DELETE", { target: option });
 			setReload((value) => value + 1);
 		} catch (err) {
-			setError(err instanceof Error ? err.message : "Could not remove configuration");
+			setError(err instanceof Error ? err.message : t("domains.removeConfigFailed"));
 		} finally { setRemoving(null); }
 	}
 
 	return (
 		<section className="mt-6">
-			<h2 className="text-base font-semibold text-neutral-900">Setup receiving email</h2>
+			<h2 className="text-base font-semibold text-neutral-900">{t("domains.setupReceiving")}</h2>
 			<p className="mt-0.5 text-sm text-neutral-500">
-				Choose what receives mail for this domain. Only one service can own the MX record; setting up another asks before replacing it.
+				{t("domains.setupReceivingDescription")}
 			</p>
 			<ul className="mt-3 space-y-2">
 				{OPTIONS.map((option) => {
@@ -65,13 +68,13 @@ export default function ReceivingSetupSection({ domain, onChange, busy, message,
 					return (
 						<ProviderCard
 							key={option.id}
-							title={option.title}
-							description={option.description}
+							title={t(option.titleKey)}
+							description={t(option.descriptionKey)}
 							ok={ok}
 							selected={selected}
 							disabled={busy}
 							onToggle={(on) => onChange?.(on ? option.id : "none")}
-							cleanup={{ present: !!present[option.id], busy: removing === option.id, disabled: removing !== null, onClick: () => void cleanUp(option.id, option.title) }}
+							cleanup={{ present: !!present[option.id], busy: removing === option.id, disabled: removing !== null, onClick: () => void cleanUp(option.id, t(option.titleKey)) }}
 						>
 							{option.id === "cloudflare"
 								? cloudflareConfig
@@ -80,7 +83,7 @@ export default function ReceivingSetupSection({ domain, onChange, busy, message,
 					);
 				})}
 			</ul>
-			{domain.receivingProvider === "none" && <p className="mt-2 text-xs text-neutral-500">No receiving service selected: this domain only sends.</p>}
+			{domain.receivingProvider === "none" && <p className="mt-2 text-xs text-neutral-500">{t("domains.noReceiving")}</p>}
 			{message && <p className="mt-2 text-xs text-red-600">{message}</p>}
 			{error && <p role="alert" className="mt-2 text-xs text-red-600">{error}</p>}
 		</section>

@@ -6,8 +6,11 @@ import type { DomainRow } from "@/lib/domains/types";
 /** Thrown when other mail servers' MX records would shadow the one being added. */
 export class MxConflictError extends Error {
 	readonly code = "MX_CONFLICT";
-	constructor(readonly records: { content: string; priority: number }[]) {
-		super("This domain has MX records for another mail service. Replace them to receive mail here.");
+	constructor(
+		readonly records: { content: string; priority: number }[],
+		message = "This domain has MX records for another mail service. Replace them to receive mail here.",
+	) {
+		super(message);
 	}
 }
 

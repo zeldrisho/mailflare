@@ -35,7 +35,7 @@ function openRouterRates(pricing: unknown): AgentModelRates | undefined {
 export async function listCloudflareAgentModels(env: CloudflareEnv): Promise<{ models: AgentModelOption[]; source: "catalog" | "suggested" }> {
 	if (!env.CF_ACCOUNT_ID || !env.CF_TOKEN) return { models: CLOUDFLARE_TOOL_MODELS, source: "suggested" };
 	try {
-		const response = await fetch(`https://api.cloudflare.com/client/v4/accounts/${encodeURIComponent(env.CF_ACCOUNT_ID)}/ai/models/search?task=Text%20Generation`, { headers: { Authorization: `Bearer ${env.CF_TOKEN}` }, signal: AbortSignal.timeout(10_000), redirect: "error" });
+		const response = await fetch(`https://api.cloudflare.com/client/v4/accounts/${encodeURIComponent(env.CF_ACCOUNT_ID)}/ai/models/search?task=Text%20Generation`, { headers: { Authorization: `Bearer ${env.CF_TOKEN}` }, signal: AbortSignal.timeout(10_000), redirect: "manual" });
 		if (!response.ok) throw new Error("Catalog unavailable");
 		const json = await response.json() as { result?: { name?: unknown; description?: unknown; task?: unknown; properties?: unknown }[] };
 		const models = (json.result ?? []).filter((item) => typeof item.name === "string" && item.name.startsWith("@cf/") && (item.task === "Text Generation" || item.task === "text-generation" || !item.task)).map((item) => ({ id: item.name as string, name: item.name as string, rates: cloudflareRates(item.properties) })).slice(0, 200);
@@ -48,7 +48,7 @@ export async function listCompatibleAgentModels(env: CloudflareEnv, input: { pre
 	const saved = await getAgentProviderConfig(env);
 	const key = input.apiKey?.trim() || (saved.provider === "compatible" && saved.preset === input.preset && saved.baseUrl === baseUrl ? saved.apiKey : "");
 	if (!key) throw new Error("Enter an API key to load models");
-	const response = await fetch(`${baseUrl}/models`, { headers: { Authorization: `Bearer ${key}`, Accept: "application/json" }, signal: AbortSignal.timeout(10_000), redirect: "error" });
+	const response = await fetch(`${baseUrl}/models`, { headers: { Authorization: `Bearer ${key}`, Accept: "application/json" }, signal: AbortSignal.timeout(10_000), redirect: "manual" });
 	if (!response.ok) throw new Error(`Model list request failed (${response.status})`);
 	const json = await response.json() as { data?: { id?: unknown; name?: unknown; pricing?: unknown }[] };
 	const models = (json.data ?? []).filter((item) => typeof item.id === "string" && item.id.length <= 200).map((item) => ({ id: item.id as string, name: typeof item.name === "string" ? item.name : item.id as string, rates: input.preset === "openrouter" ? openRouterRates(item.pricing) : undefined })).slice(0, 2_000).sort((a, b) => a.name.localeCompare(b.name));

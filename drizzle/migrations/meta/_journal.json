@@ -316,6 +316,62 @@
       "when": 1788850800016,
       "tag": "0052_add_receiving_provider",
       "breakpoints": true
+    },
+    {
+      "idx": 45,
+      "version": "6",
+      "when": 1788850800017,
+      "tag": "0053_add_trash_retention",
+      "breakpoints": true
+    },
+    {
+      "idx": 46,
+      "version": "6",
+      "when": 1788850800018,
+      "tag": "0054_add_push_subscriptions",
+      "breakpoints": true
+    },
+    {
+      "idx": 47,
+      "version": "6",
+      "when": 1788850800019,
+      "tag": "0055_add_drive",
+      "breakpoints": true
+    },
+    {
+      "idx": 48,
+      "version": "6",
+      "when": 1788850800020,
+      "tag": "0056_add_drive_upload_id",
+      "breakpoints": true
+    },
+    {
+      "idx": 49,
+      "version": "6",
+      "when": 1788850800021,
+      "tag": "0057_add_drive_resumable_uploads",
+      "breakpoints": true
+    },
+    {
+      "idx": 50,
+      "version": "6",
+      "when": 1788850800022,
+      "tag": "0058_add_drive_storage_limit",
+      "breakpoints": true
+    },
+    {
+      "idx": 51,
+      "version": "6",
+      "when": 1788850800023,
+      "tag": "0059_add_attachment_trash",
+      "breakpoints": true
+    },
+    {
+      "idx": 52,
+      "version": "6",
+      "when": 1788850801023,
+      "tag": "0060_add_license_seat_limit",
+      "breakpoints": true
     }
   ]
 }

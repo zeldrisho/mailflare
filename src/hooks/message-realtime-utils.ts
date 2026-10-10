@@ -1,4 +1,5 @@
 import type { NewMessageEvent } from "./message-realtime-types";
+import { hasActivePushSubscription } from "@/lib/push/client";
 
 export const REALTIME_FALLBACK_INTERVAL_MS = 60_000;
 export const REALTIME_HEARTBEAT_INTERVAL_MS = 25_000;
@@ -51,7 +52,7 @@ export function parseNewMessageEvent(value: string): NewMessageEvent | null {
 	}
 }
 
-export function showBrowserNewMessageNotification(event: NewMessageEvent): void {
+export async function showBrowserNewMessageNotification(event: NewMessageEvent): Promise<void> {
 	if (
 		typeof Notification === "undefined" ||
 		Notification.permission !== "granted" ||
@@ -60,6 +61,7 @@ export function showBrowserNewMessageNotification(event: NewMessageEvent): void 
 	) {
 		return;
 	}
+	if (await hasActivePushSubscription().catch(() => false)) return;
 
 	try {
 		const notification = new Notification(event.subject || "New email", {

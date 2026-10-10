@@ -89,6 +89,10 @@ Schema lives in one file: `src/db/schema/index.ts` (21 tables). Migrations are g
 
 The setup path only ever initializes an empty database — it refuses to touch one that already has tables.
 
+### Object storage is `env.BUCKET`, from R2, Backblaze B2 or AWS S3
+
+Every blob (raw MIME, attachments, Drive, avatars, branding icon, JMAP uploads, backups) goes through `env.BUCKET` with the R2 API. `withStorage` (`src/lib/storage/index.ts`) swaps `BUCKET` for `B2Bucket` (`b2-bucket.ts`, S3 API signed with the shared SigV4 client; it serves AWS S3 too) when `getObjectStorageConfig` finds all of `B2_*` (Backblaze, wins) or `S3_BUCKET`/`S3_REGION`/credentials (AWS S3, credentials falling back to `AWS_*`); otherwise the R2 binding (or the Node file bucket) is untouched. It is applied in `getEnv()`, at the top of each `worker.ts` handler (which receive the raw env) and in the Node runtime env. `B2Bucket` implements only what the app calls (`get` with range, `head`, `put`, `delete`, multipart); if new code needs another R2 method, add it there. Do not read `cloudflare:workers` env directly for storage. `GET/POST /api/v1/storage` and the `manage_storage` MCP tool (admin scope `storage`) report and test it.
+
 ### Two runtimes, one code path
 
 The Node build aliases `cloudflare:workers` to `server/runtime/cloudflare-workers.ts`, allowing the shared helper to use its existing `getNodeEnv()` fallback. That alias only applies when `MAILFLARE_RUNTIME=node`; vinext uses the native Workers module. Next outputs to `.next-node` so its generated types do not collide with vinext's `.next/types`.

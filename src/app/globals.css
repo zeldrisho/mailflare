@@ -458,7 +458,8 @@ button {
 .dark .bg-\[\#f6f8fc\], .dark .bg-\[\#f7f9fc\] { background-color: #202124; }
 .dark .bg-\[\#f2f6fc\], .dark .bg-\[\#f1f4fa\], .dark .bg-\[\#f0f3f9\] { background-color: #303134; }
 .dark .bg-\[\#eef3fb\], .dark .bg-\[\#eaf1fb\], .dark .bg-\[\#e6ecf6\] { background-color: #383a3e; }
-.dark .hover\:bg-\[\#f2f6fc\]:hover { background-color: #35363a; }
+.dark .hover\:bg-\[\#f2f6fc\]:hover,
+.dark .bg-\[\#f2f6fc\] { background-color: #35363a; }
 .dark .hover\:bg-\[\#e6ecf6\]:hover { background-color: #3c4043; }
 /* Soft shadows turn dark */
 .dark .shadow-neutral-200, .dark .shadow-neutral-300 { --tw-shadow-color: rgb(0 0 0 / 0.6); }

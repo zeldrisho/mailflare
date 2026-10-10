@@ -85,9 +85,11 @@ On a Team license an administrator can add other users as hosts of a booking eve
 
 ## Account and mailbox management
 
-Admin > API keys can also grant the `accounts` and `mailboxes` scopes independently. These routes use `Authorization: Bearer <key>` and require the key owner to retain the admin role. Account management requires a Team license; creating a shared mailbox also requires a Team license. Each key can access only accounts created by its owner and mailboxes owned by those accounts or the admin.
+Admin > API keys can also grant the `accounts`, `mailboxes` and `storage` scopes independently. These routes use `Authorization: Bearer <key>` and require the key owner to retain the admin role. Account management requires a Team license; creating a shared mailbox also requires a Team license. Each key can access only accounts created by its owner and mailboxes owned by those accounts or the admin.
 
-Admin API keys cannot read or send mail. Enable **Allow MCP access** when creating an admin key to use its selected `domains`, `accounts`, and `mailboxes` permissions through `/mcp`. The `manage_domains`, `manage_accounts`, and `manage_mailboxes` tools expose the corresponding management actions below. Admin MCP keys do not expose mail tools. Use Settings > API keys for mail and mail MCP access.
+The `storage` scope reports and tests object storage: `GET /api/v1/storage` returns `{ storage: { provider: "backblaze" | "s3" | "r2" | "files", configured, bucket, endpoint }, warning }` (credentials are never returned; `warning` explains a half-set `B2_*` configuration), and `POST /api/v1/storage` round-trips a small object and returns `{ ok, error?, latencyMs, storage }` (HTTP 502 on failure). Backblaze B2 (`B2_KEY_ID`, `B2_APPLICATION_KEY`, `B2_BUCKET`, `B2_ENDPOINT`) or AWS S3 (`S3_BUCKET`, `S3_REGION`, credentials) replaces R2 for all stored objects when configured.
+
+Admin API keys cannot read or send mail. Enable **Allow MCP access** when creating an admin key to use its selected `domains`, `accounts`, `mailboxes`, and `storage` permissions through `/mcp`. The `manage_domains`, `manage_accounts`, `manage_mailboxes`, and `manage_storage` (`status`, `test`) tools expose the corresponding management actions below. Admin MCP keys do not expose mail tools. Use Settings > API keys for mail and mail MCP access.
 
 | Scope | Mailflare route | Purpose |
 | --- | --- | --- |
@@ -100,6 +102,8 @@ Admin API keys cannot read or send mail. Enable **Allow MCP access** when creati
 | `mailboxes` | `GET /api/v1/mailboxes/[id]` | Get a managed mailbox |
 | `mailboxes` | `PATCH /api/v1/mailboxes/[id]` | Update mailbox settings |
 | `mailboxes` | `DELETE /api/v1/mailboxes/[id]` | Delete a mailbox and its routing rule |
+| `storage` | `GET /api/v1/storage` | Active object storage (R2, Backblaze B2, AWS S3 or local files) |
+| `storage` | `POST /api/v1/storage` | Write, read and delete a test object to verify storage |
 
 ### Choose aliases when creating an account
 
@@ -177,6 +181,10 @@ To send a reply that threads correctly in the recipient's client, pass the paren
 ```
 
 `GET /api/messages/{id}/thread` (session auth) returns every stored message in the same conversation, oldest first, excluding drafts and trash. `GET /api/messages?group=thread` collapses a list to one row per conversation (its newest message matching the filter) and adds `threadCount`, `threadUnread` and `threadMessageIds`, the ids that row stands for within the current filter, so bulk actions can act on the whole conversation.
+
+`POST /api/messages/bulk` (session auth) with `action: "delete"` permanently removes the given messages, including their raw MIME and attachment objects, but only those already in Trash or Spam; others are skipped and counted in `skipped`. `POST /api/messages/empty` with `{ mailboxId, folder: "trash" | "spam" }` permanently deletes that folder's messages in batches of 100 and returns `{ deleted, remaining }`; call it again until `remaining` is 0. Both write an `email.delete` audit entry per message with `permanent: true`.
+
+Each user can also choose **Settings > Inbox > Trash and Spam clean-up** to delete Trash and Spam automatically after a number of days (`GET`/`PATCH /api/settings/trash-retention` with `{ days: number | null }`, 1 to 365, `null` for never). It applies to messages in mailboxes the user owns. `messages.trashed_at` records when a message entered either folder; database triggers keep it current, and the scheduled maintenance run deletes expired messages in batches of 200, with `source: "retention"` in the audit entry.
 
 Messages composed in Mailflare are sent as HTML with a plain-text alternative derived from it. Quoted or forwarded content is wrapped in `<div class="mailflare-quote" data-mailflare-quote="1">` so the reader can fold it. `POST /api/drafts` accepts `forwardOfMessageId`, which copies that message's attachments onto the new draft; `DELETE /api/drafts/{id}/attachments/{attachmentId}` removes one, and `POST /api/send` with `draftId` sends the draft's stored files along with any uploaded in the request.
 

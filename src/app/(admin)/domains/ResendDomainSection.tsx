@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { useLanguage } from "@/components/language-provider";
 import { authFetch } from "@/lib/auth/client";
 import type { ResendDomainView } from "@/lib/domains/resend-domain-types";
 import ResendKeyRow from "./ResendKeyRow";
@@ -17,6 +18,7 @@ async function postJson<T>(url: string, method: string, body: unknown): Promise<
 }
 
 export default function ResendDomainSection({ domainId, onStatus }: { domainId: string; onStatus?: (status: string | null) => void }) {
+	const { t } = useLanguage();
 	const [keyConfigured, setKeyConfigured] = useState<boolean | null>(null);
 	const [view, setView] = useState<ResendDomainView | null>(null);
 	const [canManage, setCanManage] = useState(true);
@@ -32,16 +34,16 @@ export default function ResendDomainSection({ domainId, onStatus }: { domainId: 
 			.then(async (response) => ({ response, data: (await response.json()) as ResendResponse }))
 			.then(({ response, data }) => {
 				if (!active) return;
-				if (!response.ok && data.keyConfigured === undefined) throw new Error(data.error ?? "Could not reach Resend");
+				if (!response.ok && data.keyConfigured === undefined) throw new Error(data.error ?? t("resend.unreachable"));
 				setKeyConfigured(data.keyConfigured ?? true);
 				setCanManage(data.canManageDomains ?? true);
 				setView(data.resend ?? null);
 				setError(response.ok ? "" : data.error ?? "");
 			})
-			.catch((err) => { if (active) { setKeyConfigured(true); setError(err instanceof Error ? err.message : "Could not reach Resend"); } })
+			.catch((err) => { if (active) { setKeyConfigured(true); setError(err instanceof Error ? err.message : t("resend.unreachable")); } })
 			.finally(() => { if (active) setLoading(false); });
 		return () => { active = false; };
-	}, [domainId, reload]);
+	}, [domainId, reload, t]);
 
 	useEffect(() => {
 		if (loading) return;
@@ -53,7 +55,7 @@ export default function ResendDomainSection({ domainId, onStatus }: { domainId: 
 		setError("");
 		setNotice("");
 		try { await action(); }
-		catch (err) { setError(err instanceof Error ? err.message : "Request failed"); }
+		catch (err) { setError(err instanceof Error ? err.message : t("domains.requestFailed")); }
 		finally { setBusy(null); }
 	}
 
@@ -63,37 +65,37 @@ export default function ResendDomainSection({ domainId, onStatus }: { domainId: 
 	});
 	const sendTest = () => run("test", async () => {
 		const data = await postJson<{ to: string }>(`/api/domains/${domainId}/resend`, "POST", { action: "test" });
-		setNotice(`Test email sent to ${data.to}`);
+		setNotice(t("resend.testSent", { to: data.to }));
 	});
 
 	const verified = view?.status === "verified";
-	const needsFullKey = "Needs a full-access Resend API key";
+	const needsFullKey = t("resend.needsFullKey");
 	const domainLabel = loading
-		? "Checking Resend…"
+		? t("resend.checking")
 		: !canManage
-			? "Cannot check: this key can only send mail"
+			? t("resend.cannotCheck")
 			: !view
-				? "Could not read the domain from Resend"
+				? t("resend.cannotRead")
 				: verified
-					? "Domain verified in Resend"
+					? t("resend.verified")
 					: view.registered
 						? view.missingDns === 0
-							? `DNS records added, waiting for Resend to verify (${view.status.replace(/_/g, " ")})`
+							? t("resend.waiting", { status: view.status.replace(/_/g, " ") })
 							: view.missingDns
-								? `${view.missingDns} DNS record${view.missingDns === 1 ? "" : "s"} missing in Cloudflare`
-								: `DNS check: ${view.status.replace(/_/g, " ")}`
-						: "Domain is not added to Resend yet";
+								? t("resend.missingDns", { count: view.missingDns })
+								: t("resend.dnsCheck", { status: view.status.replace(/_/g, " ") })
+						: t("resend.notAdded");
 	const domainButton = !canManage
-		? "Setup domain"
+		? t("resend.btn.setupDomain")
 		: !view
 			? null
 			: view.registered && !view.dnsManaged
-				? "Verify"
+				? t("resend.btn.verify")
 				: !view.registered
-					? view.dnsManaged ? "Setup domain and DNS" : "Setup domain"
+					? view.dnsManaged ? t("resend.btn.setupDomainDns") : t("resend.btn.setupDomain")
 					: view.dnsManaged && view.missingDns !== 0
-						? "Create missing DNS and verify"
-						: "Check status";
+						? t("resend.btn.createMissing")
+						: t("resend.btn.checkStatus");
 
 	return (
 		<div className="space-y-2">
@@ -107,10 +109,10 @@ export default function ResendDomainSection({ domainId, onStatus }: { domainId: 
 				{keyConfigured && (
 					<StatusRow
 						ok={verified}
-						title="Domain"
-						hint="Verified sender domain in Resend"
+						title={t("resend.domain")}
+						hint={t("resend.domainHint")}
 						action={verified ? (
-							<Button size="sm" variant="outline" className="bg-white" disabled={busy !== null} onClick={() => void sendTest()}>{busy === "test" ? "Sending…" : "Send test email"}</Button>
+							<Button size="sm" variant="outline" className="bg-white" disabled={busy !== null} onClick={() => void sendTest()}>{busy === "test" ? t("resend.sending") : t("resend.sendTest")}</Button>
 						) : domainButton && !loading ? (
 							<Button
 								size="sm"
@@ -120,7 +122,7 @@ export default function ResendDomainSection({ domainId, onStatus }: { domainId: 
 								title={canManage ? undefined : needsFullKey}
 								onClick={() => void domainAction(view?.registered && (!view.dnsManaged || view.missingDns === 0) ? "verify" : "setup")}
 							>
-								{busy === "verify" ? "Checking…" : busy === "setup" ? "Working…" : domainButton}
+								{busy === "verify" ? t("domains.checking") : busy === "setup" ? t("domains.working") : domainButton}
 							</Button>
 						) : undefined}
 					>
@@ -129,9 +131,9 @@ export default function ResendDomainSection({ domainId, onStatus }: { domainId: 
 				)}
 			</ul>
 
-			{!loading && !canManage && keyConfigured && <p className="text-xs text-neutral-500">Add this domain at resend.com/domains and create the DNS records it shows, then send a test email. Or replace the key with a full-access one so Mailflare can set it up.</p>}
-			{view && view.registered && !verified && !view.dnsManaged && <p className="text-xs text-neutral-500">Add these records where this domain&apos;s DNS is hosted, then verify.</p>}
-			{view && view.registered && !verified && view.dnsManaged && view.missingDns === 0 && <p className="text-xs text-neutral-500">DNS changes can take a few minutes to propagate. Check again shortly.</p>}
+			{!loading && !canManage && keyConfigured && <p className="text-xs text-neutral-500">{t("resend.manualHint")}</p>}
+			{view && view.registered && !verified && !view.dnsManaged && <p className="text-xs text-neutral-500">{t("resend.addRecords")}</p>}
+			{view && view.registered && !verified && view.dnsManaged && view.missingDns === 0 && <p className="text-xs text-neutral-500">{t("resend.propagate")}</p>}
 
 			{view && view.records.length > 0 && !verified && (
 				<ul className="space-y-1 text-xs text-neutral-600">
